@@ -1,10 +1,8 @@
 # Use the official Ubuntu image as the base image
 FROM ubuntu:latest
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     g++ \
     libcpprest-dev \
@@ -12,15 +10,11 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     cmake
 
-# Copy the source code into the container
 COPY utils/* utils/.
 COPY tabloNode.cpp .
 
-# Compile the C++ code
-RUN g++ -o tabloNode tabloNode.cpp -lcpprest -lboost_system -lboost_thread -lboost_chrono -lboost_random -lssl -lcrypto
+RUN g++ -o tabloNode utils/*.cpp tabloNode.cpp -lcpprest -lboost_system -lboost_thread -lboost_chrono -lboost_random -lssl -lcrypto
 
-# Expose the port on which the API will listen
 EXPOSE 8080
 
-# Command to run the API when the container starts
 CMD ["./tabloNode"]
