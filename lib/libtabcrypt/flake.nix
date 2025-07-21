@@ -19,28 +19,33 @@
     in
     {
 
-      packages.${system}.libtabcrypt = pkgs.stdenv.mkDerivation {
+      packages.${system}.default = pkgs.stdenv.mkDerivation {
         pname = "libtabcrypt";
         version = "1.0";
         src = ./.;
 
         buildInputs = packages;
+
+        configurePhase = ''
+          cmake -B build -S $src
+        '';
+
         buildPhase = ''
-          cmake -B build -S .
+          cd build
+          make
         '';
 
         installPhase = ''
           mkdir -p $out/lib
-          mkdir -p $out/include
-          cp -r $src/include $out/include
-          # TODO copy cmake outputs
+          cp -r $src/include $out/
+          cp libtabcrypt.* $out/lib/
         '';
       };
 
       devShells.${system}.default = pkgs.mkShell {
-        packages = [ pkgs.gnumake ];
+        inherit packages;
 
-        inputsFrom = packages;
+        inputsFrom = [ self.packages.${system}.default ];
 
         shellHook = ''
           git status
