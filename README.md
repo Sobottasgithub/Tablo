@@ -1,11 +1,16 @@
 # Tablo
 
 ## Run TabloNode: 
-cd src/TabloNode/
+```cmd
+cd src/TabloNode/ 
 sudo docker compose up --build
+```
 
-## Run TabloMaster
+## Run TabloMaster:
+```cmd
 cd src/TabloMaster/
 apt install < requirement.txt
-g++ -o tabloMaster tabloMaster.cpp ui/*.cpp utils/*.cpp
+g++ -o tabloMaster tabloMaster.cpp ui/*.cpp 
+utils/*.cpp
 ./tabloMaster
+```
