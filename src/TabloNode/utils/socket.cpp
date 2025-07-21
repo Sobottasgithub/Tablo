@@ -48,10 +48,10 @@ void Socket::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
 
     // Based on Diffie-Hellman key exchange: Agree on sharedKey
-    std::string serverKeyPart = generateKey();
-    std::string clientKeyPart = Socket::recieveMessage(clientSocket);
-    Socket::sendMessage(clientSocket, serverKeyPart.c_str());
-    std::string sharedKey = clientKeyPart + serverKeyPart;
+    //std::string serverKeyPart = generateKey();
+    //std::string clientKeyPart = Socket::recieveMessage(clientSocket);
+    //Socket::sendMessage(clientSocket, serverKeyPart.c_str());
+    //std::string sharedKey = clientKeyPart + serverKeyPart;
 
     while(true) {
         // recieve
@@ -79,12 +79,3 @@ std::string Socket::recieveMessage(int socket) {
     return buffer;
 }
 
-std::string Socket::generateKey() {
-    static const char chars[] = "0123456789ABCDEFGHIGKLMNOPQRSTUVWXYZ";
-    char *key = new char[16];
-    for (int index = 0; index < 16; ++index) {
-        key[index] = chars[rand() % 36];
-    }
-    key[16] = '\0';
-    return key;
-}

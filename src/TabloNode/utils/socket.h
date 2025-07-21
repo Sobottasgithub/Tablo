@@ -16,7 +16,6 @@ class Socket
         std::string recieveMessage(int socket);
 
     private:
-        std::string generateKey();
         int serverSocket;
         std::vector<std::thread> threadCollection;
 };

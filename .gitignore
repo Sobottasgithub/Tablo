@@ -39,3 +39,10 @@
 
 # debug information files
 *.dwo
+
+# vscode
+.vscode/
+
+# executables
+src/TabloMaster/tabloMaster
+src/TabloClient/tabloClient

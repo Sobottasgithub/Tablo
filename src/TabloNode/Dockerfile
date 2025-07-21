@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     libssl-dev \
     cmake
-
 COPY utils/* utils/.
 COPY tabloNode.cpp .
 
