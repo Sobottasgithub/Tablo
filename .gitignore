@@ -46,3 +46,14 @@
 # executables
 src/TabloMaster/tabloMaster
 src/TabloClient/tabloClient
+
+# cmake
+build
+outputs
+
+# IDEA
+.idea
+
+# nix
+result
+.direnv
