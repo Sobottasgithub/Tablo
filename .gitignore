@@ -46,3 +46,7 @@
 # executables
 src/TabloMaster/tabloMaster
 src/TabloClient/tabloClient
+
+# IDEA
+
+.idea

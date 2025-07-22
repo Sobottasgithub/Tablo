@@ -4,9 +4,15 @@ project(tablo)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Tablo shared libraries
 
-# TabloClient, TabloMaster and TabloNode executables
+# libtabcrypt
+add_subdirectory(lib/libtabcrypt)
 
-# TabloClient
-file(GLOB_RECURSE TABLO_CLIENT_SOURCES "src/TabloClient/*.cpp")
-file(GLOB_RECURSE TABLO_CLIENT_HEADERS "include/TabloClient/*.h")
+
+
+# TabloClient, TabloMaster and TabloNode executables (provided by own CMakeLists.txt files)
+
+add_subdirectory(TabloClient)
+add_subdirectory(TabloMaster)
+add_subdirectory(TabloNode)
