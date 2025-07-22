@@ -1,5 +1,5 @@
 {
-  description = "libtabcrypt";
+  description = "Tablo";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -20,7 +20,7 @@
     {
 
       packages.${system}.default = pkgs.stdenv.mkDerivation {
-        pname = "libtabcrypt";
+        pname = "tablo-full";
         version = "1.0";
         src = ./.;
 
@@ -38,7 +38,7 @@
         installPhase = ''
           mkdir -p $out/lib
           cp -r $src/include $out/
-          cp libtabcrypt.* $out/lib/
+          # cp libtabcrypt.* $out/lib/
         '';
       };
 
