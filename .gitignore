@@ -47,6 +47,12 @@
 src/TabloMaster/tabloMaster
 src/TabloClient/tabloClient
 
-# IDEA
+# cmake
+build
 
+# IDEA
 .idea
+
+# nix
+result
+.direnv
