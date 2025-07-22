@@ -1,5 +1,5 @@
 #include <iostream>
-#include "libtabcrypt.h"
+#include "tabcrypt.h"
 
 int main() {
   std::cout << "Hello, World!" << std::endl;

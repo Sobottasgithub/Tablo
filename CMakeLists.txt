@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # libtabcrypt
 add_subdirectory(lib/libtabcrypt)
 
+# Test executables
+
+add_subdirectory(TCTest)
 
 
 # TabloClient, TabloMaster and TabloNode executables (provided by own CMakeLists.txt files)
