@@ -38,4 +38,13 @@ int main(int argc, char *argv[]) {
         std::cerr << "Unknown option: " << argv[2] << "\n";
         return EXIT_FAILURE;
     }
+
+    std::string line;
+
+    while (std::getline(std::cin, line)) {
+        if (line.empty()) {
+            break; // Exit on empty line
+        }
+        handleLine(line);
+    }
 }
