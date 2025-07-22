@@ -11,6 +11,8 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
+      version = "1.0";
+
       packages = with pkgs; [
         cmake
         gcc
@@ -19,25 +21,27 @@
     in
     {
 
-      packages.${system}.default = pkgs.stdenv.mkDerivation {
-        pname = "tablo-full";
-        version = "1.0";
-        src = ./.;
+      packages.${system} = {
+        default = pkgs.stdenv.mkDerivation {
+          pname = "tablo-full";
+          inherit version;
+          src = ./.;
 
-        buildInputs = packages;
+          buildInputs = packages;
 
-        configurePhase = ''
-          cmake -B build -S $src -DCMAKE_BUILD_TYPE=Release
-        '';
+          configurePhase = ''
+            cmake -B build -S $src -DCMAKE_BUILD_TYPE=Release
+          '';
 
-        buildPhase = ''
-          cmake --build build
-        '';
+          buildPhase = ''
+            cmake --build build
+          '';
 
-        installPhase = ''
-          cmake --install build --prefix=$out
-          cp LICENSE $out/
-        '';
+          installPhase = ''
+            cmake --install build --prefix=$out
+            cp LICENSE $out/
+          '';
+        };
       };
 
       devShells.${system}.default = pkgs.mkShell {
