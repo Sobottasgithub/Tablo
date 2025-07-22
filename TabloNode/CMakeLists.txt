@@ -7,3 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 add_executable(tablo_node ${SOURCES})
+
+# Link against the tabcrypt library
+target_link_libraries(tablo_node PRIVATE tabcrypt)

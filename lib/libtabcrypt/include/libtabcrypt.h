@@ -3,8 +3,8 @@
 
 #include <string>
 
-const std::string encrypt(const std::string&);
+std::string encrypt(const std::string &secret, const std::string &message);
 
-const std::string decrypt(const std::string&);
+std::string decrypt(const std::string &secret, const std::string &message);
 
 #endif
