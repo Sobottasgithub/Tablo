@@ -10,3 +10,5 @@ add_executable(tablo_node ${SOURCES})
 
 # Link against the tabcrypt library
 target_link_libraries(tablo_node PRIVATE tabcrypt)
+
+install(TARGETS tablo_node DESTINATION bin)

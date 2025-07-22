@@ -10,3 +10,5 @@ add_executable(tabcrypt_test ${SOURCES})
 
 # Link against the tabcrypt library
 target_link_libraries(tabcrypt_test PRIVATE tabcrypt)
+
+install(TARGETS tabcrypt_test DESTINATION bin)

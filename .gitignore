@@ -49,6 +49,7 @@ src/TabloClient/tabloClient
 
 # cmake
 build
+outputs
 
 # IDEA
 .idea

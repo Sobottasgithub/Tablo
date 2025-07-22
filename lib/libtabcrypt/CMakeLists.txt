@@ -12,3 +12,6 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 add_library(tabcrypt SHARED ${SOURCES})
 
 target_include_directories(tabcrypt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+install(TARGETS tabcrypt DESTINATION lib)
+install(DIRECTORY include/ DESTINATION include)

@@ -27,18 +27,16 @@
         buildInputs = packages;
 
         configurePhase = ''
-          cmake -B build -S $src
+          cmake -B build -S $src -DCMAKE_BUILD_TYPE=Release
         '';
 
         buildPhase = ''
-          cd build
-          make
+          cmake --build build
         '';
 
         installPhase = ''
-          mkdir -p $out/lib
-          cp -r $src/include $out/
-          # cp libtabcrypt.* $out/lib/
+          cmake --install build --prefix=$out
+          cp LICENSE $out/
         '';
       };
 
