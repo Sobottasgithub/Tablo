@@ -21,28 +21,48 @@
     in
     {
 
-      packages.${system} = {
-        default = pkgs.stdenv.mkDerivation {
-          pname = "tablo-full";
-          inherit version;
-          src = ./.;
+      packages.${system} =
+        let
+          tablo-full = pkgs.stdenv.mkDerivation {
+            pname = "tablo-full";
+            inherit version;
+            src = ./.;
 
-          buildInputs = packages;
+            buildInputs = packages;
 
-          configurePhase = ''
-            cmake -B build -S $src -DCMAKE_BUILD_TYPE=Release
-          '';
+            configurePhase = ''
+              cmake -B build -S $src -DCMAKE_BUILD_TYPE=Release
+            '';
 
-          buildPhase = ''
-            cmake --build build
-          '';
+            buildPhase = ''
+              cmake --build build
+            '';
 
-          installPhase = ''
-            cmake --install build --prefix=$out
-            cp LICENSE $out/
-          '';
+            installPhase = ''
+              cmake --install build --prefix=$out
+              cp LICENSE $out/
+            '';
+          };
+
+          mkTabloDocker =
+            name: extraConfig:
+            pkgs.dockerTools.buildImage {
+              inherit name;
+              tag = version;
+              config = {
+                Cmd = [ "${tablo-full}/bin/${name}" ];
+              } // extraConfig;
+            };
+        in
+        {
+          inherit tablo-full;
+          default = tablo-full;
+          tablo-node-docker = mkTabloDocker "tablo-node" {};
+          tablo-master-docker = mkTabloDocker "tablo-master" {};
+
+          # used for client containers not deployed via swarm
+          tablo-client-docker = mkTabloDocker "tablo-client" {};
         };
-      };
 
       devShells.${system}.default = pkgs.mkShell {
         inherit packages;

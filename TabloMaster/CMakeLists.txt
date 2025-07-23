@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
-add_executable(tablo_master ${SOURCES})
+add_executable(tablo-master ${SOURCES})
 
 # Link against the tabcrypt library
-target_link_libraries(tablo_master PRIVATE tabcrypt)
+target_link_libraries(tablo-master PRIVATE tabcrypt)
 
-install(TARGETS tablo_master DESTINATION bin)
+install(TARGETS tablo-master DESTINATION bin)

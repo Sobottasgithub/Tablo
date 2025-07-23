@@ -31,7 +31,7 @@ utils/*.cpp
   git clone https://github.com/sobottasgithub/Tablo
 ```
 
-2. configure for yor system
+2. configure for your system
 ```bash
  cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 ```
@@ -46,3 +46,11 @@ utils/*.cpp
 ```
    cmake --install build
 ```
+
+### Using the nix generated docker images
+
+The flake in this repository allowes you to build minimal docker images that avoid as much bloat as possible.
+
+To use this feature, you NEED to use nix. Download available at: https://nixos.org/
+
+You can either run the builds yourself or use the `./build-image-nix.sh` script!
