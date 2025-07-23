@@ -1,0 +1,38 @@
+# Production environment for Tablo (does not require source code checked out)
+
+services:
+  tablo-master:
+    image: ${reg}/tablo-full:latest
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command:
+      - /tablo-full/bin/tablo_master
+    networks:
+      - tablo-network
+#    ports: <- Expose Master to Host so clients can connect
+#      - Container:Host
+  tablo-node:
+    image: ${reg}/tablo-full:latest
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
+    deploy:
+      replicas: 3
+      restart_policy:
+        condition: on-failure
+    expose:
+      - 8080
+#    ports: <- Expose Node to random port at Host for debugging
+#      - 8080
+    command:
+      - /tablo-full/bin/tablo_node
+    networks:
+      - tablo-network
+networks:
+  tablo-net:
+    driver: bridge
