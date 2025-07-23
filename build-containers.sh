@@ -2,7 +2,7 @@
 #!/env bash
 set -e
 
-source .env
+source ./.env
 
 # Check for env variables (DOCKER_REGISTRY, DOCKER_REPOSITORY)
 
@@ -18,7 +18,7 @@ fi
 
 # attempt to eval flake for version
 if [ -z "$VERSION" ]; then
-  VERSION=$(nix eval .#packages.x86_64-linux.default.version2>/dev/null || true)
+  VERSION=$(nix eval --raw .#packages.x86_64-linux.default.version 2>/dev/null || true)
   if [ -z "$VERSION" ]; then
     echo "Unable to eval version from flake, please set VERSION manually."
     read -p "Enter version (e.g., 1.0.0): " VERSION
@@ -29,13 +29,13 @@ if [ -z "$VERSION" ]; then
 fi
 
 echo "Building Images with the following parameters:"
-echo "DOCKER_REGISTRY: $DOCKER_REGISTRY"
-echo "DOCKER_REPOSITORY: $DOCKER_REPOSITORY"
-echo "VERSION: $VERSION"
+echo "DOCKER_REGISTRY=$DOCKER_REGISTRY"
+echo "DOCKER_REPOSITORY=$DOCKER_REPOSITORY"
+echo "VERSION=$VERSION"
 
 # Build the Docker image
 
-docker build -t "$DOCKER_REGISTRY/$DOCKER_REPOSITORY/tablo-full:$VERSION" .
+docker build -t "$DOCKER_REGISTRY/$DOCKER_REPOSITORY/tablo-full:$VERSION" -f dev.Dockerfile .
 
 # Tag the image with latest
 docker tag "$DOCKER_REGISTRY/$DOCKER_REPOSITORY/tablo-full:$VERSION" "$DOCKER_REGISTRY/$DOCKER_REPOSITORY/tablo-full:latest"
