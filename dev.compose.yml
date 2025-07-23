@@ -1,0 +1,32 @@
+# Development / Test environment for Tablo
+
+services:
+  tablo-master:
+    image: tablo-full:latest
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command:
+      - /tablo-full/bin/tablo_master
+    networks:
+      - tablo-network
+  tablo-node:
+    image: tablo-full:latest
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    command:
+      - /tablo-full/bin/tablo_node
+    networks:
+      - tablo-network
+networks:
+    tablo-net:
+      driver: bridge
