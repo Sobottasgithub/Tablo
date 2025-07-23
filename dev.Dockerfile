@@ -4,7 +4,7 @@ LABEL authors="Ture Bentzin <ture.bentzin@alumni.fh-aachen.de>"
 # Install dependencies
 RUN nix-env -iA nixpkgs.dos2unix \
     && nix-env -iA nixpkgs.cacert \
-    && nix-env -iA nixpkgs.bashInteractive \
+    && nix-env -iA nixpkgs.bashInteractive
 
 # Copy source code
 COPY . /tablo
