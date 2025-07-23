@@ -13,7 +13,9 @@ services:
     command:
       - /tablo-full/bin/tablo_master
     networks:
-      - tablo-network
+      - tablo-net
+#    ports: <- Expose Master to Host so clients can connect
+#      - Container:Host
   tablo-node:
     image: tablo-full:latest
     build:
@@ -23,10 +25,14 @@ services:
       replicas: 2
       restart_policy:
         condition: on-failure
+    expose:
+      - 8080
+#    ports: <- Expose Node to random port at Host for debugging
+#      - 8080
     command:
       - /tablo-full/bin/tablo_node
     networks:
-      - tablo-network
+      - tablo-net
 networks:
     tablo-net:
       driver: bridge

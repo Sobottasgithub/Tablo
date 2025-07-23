@@ -1,4 +1,4 @@
-# Development / Test environment for Tablo
+# Production environment for Tablo (does not require source code checked out)
 
 services:
   tablo-master:
@@ -14,6 +14,8 @@ services:
       - /tablo-full/bin/tablo_master
     networks:
       - tablo-network
+#    ports: <- Expose Master to Host so clients can connect
+#      - Container:Host
   tablo-node:
     image: ${reg}/tablo-full:latest
     build:
@@ -23,7 +25,10 @@ services:
       replicas: 3
       restart_policy:
         condition: on-failure
-
+    expose:
+      - 8080
+#    ports: <- Expose Node to random port at Host for debugging
+#      - 8080
     command:
       - /tablo-full/bin/tablo_node
     networks:
