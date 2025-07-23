@@ -1,5 +1,5 @@
 # This script builds the Docker container for this project and tags them
-#!/env bash
+#!/usr/bin/env bash
 set -e
 
 source ./.env
