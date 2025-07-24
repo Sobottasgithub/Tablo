@@ -6,13 +6,13 @@
 #include <thread>
 #include <ctime>
 
-#include "ui/main_window.h"
+#include "utils/socket.h"
 
 using namespace std;
 
 int main()
 {
-    MainWindow mainWindow;
+    Socket socket;
 
     return 0;
 }
