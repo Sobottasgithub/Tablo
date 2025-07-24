@@ -11,7 +11,7 @@ services:
       restart_policy:
         condition: on-failure
     command:
-      - /tablo-full/bin/tablo_master
+      - /tablo-full/bin/tablo-master
     networks:
       - tablo-net
 #    ports: <- Expose Master to Host so clients can connect
@@ -30,7 +30,7 @@ services:
 #    ports: <- Expose Node to random port at Host for debugging
 #      - 8080
     command:
-      - /tablo-full/bin/tablo_node
+      - /tablo-full/bin/tablo-node
     networks:
       - tablo-net
 networks:
