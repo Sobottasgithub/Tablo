@@ -15,3 +15,4 @@ RUN find ./tablo -type f -exec dos2unix {} +
 # Build Tablo-full as base layer
 RUN nix --extra-experimental-features "nix-command flakes" build tablo/ --out-link tablo-full
 
+EXPOSE 8080

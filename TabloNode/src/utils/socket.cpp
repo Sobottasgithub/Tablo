@@ -10,6 +10,9 @@
 #include <bits/stdc++.h>
 #include <vector>
 #include <ctime>
+#include <arpa/inet.h>
+#include <sys/poll.h>
+
 
 using namespace std;
 
@@ -19,7 +22,7 @@ Socket::Socket() {
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
-    serverAddress.sin_addr.s_addr = INADDR_ANY; //inet_addr("127.0.0.1")
+    serverAddress.sin_addr.s_addr = inet_addr("0.0.0.0"); //inet_addr("127.0.0.1")
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
@@ -34,7 +37,7 @@ Socket::Socket() {
             &Socket::handleClientConnection,
             this,
             serverSocket, clientSocket
-        ));
+        )); 
     }
 
     for (auto &socketThread : threadCollection) {
@@ -46,24 +49,30 @@ Socket::Socket() {
 
 void Socket::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
+    Socket::sendMessage(clientSocket, "100");
 
-    // Based on Diffie-Hellman key exchange: Agree on sharedKey
-    //std::string serverKeyPart = generateKey();
-    //std::string clientKeyPart = Socket::recieveMessage(clientSocket);
-    //Socket::sendMessage(clientSocket, serverKeyPart.c_str());
-    //std::string sharedKey = clientKeyPart + serverKeyPart;
+    struct pollfd pfds[2];
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = clientSocket;
+    pfds[1].events = POLLIN;
 
-    while(true) {
-        // recieve
-        std::string message = Socket::recieveMessage(clientSocket);
-        Socket::sendMessage(clientSocket, "200");
-        worker.queTask(message);
-
-        // send
-        std::string returnVal = worker.getOutput();
-        const char* result = returnVal.c_str();
-        std::this_thread::sleep_for(100ms);
-        Socket::sendMessage(clientSocket, result);
+    while(poll(pfds, 2, 1000) != -1) {
+        if(pfds[0].revents & POLLIN) {
+            std::string message = Socket::recieveMessage(clientSocket);
+            Socket::sendMessage(clientSocket, "200");
+            worker.queTask(message);
+            
+            // send
+            std::string returnVal = worker.getOutput();
+            const char* result = returnVal.c_str();
+            Socket::sendMessage(clientSocket, result);
+        }
+        if(pfds[1].revents & (POLLERR | POLLHUP)) {
+            // close connection
+            close(clientSocket);
+            break;
+        }
     }
 }
 
