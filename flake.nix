@@ -28,6 +28,11 @@
             inherit version;
             src = ./.;
 
+            meta = {
+              description = "Full tablo package";
+              mainProgram = "tablo-node";
+            };
+
             buildInputs = packages;
 
             configurePhase = ''
