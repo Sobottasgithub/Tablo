@@ -13,7 +13,7 @@ services:
     command:
       - /tablo-full/bin/tablo-master
     networks:
-      - tablo-network
+      - tablo-net
 #    ports: <- Expose Master to Host so clients can connect
 #      - Container:Host
   tablo-node:
@@ -32,7 +32,8 @@ services:
     command:
       - /tablo-full/bin/tablo-node
     networks:
-      - tablo-network
+      - tablo-net
 networks:
   tablo-net:
-    driver: bridge
+    driver: overlay
+    attachable: true

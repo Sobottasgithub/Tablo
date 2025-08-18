@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: dev.Dockerfile
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: on-failure
     ports: #<- Expose Node to random port at Host for debugging
@@ -33,4 +33,5 @@ services:
       - tablo-net
 networks:
     tablo-net:
-      driver: bridge
+      driver: overlay
+      attachable: true
