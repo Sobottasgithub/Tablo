@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   tablo-master:
-    image: tablo-master:1.1
+    image: tablo-master
     deploy:
       replicas: 1
       restart_policy:
@@ -11,7 +11,7 @@ services:
       - tablo-net
 
   tablo-node:
-    image: tablo-node:1.1
+    image: tablo-node
     deploy:
       replicas: 2
       restart_policy:
