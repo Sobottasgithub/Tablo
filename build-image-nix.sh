@@ -103,5 +103,7 @@ else
   echo "Skipping compose file update."
 fi
 
+rm result-*
+
 echo
 echo "Done!"
