@@ -80,7 +80,8 @@ else
 fi
 echo
 
-read -r -p "Sir, do you want to update 'nix.compose.yml' to use ':latest' for these services? (y/n): " update_compose
+TAG="$(nix eval --raw .#packages.x86_64-linux.tablo-full.version)"
+read -r -p "Sir, do you want to update 'nix.compose.yml' to use ':${TAG}' for these services? (y/n): " update_compose
 if [[ "${update_compose}" =~ ^[Yy]$ ]]; then
   if [[ ! -f nix.compose.yml && ! -f nix.compose.yaml ]]; then
     echo "nix.compose.yml not found in current directory. Aborting compose update."
@@ -92,10 +93,7 @@ if [[ "${update_compose}" =~ ^[Yy]$ ]]; then
     echo "Updating image tags inside ${compose_file}..."
     # Replace occurrences like "tablo-master:..." -> "tablo-master:latest"
     # sed -i 's/-docker:[^"]*/-docker:${NEW_TAG}/g' filename
-    TAG="$(nix eval --raw .#packages.x86_64-linux.tablo-full.version)"
-    sed -E -i.bak \
-      -e 's/-docker:[^"]*/-docker:${TAG}/g' \
-      "${compose_file}"
+    sed -E -i.bak -e "s/(image: [^:]+):[^ ]*/\1:${TAG}/" "${compose_file}"
     echo "Backup of previous file saved as ${compose_file}.bak"
     echo "Updated ${compose_file}."
   fi
