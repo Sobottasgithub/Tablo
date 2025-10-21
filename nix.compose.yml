@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  tablo-master:
+    image: tablo-master:0.0.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    networks:
+      - tablo-net
+
+  tablo-node:
+    image: tablo-node:0.0.0
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    networks:
+      - tablo-net
+    expose:
+      - 8080
+
+networks:
+  tablo-net:
+    driver: overlay
