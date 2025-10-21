@@ -17,7 +17,7 @@ for attr in "${ATTRS[@]}"; do
   nix build ".#${attr}" -o "${out}"
   echo "Build finished, locating image artifact for ${attr}..."
   # try to find a tar* in the output
-  tarfile="result"
+  tarfile="result-${attr}"
 
   if [[ -n "$tarfile" ]]; then
     echo "Found tar artifact: ${tarfile}"
