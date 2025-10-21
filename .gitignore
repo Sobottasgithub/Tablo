@@ -56,7 +56,9 @@ outputs
 
 # nix
 result
+result-*
 .direnv
-
-
 .env
+
+# BAK
+*.bak
