@@ -17,8 +17,9 @@
 using namespace std;
 
 Socket::Socket() {
-    std::wcout << "Start Socket..." << endl;
+    std::wcout << "Start Socket...." << endl;
 
+    /*
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
@@ -44,7 +45,8 @@ Socket::Socket() {
         if(socketThread.joinable()) {
             socketThread.join();
         }
-    }
+    }*/
+    
 }
 
 void Socket::handleClientConnection(int serverSocket, int clientSocket) {

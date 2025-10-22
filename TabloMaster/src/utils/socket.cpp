@@ -14,6 +14,8 @@
 using namespace std;
 
 Socket::Socket() {
+    std::wcout << "HELLO WORLD" << endl;
+    /*
     // creating socket
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -54,7 +56,8 @@ Socket::Socket() {
     }
     
     // closing socket
-    close(clientSocket);
+    close(clientSocket);*/
+    
 }
 
 void Socket::sendMessage(int socket, const char* initialMessage) {
