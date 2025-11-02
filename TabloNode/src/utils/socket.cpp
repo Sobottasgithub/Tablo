@@ -2,6 +2,7 @@
 #include "socket.h"
 
 #include "worker.h"
+#include "udp_discovery.h"
 
 #include <iostream>
 #include <netinet/in.h>
@@ -19,6 +20,16 @@ using namespace std;
 Socket::Socket() {
     std::wcout << "Start Socket...." << endl;
 
+    udpThread = std::thread(
+            &Socket::handleUdpDiscovery,
+            this
+    );
+
+    if(udpThread.joinable()) {
+        udpThread.join();
+    }
+
+    std::wcout << "handle TCP..." << endl;
     /*
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
@@ -47,6 +58,10 @@ Socket::Socket() {
         }
     }*/
     
+}
+
+void Socket::handleUdpDiscovery() {
+    UdpDiscovery udpDiscovery;    
 }
 
 void Socket::handleClientConnection(int serverSocket, int clientSocket) {

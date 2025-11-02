@@ -11,6 +11,7 @@ class Socket
 {
     public:
         Socket();
+        void handleUdpDiscovery();
         void handleClientConnection(int serverSocket, int clientSocket);
         void sendMessage(int socket, const char* initialMessage);
         std::string recieveMessage(int socket);
@@ -18,6 +19,7 @@ class Socket
     private:
         int serverSocket;
         std::vector<std::thread> threadCollection;
+        std::thread udpThread; 
 };
 
 #endif

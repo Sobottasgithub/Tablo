@@ -11,10 +11,15 @@
 
 #include "socket.h"
 
+#include "udp_discovery.h"
+
 using namespace std;
 
 Socket::Socket() {
-    std::wcout << "HELLO WORLD" << endl;
+    std::wcout << "Start tablo master socket..." << endl;
+
+    UdpDiscovery udpDiscovery; 
+    
     /*
     // creating socket
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -53,10 +58,7 @@ Socket::Socket() {
                cout << "TIMEOUT" << endl;
                break;
         }
-    }
-    
-    // closing socket
-    close(clientSocket);*/
+    */
     
 }
 
@@ -70,3 +72,4 @@ std::string Socket::recieveMessage(int socket) {
     recv(socket, buffer, sizeof(buffer), 0);
     return buffer;
 }
+
