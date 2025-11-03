@@ -16,149 +16,117 @@
 #include <vector>
 #include <algorithm>
 
-
 using namespace std;
 
 UdpDiscovery::UdpDiscovery() {
-    std::string containerIp = UdpDiscovery::getLocalIpAddress();
-    std::wcout << "Container IP: " << containerIp.c_str() << endl;
-    std::string broadcast_ip = UdpDiscovery::getBroadcastIpAddress();
+    std::string containerIP = UdpDiscovery::getLocalIpAddress();
+    std::wcout << "Container IP: " << containerIP.c_str() << endl;
+    std::string broadcastIp = UdpDiscovery::getBroadcastIpAddress();
 
-    if (broadcast_ip.empty()) {
+    if (broadcastIP.empty()) {
         std::cerr << "Failed to find broadcast IP!" << endl;
     }
     
-    int sockfd;
-    struct sockaddr_in dest{}, recvAddr{};
-    const int port = 8888;
+    int serverSocket;
     const char* message = "100";
+    struct sockaddr_in broadcast{}, receiverAddress{};
+    const int port = 8888;
     const int bufferSize = 1024;
     char buffer[bufferSize];
 
     // Create socket
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("socket");
-        wcout << "ERROR 2" << endl;
+    if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("Failed to create Socket!");
     }
-
     // Enable broadcast
-    int broadcast = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
-        perror("setsockopt");
-        close(sockfd);
-        wcout << "ERROR 3" << endl;
+    int broadcastBind = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_BROADCAST, &broadcastBind, sizeof(broadcastBind)) < 0) {
+        perror("Failed to enable broadcast!");
+        close(serverSocket);
     }
-
+    // Allow Socket to bind on address with TIME_WAIT
     int reuse = 1;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        perror("setsockopt SO_REUSEADDR");
-        close(sockfd);
-        
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        perror("Setsockopt failed!");
+        close(serverSocket);
     }
 
     // Bind socket to listen for responses
-    recvAddr.sin_family = AF_INET;
-    recvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    recvAddr.sin_port = htons(port);
-
-    if (bind(sockfd, (struct sockaddr*)&recvAddr, sizeof(recvAddr)) < 0) {
-
-    vector<std::string> s = {};
-        perror("bind failed");
-        close(sockfd);
+    receiverAddress.sin_family = AF_INET;
+    receiverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    receiverAddress.sin_port = htons(port);
+    if (bind(serverSocket, (struct sockaddr*)&receiverAddress, sizeof(receiverAddress)) < 0) {
+        perror("Bind failed of receiverAddress");
+        close(serverSocket);
     }
-        
+    
+    // clear garbage
+    memset(&broadcast, 0, sizeof(broadcast));
+    // prepare socket
+    broadcast.sin_family = AF_INET;
+    broadcast.sin_port = htons(port);
+    inet_pton(AF_INET, broadcastIP.c_str(), &broadcast.sin_addr);
 
-    memset(&dest, 0, sizeof(dest));
-    dest.sin_family = AF_INET;
-    dest.sin_port = htons(port);
-    inet_pton(AF_INET, broadcast_ip.c_str(), &dest.sin_addr);
-
-    vector<std::string> s = {};
+    vector<std::string> nodeIPAddresses = {};
         
-    while(true) {    
-        if (sendto(sockfd, message, strlen(message), 0, (struct sockaddr*)&dest, sizeof(dest)) < 0) {
-            perror("sendto");
-            close(sockfd);
-            wcout << "ERROR 4" << endl;
+    while(true) { 
+        // Send message   
+        if (sendto(serverSocket, message, strlen(message), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+            perror("Send message failed! Closing socket...");
+            close(serverSocket);
         } 
 
-        std::wcout << "MESSAGE SEND!" << endl;
+        // While not timedout & no response from Node
+        bool hasResponse = false;
+        while(!hasResponse) {
 
+            struct timeval timeout;
+            timeout.tv_sec = 5;
+            timeout.tv_usec = 0;
 
-        bool getResponse = false;
-        
-        while(!getResponse) {
-            
+            setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-        struct timeval timeout;
-        timeout.tv_sec = 5;
-        timeout.tv_usec = 0;
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+            sockaddr_in clientAddress{};
+            socklen_t clientMessageLength = sizeof(clientAddress);
 
-        sockaddr_in senderAddr{};
-        socklen_t senderLen = sizeof(senderAddr);
+            ssize_t clientMessage = recvfrom(serverSocket, buffer, bufferSize - 1, 0,
+                                    (struct sockaddr*)&clientAddress, &clientMessageLength);
 
-        ssize_t recvLen = recvfrom(sockfd, buffer, bufferSize - 1, 0,
-                                   (struct sockaddr*)&senderAddr, &senderLen);
+            // Timeout: exit loop
+            if (clientMessage < 0) {
+                hasResponse = true;
+            }
 
-        if (recvLen < 0) {
-            perror("recvfrom (timeout or error)");
-            getResponse = true;
-        }
+            buffer[clientMessage] = '\0';  // Null terminate received message
 
-        buffer[recvLen] = '\0';  // Null-terminate received message
+            char clientIP[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &clientAddress.sin_addr, clientIP, INET_ADDRSTRLEN);
 
-        char senderIP[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &senderAddr.sin_addr, senderIP, INET_ADDRSTRLEN);
+            char localIP[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &receiverAddress.sin_addr, localIP, INET_ADDRSTRLEN);
 
-        char localIP[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &recvAddr.sin_addr, localIP, INET_ADDRSTRLEN);
+            // Compare recieved ip to own to prevent handshake with Master
+            std::string clientIPString(clientIP);
+            if(clientIPString != containerIP.c_str() && strcmp(clientIP, localIP) != 0) {
+                hasResponse = true; 
 
-    
-        std::wcout << "recieved response" << senderIP << "-----" << localIP << " container " << containerIp.c_str() << endl;
+                std::wcout << "Received response! " << clientIP << ": " << buffer << endl;
+ 
+                // Add ip to discovered Ip's if not already in vector
+                if (std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(clientIP)) == nodeIPAddresses.end()) {
+                    nodeIPAddresses.push_back(std::string(clientIP));
+                }
 
-
-        std::string senderStr(senderIP);
-        if(senderStr != containerIp.c_str() && strcmp(senderIP, localIP) != 0) {
-            std::wcout << "CRITERIA BOTH MET!" << endl;
-    
-            getResponse = true; 
-        
-
-        std::wcout << "Received response! " << senderIP << ": " << buffer << endl;
-
-        // Optional: respond again to sender
-        std::string reply = "Server received message: " + std::string(senderIP);
-        if (sendto(sockfd, reply.c_str(), reply.length(), 0,
-                   (struct sockaddr*)&senderAddr, senderLen) < 0) {
-            perror("sendto (response) failed");
-        } else {
-            std::wcout << "Sent confirmation to " << senderIP << endl;
-        }
-
-            
-        if (std::find(s.begin(), s.end(), std::string(senderIP)) == s.end()) {
-            std::wcout << "--- UNIQUE FOUND! ---" << endl;
-
-            s.push_back(std::string(senderIP));
-        }
-
-        
-
-        std::wcout << "--------------------IP's-----------------------" << endl;
-        for (const std::string& ip : s) {
-            std::cout << ip << endl;
-            std::wcout << ip.c_str() << endl;
-        }
-        
-        std::wcout << "-------------------end-IP's-----------------------" << endl;
-
-        }
+                // Only for debug:
+                std::wcout << "--------------------IP's-----------------------" << endl;
+                for (const std::string& ip : nodeIPAddresses) {
+                    std::wcout << ip.c_str() << endl;
+                }
+                std::wcout << "-------------------end-IP's-----------------------" << endl;
+            }
         }
     }
-       
-    close(sockfd);
+    close(serverSocket);
 } 
 
 
