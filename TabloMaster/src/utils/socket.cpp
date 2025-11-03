@@ -8,6 +8,7 @@
 #include <ctime>
 #include <arpa/inet.h>
 #include <sys/poll.h>
+#include <vector>
 
 #include "socket.h"
 
@@ -19,6 +20,22 @@ Socket::Socket() {
     std::wcout << "Start tablo master socket..." << endl;
 
     UdpDiscovery udpDiscovery; 
+    std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
+
+    std::vector<std::string> nodeIps;
+
+    while (true) {
+        std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
+
+        if(newNodeIps.size() == 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } else {
+            std::wcout << "Vector size: " << newNodeIps.size() << endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    }
+    
+    udpDiscoveryThread.join();
     
     /*
     // creating socket

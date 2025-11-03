@@ -17,10 +17,13 @@
 
 using namespace std;
 
-UdpDiscovery::UdpDiscovery() {
+void UdpDiscovery::udpDiscoveryCycle() {
+    wcout << "Start Udp discovery..." << endl;
     std::string containerIP = UdpDiscovery::getLocalIpAddress();
-    std::wcout << "Container IP: " << containerIP.c_str() << endl;
     std::string broadcastIP = UdpDiscovery::getBroadcastIpAddress();
+
+    std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
+
 
     if (broadcastIP.empty()) {
         std::cerr << "Failed to find broadcast IP!" << endl;
@@ -65,8 +68,6 @@ UdpDiscovery::UdpDiscovery() {
     broadcast.sin_family = AF_INET;
     broadcast.sin_port = htons(port);
     inet_pton(AF_INET, broadcastIP.c_str(), &broadcast.sin_addr);
-
-    vector<std::string> nodeIPAddresses = {};
         
     while(true) { 
         // Send message   
@@ -108,26 +109,22 @@ UdpDiscovery::UdpDiscovery() {
             std::string clientIPString(clientIP);
             if(clientIPString != containerIP.c_str() && strcmp(clientIP, localIP) != 0) {
                 hasResponse = true; 
-
-                std::wcout << "Received response! " << clientIP << ": " << buffer << endl;
  
                 // Add ip to discovered Ip's if not already in vector
                 if (std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(clientIP)) == nodeIPAddresses.end()) {
                     nodeIPAddresses.push_back(std::string(clientIP));
                 }
-
-                // Only for debug:
-                std::wcout << "--------------------IP's-----------------------" << endl;
-                for (const std::string& ip : nodeIPAddresses) {
-                    std::wcout << ip.c_str() << endl;
-                }
-                std::wcout << "-------------------end-IP's-----------------------" << endl;
             }
         }
     }
     close(serverSocket);
-} 
+    wcout << "UDP socket closed..." << endl;
+}
 
+std::vector<std::string> UdpDiscovery::getNodeAdresses() {
+    std::lock_guard<std::mutex> lock(mtx);
+    return nodeIPAddresses;
+}
 
 std::string UdpDiscovery::getLocalIpAddress() {
     struct ifaddrs *ifaddr = nullptr;
