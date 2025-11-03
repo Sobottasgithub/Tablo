@@ -1,4 +1,3 @@
-
 #include "udp_discovery.h"
 
 #include <iostream>
@@ -21,12 +20,12 @@ using namespace std;
 UdpDiscovery::UdpDiscovery() {
     std::string containerIP = UdpDiscovery::getLocalIpAddress();
     std::wcout << "Container IP: " << containerIP.c_str() << endl;
-    std::string broadcastIp = UdpDiscovery::getBroadcastIpAddress();
+    std::string broadcastIP = UdpDiscovery::getBroadcastIpAddress();
 
     if (broadcastIP.empty()) {
         std::cerr << "Failed to find broadcast IP!" << endl;
     }
-    
+        
     int serverSocket;
     const char* message = "100";
     struct sockaddr_in broadcast{}, receiverAddress{};
@@ -131,53 +130,67 @@ UdpDiscovery::UdpDiscovery() {
 
 
 std::string UdpDiscovery::getLocalIpAddress() {
-    struct ifaddrs *ifaddr;
+    struct ifaddrs *ifaddr = nullptr;
+
+    // Get linked list of network interfaces
+    if (getifaddrs(&ifaddr) == -1) {
+        return "";
+    }
+
+    std::string result;
 
     // Iterate through interfaces
     for (auto *ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (!ifa->ifa_addr) continue;
-        
+
         if (ifa->ifa_addr->sa_family == AF_INET) {
-            auto *addr = (struct sockaddr_in *)ifa->ifa_addr;
+            auto *addr = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
             char ip[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &addr->sin_addr, ip, sizeof(ip));
 
-            // Docker containers typically have "eth0" as the main interface
+            // Docker containers typically use eth0
             if (std::string(ifa->ifa_name) == "eth0") {
-                std::wstring wip(ip, ip + strlen(ip));
-                return ip;
-            }
-        }
-    }
-
-    //freeifaddrs(ifaddr);
-    return "";
-}
-
-std::string UdpDiscovery::getBroadcastIpAddress() {
-    struct ifaddrs* ifaddr;
-    std::string broadcastIp;
-
-    // Iterate through interfaces...
-    for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == nullptr) continue;
-
-        // Check if IPv4 addresses and interfaces (up) support broadcasting
-        if (ifa->ifa_addr->sa_family == AF_INET &&
-            (ifa->ifa_flags & IFF_BROADCAST) &&
-            (ifa->ifa_flags & IFF_UP) &&
-            !(ifa->ifa_flags & IFF_LOOPBACK)) {
-
-            struct sockaddr_in* socketAddress = (struct sockaddr_in*)ifa->ifa_broadaddr;
-            char ip[INET_ADDRSTRLEN];
-            if (inet_ntop(AF_INET, &(socketAddress->sin_addr), ip, INET_ADDRSTRLEN)) {
-                broadcastIp = ip;
+                result = ip;
                 break;
             }
         }
     }
 
-    //freeifaddrs(ifaddr);
-    return broadcastIp;
+    freeifaddrs(ifaddr);
+    return result;
+}
 
+std::string UdpDiscovery::getBroadcastIpAddress() {
+    struct ifaddrs* ifaddr = nullptr;
+    std::string broadcastIP;
+
+    // Get network interfaces
+    if (getifaddrs(&ifaddr) == -1) {
+        return "";
+    }
+
+    for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr) continue;
+
+        // Only consider IPv4 interfaces that are up and support broadcast
+        if (ifa->ifa_addr->sa_family == AF_INET &&
+            (ifa->ifa_flags & IFF_BROADCAST) &&
+            (ifa->ifa_flags & IFF_UP) &&
+            !(ifa->ifa_flags & IFF_LOOPBACK)) {
+
+            // Ensure the broadcast address exists
+            if (ifa->ifa_broadaddr) {
+                struct sockaddr_in* bcast =
+                    reinterpret_cast<struct sockaddr_in*>(ifa->ifa_broadaddr);
+                char ip[INET_ADDRSTRLEN];
+                if (inet_ntop(AF_INET, &(bcast->sin_addr), ip, INET_ADDRSTRLEN)) {
+                    broadcastIP = ip;
+                    break; // stop at the first valid one
+                }
+            }
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return broadcastIP;
 }
