@@ -25,12 +25,6 @@ Socket::Socket() {
             this
     );
 
-    if(udpThread.joinable()) {
-        udpThread.join();
-    }
-
-    std::wcout << "handle TCP..." << endl;
-    /*
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
@@ -52,12 +46,17 @@ Socket::Socket() {
         )); 
     }
 
+    wcout << "Terminated!" << endl;
+    
     for (auto &socketThread : threadCollection) {
         if(socketThread.joinable()) {
             socketThread.join();
         }
-    }*/
-    
+    }
+
+    if(udpThread.joinable()) {
+        udpThread.join();
+    }   
 }
 
 void Socket::handleUdpDiscovery() {
@@ -87,6 +86,7 @@ void Socket::handleClientConnection(int serverSocket, int clientSocket) {
         }
         if(pfds[1].revents & (POLLERR | POLLHUP)) {
             // close connection
+            std::wcout << "TIMEOUT" << endl;
             close(clientSocket);
             break;
         }
