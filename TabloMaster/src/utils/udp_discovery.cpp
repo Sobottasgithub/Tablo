@@ -24,9 +24,14 @@ void UdpDiscovery::udpDiscoveryCycle() {
 
     std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
 
+    if (containerIP.empty()) {
+        std::cerr << "Failed to find container IP!" << endl;
+        return;
+    }
 
     if (broadcastIP.empty()) {
         std::cerr << "Failed to find broadcast IP!" << endl;
+        return;
     }
         
     int serverSocket;

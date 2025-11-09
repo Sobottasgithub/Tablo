@@ -36,13 +36,18 @@ Socket::Socket() {
                 wcout << "--- START --- " << nodeIps[index].c_str() << " ("  << nodeIps.size() << ")" << endl;
 
                 int currentSocket = connections[index]; 
-
+           
                 struct pollfd pfds[2];
-                pfds[0].fd = STDIN_FILENO;
-                pfds[0].events = POLLIN;
-                pfds[1].fd = currentSocket;
-                pfds[1].events = POLLIN;
-            
+                pfds[0] = {
+                    .fd = STDIN_FILENO,
+                    .events = POLLIN
+                };
+                
+                pfds[1] = pollfd {
+                    .fd = currentSocket,
+                    .events = POLLIN
+                };
+
                 bool run = true;
                 while(poll(pfds, 2, 60000) != -1 or run) {
                     
@@ -84,14 +89,18 @@ Socket::Socket() {
                 nodeAddress.sin_family = AF_INET;
                 nodeAddress.sin_port = htons(8080);
                 nodeAddress.sin_addr.s_addr = inet_addr(nodeIps[index].c_str());
-                connect(newSocket, (struct sockaddr*)&nodeAddress,
-                sizeof(nodeAddress));
+                connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
                 struct pollfd pfds[2];
-                pfds[0].fd = STDIN_FILENO;
-                pfds[0].events = POLLIN;
-                pfds[1].fd = newSocket;
-                pfds[1].events = POLLIN;
+                pfds[0] = pollfd {
+                    .fd = STDIN_FILENO,
+                    .events = POLLIN
+                };
+                
+                pfds[1] = pollfd {
+                    .fd = newSocket,
+                    .events = POLLIN
+                };
 
                 // Compleate handshake
                 std::string respCode;
