@@ -9,6 +9,8 @@
 #include <arpa/inet.h>
 #include <sys/poll.h>
 #include <vector>
+#include <algorithm>
+#include <map>
 
 #include "socket.h"
 
@@ -23,19 +25,31 @@ Socket::Socket() {
     std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
 
     // TCP
-    std::vector<int> connections;
-    std::vector<std::string> nodeIps;
+    std::map<std::string, int> connections;
     while (true) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
+        std::vector<std::string> nodeIps = Socket::getKeys(connections);
+
+        // sort vectors to compare them
+        std::sort(newNodeIps.begin(), newNodeIps.end());
+        std::sort(nodeIps.begin(), nodeIps.end());
 
         if(newNodeIps.size() == 0) {
+            wcout << "No connected nodes!" << endl;
+            if (nodeIps.size() > 0) {
+                // Close connections with nodes that dont exist anymore
+                for (int index = 0; index < nodeIps.size(); index++) {
+                    std::wcout << "Close connection: " << nodeIps[index].c_str() << endl;
+                    close(connections[nodeIps[index]]);
+                    connections.erase(nodeIps[index]);
+                }
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            wcout << "No Orders can be compleated!" << endl;
         } else if(newNodeIps == nodeIps) {
             for(int index = 0; index < connections.size(); index++) {
                 wcout << "--- START --- " << nodeIps[index].c_str() << " ("  << nodeIps.size() << ")" << endl;
 
-                int currentSocket = connections[index]; 
+                int currentSocket = connections[nodeIps[index]]; 
            
                 struct pollfd pfds[2];
                 pfds[0] = {
@@ -67,66 +81,66 @@ Socket::Socket() {
 
                 std::wcout << "--- END --- " << nodeIps[index].c_str() << "\n" << endl;
             }
-
         } else if (newNodeIps != nodeIps) {
             wcout << "New nodes!" << endl;
+
+            // Create connections with nodes
+            for (int index = 0; index < newNodeIps.size(); index++) {
+                // If newNodeIps[index] not in nodeIps (keys of connections)
+                if(std::find(nodeIps.begin(), nodeIps.end(), newNodeIps[index]) == nodeIps.end()) {
+                    // Create new connection
+                    int newSocket = socket(AF_INET, SOCK_STREAM, 0);
             
-            // Close previous connections if existing
-            for (int index = 0; index < nodeIps.size(); index++) {
-                wcout << "Close connection: " << nodeIps[index].c_str() << endl;
-                close(connections[index]);
+                    sockaddr_in nodeAddress;
+                    nodeAddress.sin_family = AF_INET;
+                    nodeAddress.sin_port = htons(8080);
+                    nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
+                    connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
+
+                    struct pollfd pfds[2];
+                    pfds[0] = pollfd {
+                        .fd = STDIN_FILENO,
+                        .events = POLLIN
+                    };
+            
+                    pfds[1] = pollfd {
+                        .fd = newSocket,
+                        .events = POLLIN
+                    };
+
+                    // Compleate handshake
+                    std::string respCode;
+                    while(poll(pfds, 2, 60000) != -1) {
+                        if(pfds[0].revents & POLLIN) {
+                            respCode = Socket::recieveMessage(newSocket);
+                            std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << endl;
+                            break;
+                    
+                        }
+                        if(pfds[1].revents & (POLLERR | POLLHUP)) {
+                               std::wcout << "TIMEOUT" << endl;
+                               break;
+                        }
+                    }
+
+                    // handshake compleate
+                    if(respCode == "100") {
+                        connections.insert({newNodeIps[index], newSocket});
+                    }
+                }
             }
-            connections.clear();
-            nodeIps.clear();
-
-            // Establish new connections            
-            nodeIps = newNodeIps;
-            for (int index = 0; index < nodeIps.size(); index++) {
-                // Create new connection
-                int newSocket = socket(AF_INET, SOCK_STREAM, 0);
-                
-                sockaddr_in nodeAddress;
-                nodeAddress.sin_family = AF_INET;
-                nodeAddress.sin_port = htons(8080);
-                nodeAddress.sin_addr.s_addr = inet_addr(nodeIps[index].c_str());
-                connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
-
-                struct pollfd pfds[2];
-                pfds[0] = pollfd {
-                    .fd = STDIN_FILENO,
-                    .events = POLLIN
-                };
-                
-                pfds[1] = pollfd {
-                    .fd = newSocket,
-                    .events = POLLIN
-                };
-
-                // Compleate handshake
-                std::string respCode;
-                while(poll(pfds, 2, 60000) != -1) {
-                    if(pfds[0].revents & POLLIN) {
-                        respCode = Socket::recieveMessage(newSocket);
-                        std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << nodeIps[index].c_str() << endl;
-                        break;
                         
-                    }
-                    if(pfds[1].revents & (POLLERR | POLLHUP)) {
-                           std::wcout << "TIMEOUT" << endl;
-                           break;
-                    }
-                }
-
-                // handshake compleate
-                if(respCode == "100") {
-                    connections.push_back(newSocket);
+            // Close connections with nodes that dont exist anymore
+            for (int index = 0; index < nodeIps.size(); index++) {
+                if(std::find(newNodeIps.begin(), newNodeIps.end(), nodeIps[index]) == newNodeIps.end()) {
+                    std::wcout << "Close connection: " << nodeIps[index].c_str() << endl;
+                    close(connections[nodeIps[index]]);
+                    connections.erase(nodeIps[index]);
                 }
             }
-
         } else {
             wcout << "unknown operation!" << endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
         }
     }
     
@@ -144,3 +158,14 @@ std::string Socket::recieveMessage(int socket) {
     return buffer;
 }
 
+std::vector<std::string> Socket::getKeys(std::map<std::string, int> hashmap) {
+    std::vector<std::string> keys;
+    // preallocate memory of exact size
+    keys.reserve(hashmap.size());
+
+    for (const auto& pair : hashmap) {
+        keys.push_back(pair.first);
+    }
+
+    return keys;
+}
