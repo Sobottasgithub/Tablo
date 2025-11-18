@@ -2,6 +2,7 @@
 #include "socket.h"
 
 #include "worker.h"
+#include "methods.h"
 #include "udp_discovery.h"
 
 #include <iostream>
@@ -65,30 +66,45 @@ void Socket::handleUdpDiscovery() {
 
 void Socket::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
-    Socket::sendMessage(clientSocket, "100");
+    Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
-    struct pollfd pfds[2];
-    pfds[0].fd = STDIN_FILENO;
-    pfds[0].events = POLLIN;
-    pfds[1].fd = clientSocket;
-    pfds[1].events = POLLIN;
+    while (true) {
+        std::string methodString = Socket::recieveMessage(clientSocket);
 
-    while(poll(pfds, 2, 1000) != -1) {
-        if(pfds[0].revents & POLLIN) {
-            std::string message = Socket::recieveMessage(clientSocket);
-            Socket::sendMessage(clientSocket, "200");
-            worker.queTask(message);
+        // Check if string is numeric
+        if (!methodString.empty() && std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
+            // Convert methodString to int
+            int method = std::stoi( methodString );
+
+            if(method > Methods::START && method < Methods::END) {
+                // Valid method: success            
+                Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
             
-            // send
-            std::string returnVal = worker.getOutput();
-            const char* result = returnVal.c_str();
-            Socket::sendMessage(clientSocket, result);
-        }
-        if(pfds[1].revents & (POLLERR | POLLHUP)) {
-            // close connection
-            std::wcout << "TIMEOUT" << endl;
-            close(clientSocket);
-            break;
+                std::string data = Socket::recieveMessage(clientSocket);
+
+                // got data
+                Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+
+                std::string result = "";
+                switch (method) {
+                    case Methods::test:
+                        result = worker.testCycle(data);
+                        break;
+                    case Methods::setFile:
+                        wcout << "set file" << endl;
+                        result = "";
+                        break;
+                }                
+
+                Socket::sendMessage(clientSocket, result.c_str());
+                std::string response = Socket::recieveMessage(clientSocket);                
+            } else {
+                // Bad request!
+                Socket::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+            }
+        } else {
+            // Method not found. Bad request! Failed!
+            Socket::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
         }
     }
 }
@@ -100,8 +116,24 @@ void Socket::sendMessage(int socket, const char* initialMessage) {
 
 
 std::string Socket::recieveMessage(int socket) {
-    char buffer[1024] = { 0 };
-    recv(socket, buffer, sizeof(buffer), 0);
-    return buffer;
+    struct pollfd pfds[2];
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = socket;
+    pfds[1].events = POLLIN;
+
+    while(poll(pfds, 2, 1000) != -1) {
+        if(pfds[0].revents & POLLIN) {
+            char buffer[1024] = { 0 };
+            recv(socket, buffer, sizeof(buffer), 0);
+            return buffer;
+        }
+        if(pfds[1].revents & (POLLERR | POLLHUP)) {
+            // close connection
+            std::wcout << "TIMEOUT" << endl;
+            close(socket);
+            return "";
+        }
+    }
 }
 

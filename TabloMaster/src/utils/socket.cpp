@@ -13,6 +13,7 @@
 #include <map>
 
 #include "socket.h"
+#include "methods.h"
 
 #include "udp_discovery.h"
 
@@ -20,6 +21,9 @@ using namespace std;
 
 Socket::Socket() {
     std::wcout << "Start tablo master socket..." << endl;
+
+    std::string method = std::to_string(Methods::test).c_str();
+    std::string data = "test";
 
     UdpDiscovery udpDiscovery; 
     std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
@@ -47,39 +51,24 @@ Socket::Socket() {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else if(newNodeIps == nodeIps) {
             for(int index = 0; index < connections.size(); index++) {
-                wcout << "--- START --- " << nodeIps[index].c_str() << " ("  << nodeIps.size() << ")" << endl;
 
-                int currentSocket = connections[nodeIps[index]]; 
-           
-                struct pollfd pfds[2];
-                pfds[0] = {
-                    .fd = STDIN_FILENO,
-                    .events = POLLIN
-                };
+                int currentSocket = connections[nodeIps[index]];
                 
-                pfds[1] = pollfd {
-                    .fd = currentSocket,
-                    .events = POLLIN
-                };
-
-                bool run = true;
-                while(poll(pfds, 2, 60000) != -1 or run) {
-                    
-                    Socket::sendMessage(currentSocket, "Ping");
-                    
-                    if(pfds[0].revents & POLLIN) {
-                        std::string respCode = Socket::recieveMessage(currentSocket);
-                        std::string msg = Socket::recieveMessage(currentSocket);
-                        std::wcout << "Server Response: " << msg.c_str() << " | with code: " << respCode.c_str() << " At ip: " << nodeIps[index].c_str() << endl;
-                        break;
+                Socket::sendMessage(currentSocket, method.c_str());
+                std::string status = Socket::recieveMessage(currentSocket);
+                if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
+                    Socket::sendMessage(currentSocket, data.c_str());
+                    std::string status = Socket::recieveMessage(currentSocket);
+                    if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
+                        std::string recievedData = Socket::recieveMessage(currentSocket);
+                        Socket::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                        wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
+                    } else {
+                        wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
                     }
-                    if(pfds[1].revents & (POLLERR | POLLHUP)) {
-                           std::wcout << "TIMEOUT" << endl;
-                           break;
-                    }
+                } else {
+                    wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
                 }
-
-                std::wcout << "--- END --- " << nodeIps[index].c_str() << "\n" << endl;
             }
         } else if (newNodeIps != nodeIps) {
             wcout << "New nodes!" << endl;
@@ -97,35 +86,12 @@ Socket::Socket() {
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
-                    struct pollfd pfds[2];
-                    pfds[0] = pollfd {
-                        .fd = STDIN_FILENO,
-                        .events = POLLIN
-                    };
-            
-                    pfds[1] = pollfd {
-                        .fd = newSocket,
-                        .events = POLLIN
-                    };
-
-                    // Compleate handshake
-                    std::string respCode;
-                    while(poll(pfds, 2, 60000) != -1) {
-                        if(pfds[0].revents & POLLIN) {
-                            respCode = Socket::recieveMessage(newSocket);
-                            std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << endl;
-                            break;
-                    
-                        }
-                        if(pfds[1].revents & (POLLERR | POLLHUP)) {
-                               std::wcout << "TIMEOUT" << endl;
-                               break;
-                        }
-                    }
+                    std::string respCode = Socket::recieveMessage(newSocket);
 
                     // handshake compleate
-                    if(respCode == "100") {
+                    if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {
                         connections.insert({newNodeIps[index], newSocket});
+                        std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << endl;
                     }
                 }
             }
@@ -153,9 +119,30 @@ void Socket::sendMessage(int socket, const char* initialMessage) {
 }
 
 std::string Socket::recieveMessage(int socket) {
-    char buffer[1024] = { 0 };
-    recv(socket, buffer, sizeof(buffer), 0);
-    return buffer;
+    struct pollfd pfds[2];
+    pfds[0] = pollfd {
+        .fd = STDIN_FILENO,
+        .events = POLLIN
+    };
+
+    pfds[1] = pollfd {
+        .fd = socket,
+        .events = POLLIN
+    };
+
+    // Compleate handshake
+    std::string respCode;
+    while(poll(pfds, 2, 60000) != -1) {
+        if(pfds[0].revents & POLLIN) {
+            char buffer[1024] = { 0 };
+            recv(socket, buffer, sizeof(buffer), 0);
+            return buffer;
+        }
+        if(pfds[1].revents & (POLLERR | POLLHUP)) {
+            wcout << "TIMEOUT" << endl;
+            return "";
+        }
+    }
 }
 
 std::vector<std::string> Socket::getKeys(std::map<std::string, int> hashmap) {

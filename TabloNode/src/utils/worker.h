@@ -11,12 +11,7 @@ class Worker
 {
     public:
         Worker();
-        void queTask(std::string);
-        std::string getOutput();
-
-    private:
-        std::vector<std::string> inQue;
-        std::vector<std::string> outQue;
+        std::string testCycle(std::string data);
 };
 
 #endif
