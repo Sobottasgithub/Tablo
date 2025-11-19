@@ -1,5 +1,5 @@
 
-#include "socket.h"
+#include "networking.h"
 
 #include "worker.h"
 #include "methods.h"
@@ -18,11 +18,11 @@
 
 using namespace std;
 
-Socket::Socket() {
+Networking::Networking() {
     std::wcout << "Start Socket...." << endl;
 
     udpThread = std::thread(
-            &Socket::handleUdpDiscovery,
+            &Networking::handleUdpDiscovery,
             this
     );
 
@@ -41,7 +41,7 @@ Socket::Socket() {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         std::wcout << "clientSocket: " << clientSocket << endl;
         threadCollection.push_back(std::thread(
-            &Socket::handleClientConnection,
+            &Networking::handleClientConnection,
             this,
             serverSocket, clientSocket
         )); 
@@ -60,16 +60,16 @@ Socket::Socket() {
     }   
 }
 
-void Socket::handleUdpDiscovery() {
+void Networking::handleUdpDiscovery() {
     UdpDiscovery udpDiscovery;    
 }
 
-void Socket::handleClientConnection(int serverSocket, int clientSocket) {
+void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
-    Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+    Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
     while (true) {
-        std::string methodString = Socket::recieveMessage(clientSocket);
+        std::string methodString = Networking::recieveMessage(clientSocket);
 
         // Check if string is numeric
         if (!methodString.empty() && std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
@@ -78,12 +78,12 @@ void Socket::handleClientConnection(int serverSocket, int clientSocket) {
 
             if(method > Methods::START && method < Methods::END) {
                 // Valid method: success            
-                Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
             
-                std::string data = Socket::recieveMessage(clientSocket);
+                std::string data = Networking::recieveMessage(clientSocket);
 
                 // got data
-                Socket::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
                 std::string result = "";
                 switch (method) {
@@ -96,26 +96,26 @@ void Socket::handleClientConnection(int serverSocket, int clientSocket) {
                         break;
                 }                
 
-                Socket::sendMessage(clientSocket, result.c_str());
-                std::string response = Socket::recieveMessage(clientSocket);                
+                Networking::sendMessage(clientSocket, result.c_str());
+                std::string response = Networking::recieveMessage(clientSocket);                
             } else {
                 // Bad request!
-                Socket::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+                Networking::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
             }
         } else {
             // Method not found. Bad request! Failed!
-            Socket::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+            Networking::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
         }
     }
 }
 
-void Socket::sendMessage(int socket, const char* initialMessage) {
+void Networking::sendMessage(int socket, const char* initialMessage) {
     const char* message = initialMessage;
     send(socket, message, strlen(message), 0);
 }
 
 
-std::string Socket::recieveMessage(int socket) {
+std::string Networking::recieveMessage(int socket) {
     struct pollfd pfds[2];
     pfds[0].fd = STDIN_FILENO;
     pfds[0].events = POLLIN;

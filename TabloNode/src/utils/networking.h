@@ -1,5 +1,5 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+#ifndef NETWORKING_H
+#define NETWORKING_H
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -7,10 +7,10 @@
 #include <bits/stdc++.h>
 #include <vector>
 
-class Socket
+class Networking
 {
     public:
-        Socket();
+        Networking();
         void handleUdpDiscovery();
         void handleClientConnection(int serverSocket, int clientSocket);
         void sendMessage(int socket, const char* initialMessage);

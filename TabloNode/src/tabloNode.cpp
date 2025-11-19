@@ -3,11 +3,11 @@
 #include <chrono>
 #include <thread>
 
-#include "utils/socket.h"
+#include "utils/networking.h"
 
 using namespace std;
 
 int main() {
-    Socket socket;
+    Networking networking;
     return 0;
 }

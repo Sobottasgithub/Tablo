@@ -12,14 +12,14 @@
 #include <algorithm>
 #include <map>
 
-#include "socket.h"
+#include "networking.h"
 #include "methods.h"
 
 #include "udp_discovery.h"
 
 using namespace std;
 
-Socket::Socket() {
+Networking::Networking() {
     std::wcout << "Start tablo master socket..." << endl;
 
     std::string method = std::to_string(Methods::test).c_str();
@@ -32,7 +32,7 @@ Socket::Socket() {
     std::map<std::string, int> connections;
     while (true) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
-        std::vector<std::string> nodeIps = Socket::getKeys(connections);
+        std::vector<std::string> nodeIps = Networking::getKeys(connections);
 
         // sort vectors to compare them
         std::sort(newNodeIps.begin(), newNodeIps.end());
@@ -54,14 +54,14 @@ Socket::Socket() {
 
                 int currentSocket = connections[nodeIps[index]];
                 
-                Socket::sendMessage(currentSocket, method.c_str());
-                std::string status = Socket::recieveMessage(currentSocket);
+                Networking::sendMessage(currentSocket, method.c_str());
+                std::string status = Networking::recieveMessage(currentSocket);
                 if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                    Socket::sendMessage(currentSocket, data.c_str());
-                    std::string status = Socket::recieveMessage(currentSocket);
+                    Networking::sendMessage(currentSocket, data.c_str());
+                    std::string status = Networking::recieveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        std::string recievedData = Socket::recieveMessage(currentSocket);
-                        Socket::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                        std::string recievedData = Networking::recieveMessage(currentSocket);
+                        Networking::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
                         wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
                     } else {
                         wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
@@ -86,7 +86,7 @@ Socket::Socket() {
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
-                    std::string respCode = Socket::recieveMessage(newSocket);
+                    std::string respCode = Networking::recieveMessage(newSocket);
 
                     // handshake compleate
                     if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {
@@ -113,12 +113,12 @@ Socket::Socket() {
     udpDiscoveryThread.join();    
 }
 
-void Socket::sendMessage(int socket, const char* initialMessage) {
+void Networking::sendMessage(int socket, const char* initialMessage) {
     const char* message = initialMessage;
     send(socket, message, strlen(message), 0);
 }
 
-std::string Socket::recieveMessage(int socket) {
+std::string Networking::recieveMessage(int socket) {
     struct pollfd pfds[2];
     pfds[0] = pollfd {
         .fd = STDIN_FILENO,
@@ -145,7 +145,7 @@ std::string Socket::recieveMessage(int socket) {
     }
 }
 
-std::vector<std::string> Socket::getKeys(std::map<std::string, int> hashmap) {
+std::vector<std::string> Networking::getKeys(std::map<std::string, int> hashmap) {
     std::vector<std::string> keys;
     // preallocate memory of exact size
     keys.reserve(hashmap.size());
