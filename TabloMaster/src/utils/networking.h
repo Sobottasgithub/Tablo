@@ -7,11 +7,11 @@
 
 class Networking
 {
-public:
-    Networking();
-    void sendMessage(int socket, const char* initialMessage);
-    std::string recieveMessage(int socket);
-    std::vector<std::string> getKeys(std::map<std::string, int> hashmap);
+    public:
+        Networking();
+        void sendMessage(int socket, const char* initialMessage);
+        std::string recieveMessage(int socket);
+        std::vector<std::string> getKeys(std::map<std::string, int> hashmap);
 };
 
 #endif
