@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <map>
 
+#include "network_helpers.h"
 #include "networking.h"
 #include "methods.h"
 
@@ -22,12 +23,36 @@ using namespace std;
 Networking::Networking() {
     std::wcout << "Start tablo master socket..." << endl;
 
+    NetworkHelpers networkHelpers;
+
+    udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
+
+    // Client socket
+    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(8000);
+    serverAddress.sin_addr.s_addr = inet_addr(networkHelpers.getLocalIpAddress().c_str());
+
+    bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+    listen(serverSocket, 5);
+
+    while (true) {
+        int clientSocket = accept(serverSocket, nullptr, nullptr);
+        std::wcout << "New client connection!" << endl;
+        clientConnections.push_back(std::thread(
+           &Networking::handleClientConnection,
+           this,
+           serverSocket, clientSocket                             
+        ));
+    }
+}
+
+void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     std::string method = std::to_string(Methods::test).c_str();
     std::string data = "test";
-
-    UdpDiscovery udpDiscovery; 
-    std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
-
+        
     // TCP
     std::map<std::string, int> connections;
     while (true) {
@@ -110,7 +135,7 @@ Networking::Networking() {
         }
     }
     
-    udpDiscoveryThread.join();    
+    udpDiscoveryThread.join();
 }
 
 void Networking::sendMessage(int socket, const char* initialMessage) {
@@ -143,6 +168,7 @@ std::string Networking::recieveMessage(int socket) {
             return "";
         }
     }
+    return "";
 }
 
 std::vector<std::string> Networking::getKeys(std::map<std::string, int> hashmap) {
