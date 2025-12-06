@@ -14,9 +14,6 @@ class UdpDiscovery
     private:
         std::vector<std::string> nodeIPAddresses = {};
         std::mutex mtx;
-        
-        std::string getLocalIpAddress();
-        std::string getBroadcastIpAddress(); 
 };
 
 #endif
