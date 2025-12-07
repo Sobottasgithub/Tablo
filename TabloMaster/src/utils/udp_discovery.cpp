@@ -15,15 +15,17 @@
 #include <vector>
 #include <algorithm>
 
+#include "methods.h"
+
 #include "network_helpers.h"
 
 using namespace std;
 
-void UdpDiscovery::udpDiscoveryCycle() {
+void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     wcout << "Start Udp discovery..." << endl;
 
     NetworkHelpers networkHelpers;
-    std::string containerIP = networkHelpers.getLocalIpAddress();
+    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
     std::string broadcastIP = networkHelpers.getBroadcastIpAddress();
 
     std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
@@ -39,7 +41,7 @@ void UdpDiscovery::udpDiscoveryCycle() {
     }
         
     int serverSocket;
-    const char* message = "100";
+    const char* message = std::to_string(Methods::success).c_str();
     struct sockaddr_in broadcast{}, receiverAddress{};
     const int port = 8888;
     const int bufferSize = 1024;

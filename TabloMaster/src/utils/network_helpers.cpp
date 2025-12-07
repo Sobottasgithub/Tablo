@@ -8,7 +8,7 @@
 
 using namespace std;
 
-std::string NetworkHelpers::getLocalIpAddress() {
+std::string NetworkHelpers::getLocalIpAddress(std::string interface) {
     struct ifaddrs *ifaddr = nullptr;
 
     // Get linked list of network interfaces
@@ -28,7 +28,7 @@ std::string NetworkHelpers::getLocalIpAddress() {
             inet_ntop(AF_INET, &addr->sin_addr, ip, sizeof(ip));
 
             // Docker containers typically use eth0
-            if (std::string(ifa->ifa_name) == "eth0") {
+            if (std::string(ifa->ifa_name) == interface) {
                 result = ip;
                 break;
             }

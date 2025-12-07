@@ -11,7 +11,7 @@
 class Networking
 {
     public:
-        Networking();
+        Networking(std::string interface);
         void handleClientConnection(int serverSocket, int clientSocket);
         void sendMessage(int socket, const char* initialMessage);
         std::string recieveMessage(int socket);

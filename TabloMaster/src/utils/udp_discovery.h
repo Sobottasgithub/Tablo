@@ -8,7 +8,7 @@
 class UdpDiscovery
 {
     public:
-        void udpDiscoveryCycle();
+        void udpDiscoveryCycle(std::string interface);
         std::vector<std::string> getNodeAdresses();
         
     private:

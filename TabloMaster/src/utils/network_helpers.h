@@ -6,7 +6,7 @@
 class NetworkHelpers
 {
     public:
-        std::string getLocalIpAddress();
+        std::string getLocalIpAddress(std::string interface);
         std::string getBroadcastIpAddress(); 
 };
 

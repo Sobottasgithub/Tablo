@@ -20,12 +20,12 @@
 
 using namespace std;
 
-Networking::Networking() {
-    std::wcout << "Start tablo master socket..." << endl;
+Networking::Networking(std::string interface) {
+    std::wcout << "Start socket..." << endl;
 
     NetworkHelpers networkHelpers;
 
-    udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery);
+    udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
 
     // Client socket
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -33,7 +33,7 @@ Networking::Networking() {
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8000);
-    serverAddress.sin_addr.s_addr = inet_addr(networkHelpers.getLocalIpAddress().c_str());
+    serverAddress.sin_addr.s_addr = inet_addr(networkHelpers.getLocalIpAddress(interface).c_str());
 
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     listen(serverSocket, 5);
