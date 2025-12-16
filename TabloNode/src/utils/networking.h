@@ -6,12 +6,13 @@
 #include <thread>
 #include <bits/stdc++.h>
 #include <vector>
+#include <string>
 
 class Networking
 {
     public:
-        Networking();
-        void handleUdpDiscovery();
+        Networking(std::string interface);
+        void handleUdpDiscovery(std::string interface);
         void handleClientConnection(int serverSocket, int clientSocket);
         void sendMessage(int socket, const char* initialMessage);
         std::string recieveMessage(int socket);

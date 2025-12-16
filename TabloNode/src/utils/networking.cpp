@@ -18,18 +18,19 @@
 
 using namespace std;
 
-Networking::Networking() {
+Networking::Networking(std::string interface) {
     std::wcout << "Start Socket...." << endl;
 
     udpThread = std::thread(
             &Networking::handleUdpDiscovery,
-            this
+            this,
+            interface
     );
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
-    serverAddress.sin_addr.s_addr = inet_addr("0.0.0.0"); //inet_addr("127.0.0.1")
+    serverAddress.sin_addr.s_addr = inet_addr(interface.c_str());
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
@@ -60,8 +61,8 @@ Networking::Networking() {
     }   
 }
 
-void Networking::handleUdpDiscovery() {
-    UdpDiscovery udpDiscovery;    
+void Networking::handleUdpDiscovery(std::string interface) {
+    UdpDiscovery udpDiscovery(interface);    
 }
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
@@ -135,5 +136,6 @@ std::string Networking::recieveMessage(int socket) {
             return "";
         }
     }
+    return "";
 }
 

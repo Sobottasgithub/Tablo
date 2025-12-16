@@ -14,8 +14,7 @@
 #include <net/if.h>
 #include <vector>
 #include <algorithm>
-
-#include "methods.h"
+#include <fcntl.h>
 
 #include "network_helpers.h"
 
@@ -31,102 +30,117 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
 
     if (containerIP.empty()) {
-        std::cerr << "Failed to find container IP!" << endl;
+        std::wcout << "Failed to find container IP!" << std::endl;
         return;
     }
 
     if (broadcastIP.empty()) {
-        std::cerr << "Failed to find broadcast IP!" << endl;
+        std::wcout << "Failed to find broadcast IP!" << std::endl;
         return;
     }
-        
+
+    // Init: server socket   
     int serverSocket;
-    const char* message = std::to_string(Methods::success).c_str();
+    const char* message = containerIP.c_str();
     struct sockaddr_in broadcast{}, receiverAddress{};
-    const int port = 8888;
+    const int port = 4000;
     const int bufferSize = 1024;
     char buffer[bufferSize];
 
     // Create socket
     if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("Failed to create Socket!");
+        std::wcout << "Failed to create Socket!" << std::endl;
+        return;
     }
     // Enable broadcast
     int broadcastBind = 1;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_BROADCAST, &broadcastBind, sizeof(broadcastBind)) < 0) {
-        perror("Failed to enable broadcast!");
+        std::wcout << "Failed to enable broadcast!" << std::endl;
         close(serverSocket);
+        return;
     }
-    // Allow Socket to bind on address with TIME_WAIT
+    // Allow reuse
     int reuse = 1;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        perror("Setsockopt failed!");
+        std::wcout << "Setsockopt failed!" << endl;
         close(serverSocket);
+        return;
     }
 
-    // Bind socket to listen for responses
-    receiverAddress.sin_family = AF_INET;
-    receiverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    receiverAddress.sin_port = htons(port);
-    if (bind(serverSocket, (struct sockaddr*)&receiverAddress, sizeof(receiverAddress)) < 0) {
-        perror("Bind failed of receiverAddress");
-        close(serverSocket);
-    }
-    
     // clear garbage
     memset(&broadcast, 0, sizeof(broadcast));
     // prepare socket
     broadcast.sin_family = AF_INET;
     broadcast.sin_port = htons(port);
-    inet_pton(AF_INET, broadcastIP.c_str(), &broadcast.sin_addr);
-        
+
+    if (inet_pton(AF_INET, broadcastIP.c_str(), &broadcast.sin_addr) <= 0) {
+        std::wcout << "Invalid broadcast IP" << std::endl;
+        close(serverSocket);
+        return;
+    }
+
+    // Init recieve socket
+    int tcpMasterSocket, tcpNodeSocket;
+    struct sockaddr_in tcpAddress;
+    int opt = 1;
+    socklen_t addrlen = sizeof(tcpAddress);
+    if ((tcpMasterSocket = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        std::wcout << "socket failed" << std::endl;
+        return;
+    }
+    if (setsockopt(tcpMasterSocket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        std::wcout << "Setsockopt failed!" << std::endl;
+        return;
+    }
+    tcpAddress.sin_family = AF_INET;
+    tcpAddress.sin_addr.s_addr = inet_addr(containerIP.c_str());
+    tcpAddress.sin_port = htons(4001);
+    if (bind(tcpMasterSocket, (struct sockaddr*)&tcpAddress, sizeof(tcpAddress)) < 0) {
+        std::wcout << "Bind failed!" << std::endl;
+        return;
+    }
+    if (listen(tcpMasterSocket, 3) < 0) {
+        std::wcout << "Listen failed!" << std::endl;
+        return;
+    }
+
     while(true) { 
         // Send message   
         if (sendto(serverSocket, message, strlen(message), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
-            perror("Send message failed! Closing socket...");
+            std::wcout << "Broadcast failed!" << std::endl;
             close(serverSocket);
-        } 
-
-        // While not timedout & no response from Node
-        bool hasResponse = false;
-        while(!hasResponse) {
-
-            struct timeval timeout;
-            timeout.tv_sec = 5;
-            timeout.tv_usec = 0;
-
-            setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-            sockaddr_in clientAddress{};
-            socklen_t clientMessageLength = sizeof(clientAddress);
-
-            ssize_t clientMessage = recvfrom(serverSocket, buffer, bufferSize - 1, 0,
-                                    (struct sockaddr*)&clientAddress, &clientMessageLength);
-
-            // Timeout: exit loop
-            if (clientMessage < 0) {
-                hasResponse = true;
-            }
-
-            buffer[clientMessage] = '\0';  // Null terminate received message
-
-            char clientIP[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &clientAddress.sin_addr, clientIP, INET_ADDRSTRLEN);
-
-            char localIP[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &receiverAddress.sin_addr, localIP, INET_ADDRSTRLEN);
-
-            // Compare recieved ip to own to prevent handshake with Master
-            std::string clientIPString(clientIP);
-            if(clientIPString != containerIP.c_str() && strcmp(clientIP, localIP) != 0) {
-                hasResponse = true; 
- 
-                // Add ip to discovered Ip's if not already in vector
-                if (std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(clientIP)) == nodeIPAddresses.end()) {
-                    nodeIPAddresses.push_back(std::string(clientIP));
-                }
-            }
+            return;
         }
+
+        // Accept incoming connection
+        int flags = fcntl(tcpMasterSocket, F_GETFL, 0);
+        fcntl(tcpMasterSocket, F_SETFL, flags | O_NONBLOCK);
+
+        int tcpNodeSocket = -1;
+        time_t start = time(nullptr);
+        while (time(nullptr) - start < 5) {
+            tcpNodeSocket = accept(tcpMasterSocket, (struct sockaddr*)&tcpAddress, (socklen_t*)&addrlen);
+            if (tcpNodeSocket >= 0) break;
+            usleep(100000);
+        }
+
+        if (tcpNodeSocket < 0) {
+            // DEBUG ONLY:
+            //std::wcout << "Timeout: no connection" << std::endl;
+            continue;
+        } else {
+            ssize_t valread = read(tcpNodeSocket, buffer, sizeof(buffer));
+            // DEBUG ONLY:
+            //std::wcout << "Received: " << buffer << std::endl;
+
+            // Add ip to discovered Ip's if not already in vector
+            if (std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(buffer)) == nodeIPAddresses.end()) {
+                nodeIPAddresses.push_back(std::string(buffer));
+            }
+
+            close(tcpNodeSocket);
+        }
+        usleep(100000);
     }
     close(serverSocket);
     wcout << "UDP socket closed..." << endl;

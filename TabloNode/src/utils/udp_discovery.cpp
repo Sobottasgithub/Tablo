@@ -1,52 +1,87 @@
-
 #include "udp_discovery.h"
+#include "network_helpers.h"
 
 #include <iostream>
-#include <netinet/in.h>
+#include <string>
+#include <stdexcept>
+
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <string>
+#include <sys/poll.h>
 
 using namespace std;
 
-UdpDiscovery::UdpDiscovery() {
-    std::wcout << "Start udp discovery..." << endl;
+UdpDiscovery::UdpDiscovery(std::string interface) {
+    std::wcout << "Start udp discovery..." << std::endl;
     
+    NetworkHelpers networkHelpers = NetworkHelpers();
+    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
+
     int udpSocket;
-    struct sockaddr_in nodeAddress{};
-    const int port = 8888;
+    const int port = 4000; 
     char buffer[1024];
-
+    
     udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
-    int reuse = 1;
-    setsockopt(udpSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
+    if (udpSocket < 0) {
+        std::wcout << "Create socket failed!" << std::endl;
+        return;
+    }
 
+    int broadcast = 1;
+    setsockopt(udpSocket, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+
+    sockaddr_in nodeAddress{};
     nodeAddress.sin_family = AF_INET;
     nodeAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     nodeAddress.sin_port = htons(port);
 
-    bind(udpSocket, (struct sockaddr*)&nodeAddress, sizeof(nodeAddress));
+    if (bind(udpSocket, (struct sockaddr*)&nodeAddress, sizeof(nodeAddress)) < 0) {
+        std::wcout << "UDP Socket bind failed!" << std::endl;
+        return;
+    }
+    wcout << "Listening on UDP port " << port << endl;
 
-    std::wcout << "Listening for UDP broadcast... port: " << port << endl;
-
+     // Init poll
+    struct pollfd pfds[2];
+    pfds[0].fd = STDIN_FILENO;
+    pfds[0].events = POLLIN;
+    pfds[1].fd = udpSocket;
+    pfds[1].events = POLLIN;
+    
     while (true) {
-        sockaddr_in masterAddress{};
-        socklen_t masterAdressLength = sizeof(masterAddress);
+        // Get UDP Discovery packet
+        std::string respCode;
+        while(poll(pfds, 2, 1000) != -1) {
+            char buffer[1024] = { 0 };
+            recv(udpSocket, buffer, sizeof(buffer), 0);
 
-        ssize_t recvLen = recvfrom(udpSocket, buffer, sizeof(buffer) - 1, 0, (struct sockaddr*)&masterAddress, &masterAdressLength);
-        buffer[recvLen] = '\0';
+            // DEBUG ONLY:
+            //std::wcout << buffer << std::endl;
 
-        char masterIp[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &masterAddress.sin_addr, masterIp, INET_ADDRSTRLEN);
+            // Send response over TCP
+            int recieveSocket = 0;
+            struct sockaddr_in masterAddress;
+            masterAddress.sin_family = AF_INET;
+            masterAddress.sin_port = htons(4001);
 
-        std::string reply = "102";
-        if (sendto(udpSocket, reply.c_str(), reply.length(), 0,
-                   (struct sockaddr*)&masterAddress, masterAdressLength) < 0) {
-            std::wcout << "Reply failed to: " << masterIp << endl;
+            if ((recieveSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                std::wcout << "Socket creation error" << std::endl;
+                continue;
+            }
+            if (inet_pton(AF_INET, buffer, &masterAddress.sin_addr) <= 0) {
+                std::wcout << "Address not supported" << std::endl;
+                continue;
+            }
+            if (connect(recieveSocket, (struct sockaddr*)&masterAddress, sizeof(masterAddress)) < 0) {
+                std::wcout << "Connection failed" << std::endl;
+                continue;
+            }
+            send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
+            close(recieveSocket);
         }
     }
-
     close(udpSocket);
 }
 
