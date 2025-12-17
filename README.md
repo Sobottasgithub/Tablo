@@ -1,50 +1,42 @@
 # Tablo
 
-## Run TabloNode: 
+## Deploy with NIX
+
+### 1 Allow following ports in your firewall
+
+The following ports are used to establish the network tablo needs:
+
+- **4000**
+- **4001**
+- **4003**
+- **4004**
+
+### 2 Deploy
+
 ```cmd
-cd src/TabloNode/ 
-sudo docker compose up --build
+nix shell
+./build-image-nix.sh
+tablo-master --interface YOURINTERFACE
+tablo-node --interface YOURINTERFACE
+tablo-client --master YOURMASTERSIP
 ```
 
-## Run TabloMaster:
+## Deploy with DOCKER
+
+### 1 Allow following ports in your firewall
+
+The following ports are used to establish the network tablo needs:
+
+- **4003**
+
+### 2 Deploy
+
+In docker swarm mode:
+
 ```cmd
-cd src/TabloMaster/
-apt install < requirement.txt
-g++ -o tabloMaster tabloMaster.cpp ui/*.cpp 
-utils/*.cpp
-./tabloMaster
-```
-
-## Building:
-
-### Using nix (with flakes and nix-command enabled):
-
-```bash
-  nix build github:Sobottasgithub/Tablo
-```
-
-### Standalone:
-
-1. clone repository
-
-```bash
-  git clone https://github.com/sobottasgithub/Tablo
-```
-
-2. configure for your system
-```bash
- cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-```
-
-3. compile
-
-```bash
-  cmake --build build
-```
-
-4. install for packaging
-```
-   cmake --install build
+./build-image-nix.sh
+docker stack deploy --compose-file nix.compose.yml NAME --detach=false
+tablo-client --master YOURMASTERIP
 ```
 
 ### Using the nix generated docker images
@@ -53,4 +45,3 @@ The flake in this repository allowes you to build minimal docker images that avo
 
 To use this feature, you NEED to use nix. Download available at: https://nixos.org/
 
-You can either run the builds yourself or use the `./build-image-nix.sh` script!
