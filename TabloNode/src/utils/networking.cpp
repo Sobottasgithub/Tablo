@@ -34,7 +34,7 @@ Networking::Networking(std::string interface) {
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8000);
+    serverAddress.sin_port = htons(4004);
     serverAddress.sin_addr.s_addr = inet_addr(containerIP.c_str());
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);

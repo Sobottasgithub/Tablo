@@ -108,7 +108,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             
                     sockaddr_in nodeAddress;
                     nodeAddress.sin_family = AF_INET;
-                    nodeAddress.sin_port = htons(8000);
+                    nodeAddress.sin_port = htons(4004);
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
