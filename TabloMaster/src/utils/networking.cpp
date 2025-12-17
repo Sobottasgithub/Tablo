@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <memory_resource>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -32,7 +33,7 @@ Networking::Networking(std::string interface) {
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8000);
+    serverAddress.sin_port = htons(4003);
     serverAddress.sin_addr.s_addr = inet_addr(networkHelpers.getLocalIpAddress(interface).c_str());
 
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
@@ -107,7 +108,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             
                     sockaddr_in nodeAddress;
                     nodeAddress.sin_family = AF_INET;
-                    nodeAddress.sin_port = htons(8080);
+                    nodeAddress.sin_port = htons(8000);
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
@@ -144,29 +145,16 @@ void Networking::sendMessage(int socket, const char* initialMessage) {
 }
 
 std::string Networking::recieveMessage(int socket) {
-    struct pollfd pfds[2];
-    pfds[0] = pollfd {
-        .fd = STDIN_FILENO,
-        .events = POLLIN
-    };
+    pollfd pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLIN;
 
-    pfds[1] = pollfd {
-        .fd = socket,
-        .events = POLLIN
-    };
-
-    // Compleate handshake
-    std::string respCode;
-    while(poll(pfds, 2, 60000) != -1) {
-        if(pfds[0].revents & POLLIN) {
-            char buffer[1024] = { 0 };
-            recv(socket, buffer, sizeof(buffer), 0);
-            return buffer;
-        }
-        if(pfds[1].revents & (POLLERR | POLLHUP)) {
-            wcout << "TIMEOUT" << endl;
-            return "";
-        }
+    int ret = poll(&pfd, 1, 10000);
+    if (ret > 0 && (pfd.revents & POLLIN)) {
+        char buffer[1024]{};
+        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
+        if (n <= 0) return "";
+        return std::string(buffer, n);
     }
     return "";
 }

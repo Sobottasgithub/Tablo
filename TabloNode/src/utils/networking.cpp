@@ -4,10 +4,12 @@
 #include "worker.h"
 #include "methods.h"
 #include "udp_discovery.h"
+#include "network_helpers.h"
 
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <system_error>
 #include <thread>
 #include <bits/stdc++.h>
 #include <vector>
@@ -21,6 +23,9 @@ using namespace std;
 Networking::Networking(std::string interface) {
     std::wcout << "Start Socket...." << endl;
 
+    NetworkHelpers networkHelpers;
+    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
+
     udpThread = std::thread(
             &Networking::handleUdpDiscovery,
             this,
@@ -29,8 +34,8 @@ Networking::Networking(std::string interface) {
 
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(8080);
-    serverAddress.sin_addr.s_addr = inet_addr(interface.c_str());
+    serverAddress.sin_port = htons(8000);
+    serverAddress.sin_addr.s_addr = inet_addr(containerIP.c_str());
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
@@ -67,6 +72,7 @@ void Networking::handleUdpDiscovery(std::string interface) {
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
+
     Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
     while (true) {
@@ -117,24 +123,16 @@ void Networking::sendMessage(int socket, const char* initialMessage) {
 
 
 std::string Networking::recieveMessage(int socket) {
-    struct pollfd pfds[2];
-    pfds[0].fd = STDIN_FILENO;
-    pfds[0].events = POLLIN;
-    pfds[1].fd = socket;
-    pfds[1].events = POLLIN;
+    pollfd pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLIN;
 
-    while(poll(pfds, 2, 1000) != -1) {
-        if(pfds[0].revents & POLLIN) {
-            char buffer[1024] = { 0 };
-            recv(socket, buffer, sizeof(buffer), 0);
-            return buffer;
-        }
-        if(pfds[1].revents & (POLLERR | POLLHUP)) {
-            // close connection
-            std::wcout << "TIMEOUT" << endl;
-            close(socket);
-            return "";
-        }
+    int ret = poll(&pfd, 1, 10000);
+    if (ret > 0 && (pfd.revents & POLLIN)) {
+        char buffer[1024]{};
+        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
+        if (n <= 0) return "";
+        return std::string(buffer, n);
     }
     return "";
 }

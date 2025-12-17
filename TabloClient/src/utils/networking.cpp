@@ -23,7 +23,7 @@ Networking::Networking(std::string tabloMaster) {
   // specifying address
   sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;
-  serverAddress.sin_port = htons(8000);
+  serverAddress.sin_port = htons(4003);
   serverAddress.sin_addr.s_addr = inet_addr(tabloMaster.c_str());
 
   // sending connection request
