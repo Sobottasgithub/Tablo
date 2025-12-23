@@ -7,20 +7,20 @@
 #include <thread>
 
 #include "udp_discovery.h"
+#include "network_helpers.h"
 
 class Networking
 {
     public:
         Networking(std::string interface);
         void handleClientConnection(int serverSocket, int clientSocket);
-        void sendMessage(int socket, const char* initialMessage);
-        std::string recieveMessage(int socket);
         std::vector<std::string> getKeys(std::map<std::string, int> hashmap);
 
     private:
         std::vector<std::thread> clientConnections;
         UdpDiscovery udpDiscovery;
         std::thread udpDiscoveryThread;
+        NetworkHelpers networkHelpers;
 };
 
 #endif

@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <map>
 
-#include "network_helpers.h"
 #include "networking.h"
 #include "methods.h"
 #include "client_session_controller.h"
@@ -24,9 +23,6 @@ using namespace std;
 
 Networking::Networking(std::string interface) {
     std::wcout << "Start socket..." << endl;
-
-    NetworkHelpers networkHelpers;
-
     udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
 
     // Client socket
@@ -91,14 +87,14 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
                     int currentSocket = connections[nodeIps[index]];
                 
-                    Networking::sendMessage(currentSocket, method.c_str());
-                    std::string status = Networking::recieveMessage(currentSocket);
+                    networkHelpers.sendMessage(currentSocket, method.c_str());
+                    std::string status = networkHelpers.receiveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        Networking::sendMessage(currentSocket, content.c_str());
-                        std::string status = Networking::recieveMessage(currentSocket);
+                        networkHelpers.sendMessage(currentSocket, content.c_str());
+                        std::string status = networkHelpers.receiveMessage(currentSocket);
                         if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                            std::string recievedData = Networking::recieveMessage(currentSocket);
-                            Networking::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                            std::string recievedData = networkHelpers.receiveMessage(currentSocket);
+                            networkHelpers.sendMessage(currentSocket, std::to_string(Methods::success).c_str());
                             wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
                             clientSessionManager.pushSolution(recievedData);
                         } else {
@@ -125,7 +121,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
-                    std::string respCode = Networking::recieveMessage(newSocket);
+                    std::string respCode = networkHelpers.receiveMessage(newSocket);
 
                     // handshake compleate
                     if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {
@@ -150,26 +146,6 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     }
     
     udpDiscoveryThread.join();
-}
-
-void Networking::sendMessage(int socket, const char* initialMessage) {
-    const char* message = initialMessage;
-    send(socket, message, strlen(message), 0);
-}
-
-std::string Networking::recieveMessage(int socket) {
-    pollfd pfd{};
-    pfd.fd = socket;
-    pfd.events = POLLIN;
-
-    int ret = poll(&pfd, 1, 10000);
-    if (ret > 0 && (pfd.revents & POLLIN)) {
-        char buffer[1024]{};
-        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
-        if (n <= 0) return "";
-        return std::string(buffer, n);
-    }
-    return "";
 }
 
 std::vector<std::string> Networking::getKeys(std::map<std::string, int> hashmap) {

@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include "network_helpers.h"
 
 using namespace std;
 
@@ -20,13 +21,13 @@ class ClientSessionManager
       void setSocket(int socket);
 
     private:
+      NetworkHelpers networkHelpers;
+       
       int socket;
       std::vector<std::map<std::string, std::string>> orderCollection;
       std::vector<std::string> solutionCollection;
       std::mutex mtx;
 
-      std::string recieveMessage(int socket);
-      void sendMessage(int socket, const char* initialMessage);
       bool isNumeric(const std::string& s);
 };
 

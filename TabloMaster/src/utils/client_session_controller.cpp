@@ -26,29 +26,25 @@ void ClientSessionManager::setSocket(int socket) {
 void ClientSessionManager::sessionControllerCycle() {
   while (true) {
     // Recieve orders
-    std::string orderCountString = recieveMessage(this->socket);
-    sendMessage(this->socket, std::to_string(Methods::success).c_str());
+    std::string orderCountString = networkHelpers.receiveMessage(this->socket);
+    networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
     if (isNumeric(orderCountString)) {
       int orderCount = std::stoi(orderCountString);  
       for (int index = 0; index < orderCount; index++) {
-        std::string method  = recieveMessage(this->socket);
-        sendMessage(this->socket, std::to_string(Methods::success).c_str());
-        std::string content = recieveMessage(this->socket);
-        sendMessage(this->socket, std::to_string(Methods::success).c_str());
+        std::string method  = networkHelpers.receiveMessage(this->socket);
+        networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
+        std::string content = networkHelpers.receiveMessage(this->socket);
+        networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
         orderCollection.push_back({ {"method", method}, {"content", content} });
       }
     }
 
     // Send solutions
-    do {
-      sendMessage(this->socket, to_string(solutionCollection.size()).c_str());
-    }
-    while (std::stoi(recieveMessage(this->socket)) != Methods::success);
+    networkHelpers.sendMessage(this->socket, to_string(solutionCollection.size()).c_str());
+    networkHelpers.receiveMessage(this->socket);
     for(int index = 0; index < solutionCollection.size(); index++) {
-      do {
-        sendMessage(this->socket, solutionCollection[0].c_str());
-      }
-      while (std::stoi(recieveMessage(this->socket)) != Methods::success);
+      networkHelpers.sendMessage(this->socket, solutionCollection[0].c_str());
+      networkHelpers.receiveMessage(this->socket);
       solutionCollection.erase(solutionCollection.begin());
     }
   }
@@ -73,26 +69,6 @@ std::map<std::string, std::string> ClientSessionManager::popOrder() {
 void ClientSessionManager::pushSolution(std::string solution) {
   std::lock_guard<std::mutex> lock(mtx);
   solutionCollection.push_back(solution);
-}
-
-void ClientSessionManager::sendMessage(int socket, const char* initialMessage) {
-    const char* message = initialMessage;
-    send(socket, message, strlen(message), 0);
-}
-
-std::string ClientSessionManager::recieveMessage(int socket) {
-    pollfd pfd{};
-    pfd.fd = socket;
-    pfd.events = POLLIN;
-
-    int ret = poll(&pfd, 1, 10000);
-    if (ret > 0 && (pfd.revents & POLLIN)) {
-        char buffer[1024]{};
-        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
-        if (n <= 0) return "";
-        return std::string(buffer, n);
-    }
-    return "";
 }
 
 bool ClientSessionManager::isNumeric(const std::string& s) {

@@ -4,6 +4,9 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <net/if.h>
+#include <sys/poll.h>
+#include <cstring>
+
 #include "network_helpers.h"
 
 using namespace std;
@@ -72,4 +75,24 @@ std::string NetworkHelpers::getBroadcastIpAddress() {
 
     freeifaddrs(ifaddr);
     return broadcastIP;
+}
+
+void NetworkHelpers::sendMessage(int socket, const char* initialMessage) {
+    const char* message = initialMessage;
+    send(socket, message, strlen(message), 0);
+}
+
+std::string NetworkHelpers::receiveMessage(int socket) {
+    pollfd pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLIN;
+
+    int ret = poll(&pfd, 1, 10000);
+    if (ret > 0 && (pfd.revents & POLLIN)) {
+        char buffer[1024]{};
+        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
+        if (n <= 0) return "";
+        return std::string(buffer, n);
+    }
+    return "";
 }
