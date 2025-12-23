@@ -16,6 +16,7 @@
 #include "network_helpers.h"
 #include "networking.h"
 #include "methods.h"
+#include "client_session_controller.h"
 
 #include "udp_discovery.h"
 
@@ -51,9 +52,13 @@ Networking::Networking(std::string interface) {
 }
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
-    std::string method = std::to_string(Methods::test).c_str();
-    std::string data = "test";
-        
+    ClientSessionManager clientSessionManager(clientSocket);
+
+    std::thread clientThread(
+        &ClientSessionManager::sessionControllerCycle,
+        &clientSessionManager
+    );
+    
     // TCP
     std::map<std::string, int> connections;
     while (true) {
@@ -63,7 +68,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         // sort vectors to compare them
         std::sort(newNodeIps.begin(), newNodeIps.end());
         std::sort(nodeIps.begin(), nodeIps.end());
-
+        
         if(newNodeIps.size() == 0) {
             wcout << "No connected nodes!" << endl;
             if (nodeIps.size() > 0) {
@@ -76,24 +81,32 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else if(newNodeIps == nodeIps) {
-            for(int index = 0; index < connections.size(); index++) {
-
-                int currentSocket = connections[nodeIps[index]];
+            while (clientSessionManager.hasOrder()) {
+                map<std::string, std::string> order = clientSessionManager.popOrder();
+                wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << endl;
+                std::string method = order.at("method").c_str();
+                std::string content = order.at("content").c_str();
                 
-                Networking::sendMessage(currentSocket, method.c_str());
-                std::string status = Networking::recieveMessage(currentSocket);
-                if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                    Networking::sendMessage(currentSocket, data.c_str());
+                for(int index = 0; index < connections.size(); index++) {
+
+                    int currentSocket = connections[nodeIps[index]];
+                
+                    Networking::sendMessage(currentSocket, method.c_str());
                     std::string status = Networking::recieveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        std::string recievedData = Networking::recieveMessage(currentSocket);
-                        Networking::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
-                        wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
+                        Networking::sendMessage(currentSocket, content.c_str());
+                        std::string status = Networking::recieveMessage(currentSocket);
+                        if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
+                            std::string recievedData = Networking::recieveMessage(currentSocket);
+                            Networking::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                            wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
+                            clientSessionManager.pushSolution(recievedData);
+                        } else {
+                            wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
+                        }
                     } else {
                         wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
                     }
-                } else {
-                    wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
                 }
             }
         } else if (newNodeIps != nodeIps) {

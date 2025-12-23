@@ -1,0 +1,33 @@
+#ifndef CLIENT_SESSION_CONTROLLER_H
+#define CLIENT_SESSION_CONTROLLER_H
+
+#include <string>
+#include <map>
+#include <vector>
+#include <mutex>
+
+using namespace std;
+
+class ClientSessionManager
+{
+    public:
+      ClientSessionManager();
+      ClientSessionManager(int socket);
+      void sessionControllerCycle();
+      bool hasOrder(); 
+      map<std::string, std::string> popOrder();
+      void pushSolution(std::string solution); 
+      void setSocket(int socket);
+
+    private:
+      int socket;
+      std::vector<std::map<std::string, std::string>> orderCollection;
+      std::vector<std::string> solutionCollection;
+      std::mutex mtx;
+
+      std::string recieveMessage(int socket);
+      void sendMessage(int socket, const char* initialMessage);
+      bool isNumeric(const std::string& s);
+};
+
+#endif
