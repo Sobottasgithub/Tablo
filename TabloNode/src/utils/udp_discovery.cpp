@@ -12,8 +12,6 @@
 #include <unistd.h>
 #include <sys/poll.h>
 
-using namespace std;
-
 UdpDiscovery::UdpDiscovery(std::string interface) {
     std::wcout << "Start udp discovery..." << std::endl;
     

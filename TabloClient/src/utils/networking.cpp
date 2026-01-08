@@ -8,17 +8,14 @@
 #include <sys/poll.h>
 #include <regex>
 
-
 #include "networking.h"
 
-using namespace std;
-
 Networking::Networking() {
-  std::wcout << "Start tablo client socket..." << endl;
+  std::wcout << "Start tablo client socket..." << std::endl;
 }
 
 Networking::Networking(std::string tabloMaster) {
-  std::wcout << "tablo Master: " << tabloMaster.c_str() << endl;
+  std::wcout << "tablo Master: " << tabloMaster.c_str() << std::endl;
 
   // creating socket
   int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -40,7 +37,7 @@ Networking::Networking(std::string tabloMaster) {
     recieveMessage(clientSocket);
     for(int index = 0; index < 2; index++) {
       const char* method = "401";
-      std::string data = "test" + to_string(count);
+      std::string data = "test" + std::to_string(count);
       const char* content = data.c_str();
       send(clientSocket, method, strlen(method), 0);
       recieveMessage(clientSocket);
@@ -57,7 +54,7 @@ Networking::Networking(std::string tabloMaster) {
       if (count != 0) {
         send(clientSocket, success, strlen(success), 0);
         for(int i = 0; i < count; i++) {
-          std::wcout << recieveMessage(clientSocket).c_str() << endl;
+          std::wcout << recieveMessage(clientSocket).c_str() << std::endl;
           send(clientSocket, success, strlen(success), 0);
         }
       } else {

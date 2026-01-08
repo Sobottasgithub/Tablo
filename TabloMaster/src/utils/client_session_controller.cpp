@@ -12,8 +12,6 @@
 
 #include "methods.h"
 
-using namespace std;
-
 ClientSessionManager::ClientSessionManager() {}
 
 ClientSessionManager::ClientSessionManager(int socket) {
@@ -42,7 +40,7 @@ void ClientSessionManager::sessionControllerCycle() {
 
     // Send solutions
     int solutionCollectionSize = solutionCollection.size();
-    tabnet::sendMessage(this->socket, to_string(solutionCollectionSize).c_str());
+    tabnet::sendMessage(this->socket, std::to_string(solutionCollectionSize).c_str());
     if (solutionCollectionSize > 0) {
       tabnet::receiveMessage(this->socket);
       for(int index = 0; index < solutionCollectionSize; index++) {

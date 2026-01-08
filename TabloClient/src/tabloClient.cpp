@@ -4,11 +4,9 @@
 
 #include "utils/networking.h"
 
-using namespace std;
-
 int main(int argc, char *argv[])
 {
-    std::wcout << "Tablo Client" << endl;
+    std::wcout << "Tablo Client" << std::endl;
     if (argc > 0) {
         for(int index = 0; index < argc; index++) {
             if (std::string(argv[index]).rfind("--master", 0) == 0) {

@@ -6,8 +6,6 @@
 #include <vector>
 #include <mutex>
 
-using namespace std;
-
 class ClientSessionManager
 {
     public:
@@ -15,7 +13,7 @@ class ClientSessionManager
       ClientSessionManager(int socket);
       void sessionControllerCycle();
       bool hasOrder(); 
-      map<std::string, std::string> popOrder();
+      std::map<std::string, std::string> popOrder();
       void pushSolution(std::string solution); 
       void setSocket(int socket);
 

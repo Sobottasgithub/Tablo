@@ -20,10 +20,8 @@
 #include "methods.h"
 #include "client_session_controller.h"
 
-using namespace std;
-
 Networking::Networking(std::string interface) {
-    std::wcout << "Start socket..." << endl;
+    std::wcout << "Start socket..." << std::endl;
     udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
 
     // Client socket
@@ -39,7 +37,7 @@ Networking::Networking(std::string interface) {
 
     while (true) {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
-        std::wcout << "New client connection!" << endl;
+        std::wcout << "New client connection!" << std::endl;
         clientConnections.push_back(std::thread(
            &Networking::handleClientConnection,
            this,
@@ -71,7 +69,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             if (nodeIps.size() > 0) {
                 // Close connections with nodes that dont exist anymore
                 for (int index = 0; index < nodeIps.size(); index++) {
-                    std::wcout << "Close connection: " << nodeIps[index].c_str() << endl;
+                    std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
                     close(connections[nodeIps[index]]);
                     connections.erase(nodeIps[index]);
                 }
@@ -79,7 +77,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else if(newNodeIps == nodeIps) {
             while (clientSessionManager.hasOrder()) {
-                map<std::string, std::string> order = clientSessionManager.popOrder();
+                std::map<std::string, std::string> order = clientSessionManager.popOrder();
                 std::wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << std::endl;
                 std::string method = order.at("method").c_str();
                 std::string content = order.at("content").c_str();
@@ -99,15 +97,15 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                             std::wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
                             clientSessionManager.pushSolution(recievedData);
                         } else {
-                            wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
+                            std::wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << std::endl;
                         }
                     } else {
-                        wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
+                        std::wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << std::endl;
                     }
                 }
             }
         } else if (newNodeIps != nodeIps) {
-            wcout << "New nodes!" << endl;
+            std::wcout << "New nodes!" << std::endl;
 
             // Create connections with nodes
             for (int index = 0; index < newNodeIps.size(); index++) {
@@ -127,7 +125,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     // handshake compleate
                     if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {
                         connections.insert({newNodeIps[index], newSocket});
-                        std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << endl;
+                        std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << std::endl;
                     }
                 }
             }
@@ -135,13 +133,13 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             // Close connections with nodes that dont exist anymore
             for (int index = 0; index < nodeIps.size(); index++) {
                 if(std::find(newNodeIps.begin(), newNodeIps.end(), nodeIps[index]) == newNodeIps.end()) {
-                    std::wcout << "Close connection: " << nodeIps[index].c_str() << endl;
+                    std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
                     close(connections[nodeIps[index]]);
                     connections.erase(nodeIps[index]);
                 }
             }
         } else {
-            wcout << "unknown operation!" << endl;
+            std::wcout << "unknown operation!" << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }

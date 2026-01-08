@@ -8,10 +8,8 @@
 #include <bits/stdc++.h>
 #include <vector>
 
-using namespace std;
-
 Worker::Worker() {
-    cout << "";
+    std::wcout << "" << std::endl;
 }
 
 std::string Worker::testCycle(std::string data) {

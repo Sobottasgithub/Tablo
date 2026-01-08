@@ -16,10 +16,8 @@
 #include <ctime>
 #include <arpa/inet.h>
 
-using namespace std;
-
 Networking::Networking(std::string interface) {
-    std::wcout << "Start Socket...." << endl;
+    std::wcout << "Start Socket...." << std::endl;
 
     std::string containerIP = tabnet::getLocalIpAddress(interface);
 
@@ -42,7 +40,7 @@ Networking::Networking(std::string interface) {
     listen(serverSocket, 5);
     while(true) {
         int clientSocket = accept(serverSocket, nullptr, nullptr);
-        std::wcout << "clientSocket: " << clientSocket << endl;
+        std::wcout << "clientSocket: " << clientSocket << std::endl;
         threadCollection.push_back(std::thread(
             &Networking::handleClientConnection,
             this,
@@ -50,7 +48,7 @@ Networking::Networking(std::string interface) {
         )); 
     }
 
-    wcout << "Terminated!" << endl;
+    std::wcout << "Terminated!" << std::endl;
     
     for (auto &socketThread : threadCollection) {
         if(socketThread.joinable()) {
@@ -95,7 +93,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         result = worker.testCycle(data);
                         break;
                     case Methods::setFile:
-                        wcout << "set file" << endl;
+                        std::wcout << "set file" << std::endl;
                         result = "";
                         break;
                 }                

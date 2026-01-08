@@ -18,15 +18,13 @@
 #include <algorithm>
 #include <fcntl.h>
 
-using namespace std;
-
 void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
-    wcout << "Start Udp discovery..." << endl;
+    std::wcout << "Start Udp discovery..." << std::endl;
 
     std::string containerIP = tabnet::getLocalIpAddress(interface);
     std::string broadcastIP = tabnet::getBroadcastIpAddress();
 
-    std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
+    std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << std::endl;
 
     if (containerIP.empty()) {
         std::wcout << "Failed to find container IP!" << std::endl;
@@ -61,7 +59,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     // Allow reuse
     int reuse = 1;
     if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-        std::wcout << "Setsockopt failed!" << endl;
+        std::wcout << "Setsockopt failed!" << std::endl;
         close(serverSocket);
         return;
     }
@@ -142,7 +140,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
         usleep(100000);
     }
     close(serverSocket);
-    wcout << "UDP socket closed..." << endl;
+    std::wcout << "UDP socket closed..." << std::endl;
 }
 
 std::vector<std::string> UdpDiscovery::getNodeAdresses() {

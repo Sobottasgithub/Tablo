@@ -2,11 +2,9 @@
 
 #include "utils/networking.h"
 
-using namespace std;
-
 int main(int argc, char *argv[])
 {
-    std::wcout << "Tablo Master" << endl;
+    std::wcout << "Tablo Master" << std::endl;
     if (argc > 0) {
         for(int index = 0; index < argc; index++) {
             if (std::string(argv[index]).rfind("--interface", 0) == 0) {
