@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # libtabcrypt
 add_subdirectory(lib/libtabcrypt)
 
+# libtabnet
+add_subdirectory(lib/libtabnet)
+
 # Test executables
 
 add_subdirectory(TCTest)
