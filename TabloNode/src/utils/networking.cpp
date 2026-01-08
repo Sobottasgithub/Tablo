@@ -1,10 +1,8 @@
-
 #include "networking.h"
 
 #include "worker.h"
 #include "methods.h"
 #include "udp_discovery.h"
-#include "network_helpers.h"
 
 #include <iostream>
 #include <netinet/in.h>
@@ -15,8 +13,6 @@
 #include <vector>
 #include <ctime>
 #include <arpa/inet.h>
-#include <sys/poll.h>
-
 
 using namespace std;
 
@@ -73,10 +69,10 @@ void Networking::handleUdpDiscovery(std::string interface) {
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
 
-    Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+    networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
     while (true) {
-        std::string methodString = Networking::recieveMessage(clientSocket);
+        std::string methodString = networkHelpers.receiveMessage(clientSocket);
 
         // Check if string is numeric
         if (!methodString.empty() && std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
@@ -85,12 +81,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
             if(method > Methods::START && method < Methods::END) {
                 // Valid method: success            
-                Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
             
-                std::string data = Networking::recieveMessage(clientSocket);
+                std::string data = networkHelpers.receiveMessage(clientSocket);
 
                 // got data
-                Networking::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
                 std::string result = "";
                 switch (method) {
@@ -103,37 +99,15 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         break;
                 }                
 
-                Networking::sendMessage(clientSocket, result.c_str());
-                std::string response = Networking::recieveMessage(clientSocket);                
+                networkHelpers.sendMessage(clientSocket, result.c_str());
+                std::string response = networkHelpers.receiveMessage(clientSocket);                
             } else {
                 // Bad request!
-                Networking::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
             }
         } else {
             // Method not found. Bad request! Failed!
-            Networking::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+            networkHelpers.sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
         }
     }
 }
-
-void Networking::sendMessage(int socket, const char* initialMessage) {
-    const char* message = initialMessage;
-    send(socket, message, strlen(message), 0);
-}
-
-
-std::string Networking::recieveMessage(int socket) {
-    pollfd pfd{};
-    pfd.fd = socket;
-    pfd.events = POLLIN;
-
-    int ret = poll(&pfd, 1, 10000);
-    if (ret > 0 && (pfd.revents & POLLIN)) {
-        char buffer[1024]{};
-        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
-        if (n <= 0) return "";
-        return std::string(buffer, n);
-    }
-    return "";
-}
-

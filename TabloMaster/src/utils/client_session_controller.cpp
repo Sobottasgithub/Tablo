@@ -6,7 +6,6 @@
 #include <iostream>
 #include <regex>
 #include <cstring>
-#include <sys/poll.h>
 #include <sys/socket.h>
 
 #include "methods.h"
@@ -29,7 +28,7 @@ void ClientSessionManager::sessionControllerCycle() {
     std::string orderCountString = networkHelpers.receiveMessage(this->socket);
     networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
     if (isNumeric(orderCountString)) {
-      int orderCount = std::stoi(orderCountString);  
+      int orderCount = std::stoi(orderCountString);
       for (int index = 0; index < orderCount; index++) {
         std::string method  = networkHelpers.receiveMessage(this->socket);
         networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
@@ -40,12 +39,15 @@ void ClientSessionManager::sessionControllerCycle() {
     }
 
     // Send solutions
-    networkHelpers.sendMessage(this->socket, to_string(solutionCollection.size()).c_str());
-    networkHelpers.receiveMessage(this->socket);
-    for(int index = 0; index < solutionCollection.size(); index++) {
-      networkHelpers.sendMessage(this->socket, solutionCollection[0].c_str());
+    int solutionCollectionSize = solutionCollection.size();
+    networkHelpers.sendMessage(this->socket, to_string(solutionCollectionSize).c_str());
+    if (solutionCollectionSize > 0) {
       networkHelpers.receiveMessage(this->socket);
-      solutionCollection.erase(solutionCollection.begin());
+      for(int index = 0; index < solutionCollectionSize; index++) {
+        networkHelpers.sendMessage(this->socket, solutionCollection[0].c_str());
+        networkHelpers.receiveMessage(this->socket);
+        solutionCollection.erase(solutionCollection.begin());
+      }
     }
   }
 }
@@ -71,9 +73,9 @@ void ClientSessionManager::pushSolution(std::string solution) {
   solutionCollection.push_back(solution);
 }
 
-bool ClientSessionManager::isNumeric(const std::string& s) {
+bool ClientSessionManager::isNumeric(const std::string& string) {
     static const std::regex number_regex(
         R"(^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$)"
     );
-    return std::regex_match(s, number_regex);
+    return std::regex_match(string, number_regex);
 }

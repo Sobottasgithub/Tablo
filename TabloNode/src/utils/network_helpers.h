@@ -7,7 +7,10 @@ class NetworkHelpers
 {
     public:
         std::string getLocalIpAddress(std::string interface);
-        std::string getBroadcastIpAddress(); 
+        std::string getBroadcastIpAddress();
+        void sendMessage(int socket, const char* initialMessage);
+        std::string receiveMessage(int socket);
+ 
 };
 
 #endif

@@ -13,6 +13,8 @@ class Networking
 
   private:
     std::string recieveMessage(int socket);
+    bool isNumeric(const std::string& string);
+
 };
 
 #endif

@@ -28,7 +28,7 @@ class ClientSessionManager
       std::vector<std::string> solutionCollection;
       std::mutex mtx;
 
-      bool isNumeric(const std::string& s);
+      bool isNumeric(const std::string& string);
 };
 
 #endif

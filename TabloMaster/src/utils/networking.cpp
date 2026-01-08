@@ -66,7 +66,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         std::sort(nodeIps.begin(), nodeIps.end());
         
         if(newNodeIps.size() == 0) {
-            wcout << "No connected nodes!" << endl;
+            std::wcout << "No connected nodes!" << std::endl;
             if (nodeIps.size() > 0) {
                 // Close connections with nodes that dont exist anymore
                 for (int index = 0; index < nodeIps.size(); index++) {
@@ -79,7 +79,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         } else if(newNodeIps == nodeIps) {
             while (clientSessionManager.hasOrder()) {
                 map<std::string, std::string> order = clientSessionManager.popOrder();
-                wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << endl;
+                std::wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << std::endl;
                 std::string method = order.at("method").c_str();
                 std::string content = order.at("content").c_str();
                 

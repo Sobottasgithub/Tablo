@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/poll.h>
+#include <regex>
+
 
 #include "networking.h"
 
@@ -49,11 +51,20 @@ Networking::Networking(std::string tabloMaster) {
 
     //recieve
     const char* success = "100";
-    int count = std::stoi(recieveMessage(clientSocket));
-    send(clientSocket, success, strlen(success), 0);
-    for(int i = 0; i < count; i++) {
-      std::wcout << recieveMessage(clientSocket).c_str() << endl;
-      send(clientSocket, success, strlen(success), 0);
+    std::string recievedMessage = recieveMessage(clientSocket);
+    if (Networking::isNumeric(recievedMessage)) {
+      int count = std::stoi(recievedMessage);
+      if (count != 0) {
+        send(clientSocket, success, strlen(success), 0);
+        for(int i = 0; i < count; i++) {
+          std::wcout << recieveMessage(clientSocket).c_str() << endl;
+          send(clientSocket, success, strlen(success), 0);
+        }
+      } else {
+        std::wcout << "No solutions!" << std::endl;
+      }
+    } else {
+      std::wcout << "Count failed!" << std::endl;
     }
   }
 }
@@ -72,3 +83,11 @@ Networking::Networking(std::string tabloMaster) {
     }
     return "";
 }
+
+bool Networking::isNumeric(const std::string& string) {
+    static const std::regex number_regex(
+        R"(^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$)"
+    );
+    return std::regex_match(string, number_regex);
+}
+
