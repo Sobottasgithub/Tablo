@@ -1,5 +1,7 @@
 #include "networking.h"
 
+#include "tabnet.h"
+
 #include "worker.h"
 #include "methods.h"
 #include "udp_discovery.h"
@@ -19,8 +21,7 @@ using namespace std;
 Networking::Networking(std::string interface) {
     std::wcout << "Start Socket...." << endl;
 
-    NetworkHelpers networkHelpers;
-    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
+    std::string containerIP = tabnet::getLocalIpAddress(interface);
 
     udpThread = std::thread(
             &Networking::handleUdpDiscovery,
@@ -69,10 +70,10 @@ void Networking::handleUdpDiscovery(std::string interface) {
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
 
-    networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+    tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
     while (true) {
-        std::string methodString = networkHelpers.receiveMessage(clientSocket);
+        std::string methodString = tabnet::receiveMessage(clientSocket);
 
         // Check if string is numeric
         if (!methodString.empty() && std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
@@ -81,12 +82,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
             if(method > Methods::START && method < Methods::END) {
                 // Valid method: success            
-                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
             
-                std::string data = networkHelpers.receiveMessage(clientSocket);
+                std::string data = tabnet::receiveMessage(clientSocket);
 
                 // got data
-                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
                 std::string result = "";
                 switch (method) {
@@ -99,15 +100,15 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         break;
                 }                
 
-                networkHelpers.sendMessage(clientSocket, result.c_str());
-                std::string response = networkHelpers.receiveMessage(clientSocket);                
+                tabnet::sendMessage(clientSocket, result.c_str());
+                std::string response = tabnet::receiveMessage(clientSocket);                
             } else {
                 // Bad request!
-                networkHelpers.sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+                tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
             }
         } else {
             // Method not found. Bad request! Failed!
-            networkHelpers.sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+            tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
         }
     }
 }

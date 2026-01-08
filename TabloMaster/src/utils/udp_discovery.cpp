@@ -1,5 +1,7 @@
 #include "udp_discovery.h"
 
+#include "tabnet.h"
+
 #include <iostream>
 #include <cstring>
 #include <netinet/in.h>
@@ -16,16 +18,13 @@
 #include <algorithm>
 #include <fcntl.h>
 
-#include "network_helpers.h"
-
 using namespace std;
 
 void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     wcout << "Start Udp discovery..." << endl;
 
-    NetworkHelpers networkHelpers;
-    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
-    std::string broadcastIP = networkHelpers.getBroadcastIpAddress();
+    std::string containerIP = tabnet::getLocalIpAddress(interface);
+    std::string broadcastIP = tabnet::getBroadcastIpAddress();
 
     std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << endl;
 

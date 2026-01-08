@@ -1,5 +1,7 @@
 #include "client_session_controller.h"
 
+#include "tabnet.h"
+
 #include <mutex>
 #include <string>
 #include <map>
@@ -25,27 +27,27 @@ void ClientSessionManager::setSocket(int socket) {
 void ClientSessionManager::sessionControllerCycle() {
   while (true) {
     // Recieve orders
-    std::string orderCountString = networkHelpers.receiveMessage(this->socket);
-    networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
+    std::string orderCountString = tabnet::receiveMessage(this->socket);
+    tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
     if (isNumeric(orderCountString)) {
       int orderCount = std::stoi(orderCountString);
       for (int index = 0; index < orderCount; index++) {
-        std::string method  = networkHelpers.receiveMessage(this->socket);
-        networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
-        std::string content = networkHelpers.receiveMessage(this->socket);
-        networkHelpers.sendMessage(this->socket, std::to_string(Methods::success).c_str());
+        std::string method  = tabnet::receiveMessage(this->socket);
+        tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
+        std::string content = tabnet::receiveMessage(this->socket);
+        tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
         orderCollection.push_back({ {"method", method}, {"content", content} });
       }
     }
 
     // Send solutions
     int solutionCollectionSize = solutionCollection.size();
-    networkHelpers.sendMessage(this->socket, to_string(solutionCollectionSize).c_str());
+    tabnet::sendMessage(this->socket, to_string(solutionCollectionSize).c_str());
     if (solutionCollectionSize > 0) {
-      networkHelpers.receiveMessage(this->socket);
+      tabnet::receiveMessage(this->socket);
       for(int index = 0; index < solutionCollectionSize; index++) {
-        networkHelpers.sendMessage(this->socket, solutionCollection[0].c_str());
-        networkHelpers.receiveMessage(this->socket);
+        tabnet::sendMessage(this->socket, solutionCollection[0].c_str());
+        tabnet::receiveMessage(this->socket);
         solutionCollection.erase(solutionCollection.begin());
       }
     }
@@ -74,8 +76,8 @@ void ClientSessionManager::pushSolution(std::string solution) {
 }
 
 bool ClientSessionManager::isNumeric(const std::string& string) {
-    static const std::regex number_regex(
+    static const std::regex numberRegex(
         R"(^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$)"
     );
-    return std::regex_match(string, number_regex);
+    return std::regex_match(string, numberRegex);
 }

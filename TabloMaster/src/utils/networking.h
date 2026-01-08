@@ -7,7 +7,6 @@
 #include <thread>
 
 #include "udp_discovery.h"
-#include "network_helpers.h"
 
 class Networking
 {
@@ -20,7 +19,6 @@ class Networking
         std::vector<std::thread> clientConnections;
         UdpDiscovery udpDiscovery;
         std::thread udpDiscoveryThread;
-        NetworkHelpers networkHelpers;
 };
 
 #endif

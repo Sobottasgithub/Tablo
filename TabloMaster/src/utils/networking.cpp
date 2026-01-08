@@ -1,3 +1,6 @@
+#include "udp_discovery.h"
+
+#include "tabnet.h"
 
 #include <iostream>
 #include <cstring>
@@ -17,8 +20,6 @@
 #include "methods.h"
 #include "client_session_controller.h"
 
-#include "udp_discovery.h"
-
 using namespace std;
 
 Networking::Networking(std::string interface) {
@@ -31,7 +32,7 @@ Networking::Networking(std::string interface) {
     sockaddr_in serverAddress;
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(4003);
-    serverAddress.sin_addr.s_addr = inet_addr(networkHelpers.getLocalIpAddress(interface).c_str());
+    serverAddress.sin_addr.s_addr = inet_addr(tabnet::getLocalIpAddress(interface).c_str());
 
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     listen(serverSocket, 5);
@@ -87,15 +88,15 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
                     int currentSocket = connections[nodeIps[index]];
                 
-                    networkHelpers.sendMessage(currentSocket, method.c_str());
-                    std::string status = networkHelpers.receiveMessage(currentSocket);
+                    tabnet::sendMessage(currentSocket, method.c_str());
+                    std::string status = tabnet::receiveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        networkHelpers.sendMessage(currentSocket, content.c_str());
-                        std::string status = networkHelpers.receiveMessage(currentSocket);
+                        tabnet::sendMessage(currentSocket, content.c_str());
+                        std::string status = tabnet::receiveMessage(currentSocket);
                         if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                            std::string recievedData = networkHelpers.receiveMessage(currentSocket);
-                            networkHelpers.sendMessage(currentSocket, std::to_string(Methods::success).c_str());
-                            wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << endl;
+                            std::string recievedData = tabnet::receiveMessage(currentSocket);
+                            tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                            std::wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
                             clientSessionManager.pushSolution(recievedData);
                         } else {
                             wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << endl;
@@ -121,7 +122,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
                     connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
-                    std::string respCode = networkHelpers.receiveMessage(newSocket);
+                    std::string respCode = tabnet::receiveMessage(newSocket);
 
                     // handshake compleate
                     if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {

@@ -1,5 +1,6 @@
 #include "udp_discovery.h"
-#include "network_helpers.h"
+
+#include "tabnet.h"
 
 #include <iostream>
 #include <string>
@@ -16,8 +17,7 @@ using namespace std;
 UdpDiscovery::UdpDiscovery(std::string interface) {
     std::wcout << "Start udp discovery..." << std::endl;
     
-    NetworkHelpers networkHelpers = NetworkHelpers();
-    std::string containerIP = networkHelpers.getLocalIpAddress(interface);
+    std::string containerIP = tabnet::getLocalIpAddress(interface);
 
     int udpSocket;
     const int port = 4000; 
@@ -44,8 +44,8 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
     std::wcout << "Listening on UDP port " << port << std::endl;
     while (true) {
         // Get UDP Discovery packet
-        std::string masterIP = networkHelpers.receiveMessage(udpSocket);
-        if (masterIP.length() != 0 && networkHelpers.isValidIpV4(masterIP)) {
+        std::string masterIP = tabnet::receiveMessage(udpSocket);
+        if (masterIP.length() != 0 && tabnet::isValidIpV4(masterIP)) {
             // DEBUG ONLY:
             //std::wcout << masterIP.c_str() << std::endl;
 
@@ -68,7 +68,7 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
                 continue;
             }
             //send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
-            networkHelpers.sendMessage(recieveSocket, containerIP.c_str());
+            tabnet::sendMessage(recieveSocket, containerIP.c_str());
             close(recieveSocket);
         }
     }

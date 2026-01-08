@@ -7,7 +7,6 @@
 #include <bits/stdc++.h>
 #include <vector>
 #include <string>
-#include "network_helpers.h"
 
 class Networking
 {
@@ -17,7 +16,6 @@ class Networking
         void handleClientConnection(int serverSocket, int clientSocket);
 
     private:
-        NetworkHelpers networkHelpers;
         int serverSocket;
         std::vector<std::thread> threadCollection;
         std::thread udpThread;

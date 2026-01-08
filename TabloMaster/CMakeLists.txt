@@ -8,7 +8,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 add_executable(tablo-master ${SOURCES})
 
-# Link against the tabcrypt library
+# Link against the tabcrypt and tabnet library
 target_link_libraries(tablo-master PRIVATE tabcrypt)
+target_link_libraries(tablo-master PRIVATE tabnet)
 
 install(TARGETS tablo-master DESTINATION bin)
