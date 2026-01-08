@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include "tabnet.h"
 
 #include "utils/networking.h"
 
@@ -9,6 +10,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+    tabnet::test();
     std::wcout << "Tablo Node" << endl;
     if (argc > 0) {
         for(int index = 0; index < argc; index++) {
