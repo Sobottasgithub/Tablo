@@ -6,6 +6,8 @@
 #include <net/if.h>
 #include <cstring>
 #include <sys/poll.h>
+#include <bits/stdc++.h>
+
 #include "network_helpers.h"
 
 using namespace std;
@@ -95,4 +97,35 @@ std::string NetworkHelpers::receiveMessage(int socket) {
         return std::string(buffer, n);
     }
     return "";
+}
+
+bool NetworkHelpers::isValidIpV4(std::string &ipString){
+    if (ipString.size() < 7) return false;
+
+    int count = 0;
+    // Seperate Ip Octets
+    stringstream stringStream(ipString);
+    while (stringStream.good()){
+        string octet;
+        getline(stringStream, octet, '.');
+
+        if (octet.size() > 1){
+            if (octet[0] == '0')
+                return false;
+        }
+
+        for (int index = 0; index < octet.size(); index++){
+            if (isalpha(octet[index]))
+                return false;
+        }
+
+        if (stoi(octet) > 255)
+            return false;
+
+        count++;
+    }
+
+    if (count != 4) return false;
+
+    return true;
 }

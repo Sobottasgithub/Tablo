@@ -10,7 +10,7 @@ class NetworkHelpers
         std::string getBroadcastIpAddress();
         void sendMessage(int socket, const char* initialMessage);
         std::string receiveMessage(int socket);
- 
+        bool isValidIpV4(std::string &ipString);
 };
 
 #endif

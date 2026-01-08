@@ -41,24 +41,13 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
         std::wcout << "UDP Socket bind failed!" << std::endl;
         return;
     }
-    wcout << "Listening on UDP port " << port << endl;
-
-     // Init poll
-    struct pollfd pfds[2];
-    pfds[0].fd = STDIN_FILENO;
-    pfds[0].events = POLLIN;
-    pfds[1].fd = udpSocket;
-    pfds[1].events = POLLIN;
-    
+    std::wcout << "Listening on UDP port " << port << std::endl;
     while (true) {
         // Get UDP Discovery packet
-        std::string respCode;
-        while(poll(pfds, 2, 1000) != -1) {
-            char buffer[1024] = { 0 };
-            recv(udpSocket, buffer, sizeof(buffer), 0);
-
+        std::string masterIP = networkHelpers.receiveMessage(udpSocket);
+        if (masterIP.length() != 0 && networkHelpers.isValidIpV4(masterIP)) {
             // DEBUG ONLY:
-            //std::wcout << buffer << std::endl;
+            //std::wcout << masterIP.c_str() << std::endl;
 
             // Send response over TCP
             int recieveSocket = 0;
@@ -70,7 +59,7 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
                 std::wcout << "Socket creation error" << std::endl;
                 continue;
             }
-            if (inet_pton(AF_INET, buffer, &masterAddress.sin_addr) <= 0) {
+            if (inet_pton(AF_INET, masterIP.c_str(), &masterAddress.sin_addr) <= 0) {
                 std::wcout << "Address not supported" << std::endl;
                 continue;
             }
@@ -78,7 +67,8 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
                 std::wcout << "Connection failed" << std::endl;
                 continue;
             }
-            send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
+            //send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
+            networkHelpers.sendMessage(recieveSocket, containerIP.c_str());
             close(recieveSocket);
         }
     }
