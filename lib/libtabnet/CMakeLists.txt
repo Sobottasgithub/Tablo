@@ -13,5 +13,8 @@ add_library(tabnet SHARED ${SOURCES})
 
 target_include_directories(tabnet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Link against the tabcrypt library
+target_link_libraries(tabnet PRIVATE tabcrypt)
+
 install(TARGETS tabnet DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)

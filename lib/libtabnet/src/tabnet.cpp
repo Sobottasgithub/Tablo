@@ -1,5 +1,8 @@
 #include "../include/tabnet.h"
 
+#include "tabcrypt.h"
+
+#include <stdatomic.h>
 #include <string>
 #include <ifaddrs.h>
 #include <arpa/inet.h>
@@ -9,6 +12,8 @@
 #include <cstring>
 #include <sys/poll.h>
 #include <bits/stdc++.h>
+
+std::string secret = "";
 
 namespace tabnet {
   std::string getLocalIpAddress(std::string interface) {
@@ -77,8 +82,9 @@ namespace tabnet {
       return broadcastIP;
   }
 
-  void sendMessage(int socket, const char* initialMessage) {
-      const char* message = initialMessage;
+  void sendMessage(int socket, std::string initialMessage) {
+      std::string encryptedMessage = tabcrypt::encrypt(secret, initialMessage);
+      const char* message = encryptedMessage.c_str();
       send(socket, message, strlen(message), 0);
   }
 
@@ -91,9 +97,9 @@ namespace tabnet {
       int ret = poll(&pfd, 1, 10000);
       if (ret > 0 && (pfd.revents & POLLIN)) {
           char buffer[1024]{};
-          ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
-          if (n <= 0) return "";
-          return std::string(buffer, n);
+          ssize_t size = recv(socket, buffer, sizeof(buffer)-1, 0);
+          if (size <= 0) return "";
+          return tabcrypt::decrypt(secret, std::string(buffer, size));
       }
       return "";
   }
