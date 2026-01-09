@@ -50,6 +50,7 @@ src/TabloClient/tabloClient
 # cmake
 build
 outputs
+.cache
 
 # IDEA
 .idea
