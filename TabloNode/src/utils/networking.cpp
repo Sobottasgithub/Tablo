@@ -2,120 +2,119 @@
 
 #include "tabnet.h"
 
-#include "worker.h"
 #include "methods.h"
 #include "udp_discovery.h"
+#include "worker.h"
 
+#include <arpa/inet.h>
+#include <bits/stdc++.h>
+#include <ctime>
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <system_error>
 #include <thread>
-#include <bits/stdc++.h>
 #include <vector>
-#include <ctime>
-#include <arpa/inet.h>
 
 Networking::Networking(std::string interface) {
-    std::wcout << "Start Socket...." << std::endl;
+  std::wcout << "Start Socket...." << std::endl;
 
-    std::string containerIP = tabnet::getLocalIpAddress(interface);
+  std::string containerIP = tabnet::getLocalIpAddress(interface);
 
-    udpThread = std::thread(
-            &Networking::handleUdpDiscovery,
-            this,
-            interface
-    );
+  udpThread = std::thread(&Networking::handleUdpDiscovery, this, interface);
 
-    sockaddr_in serverAddress;
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(4004);
-    serverAddress.sin_addr.s_addr = inet_addr(containerIP.c_str());
+  sockaddr_in serverAddress;
+  serverAddress.sin_family = AF_INET;
+  serverAddress.sin_port = htons(4004);
+  serverAddress.sin_addr.s_addr = inet_addr(containerIP.c_str());
 
-    int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+  int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+  bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress));
 
-    // On new request: make new worker thread
-    threadCollection.reserve(100);
-    listen(serverSocket, 5);
-    while(true) {
-        int clientSocket = accept(serverSocket, nullptr, nullptr);
-        std::wcout << "clientSocket: " << clientSocket << std::endl;
-        threadCollection.push_back(std::thread(
-            &Networking::handleClientConnection,
-            this,
-            serverSocket, clientSocket
-        )); 
+  // On new request: make new worker thread
+  threadCollection.reserve(100);
+  listen(serverSocket, 5);
+  while (true) {
+    int clientSocket = accept(serverSocket, nullptr, nullptr);
+    std::wcout << "clientSocket: " << clientSocket << std::endl;
+    threadCollection.push_back(std::thread(&Networking::handleClientConnection,
+                                           this, serverSocket, clientSocket));
+  }
+
+  std::wcout << "Terminated!" << std::endl;
+
+  for (auto &socketThread : threadCollection) {
+    if (socketThread.joinable()) {
+      socketThread.join();
     }
+  }
 
-    std::wcout << "Terminated!" << std::endl;
-    
-    for (auto &socketThread : threadCollection) {
-        if(socketThread.joinable()) {
-            socketThread.join();
-        }
-    }
-
-    if(udpThread.joinable()) {
-        udpThread.join();
-    }   
+  if (udpThread.joinable()) {
+    udpThread.join();
+  }
 }
 
 void Networking::handleUdpDiscovery(std::string interface) {
-    UdpDiscovery udpDiscovery(interface);    
+  UdpDiscovery udpDiscovery(interface);
 }
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
-    Worker worker;
-    int responseCode = 0;
+  Worker worker;
+  int responseCode = 0;
 
-    responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+  responseCode = tabnet::sendMessage(clientSocket,
+                                     std::to_string(Methods::success).c_str());
 
-    while (true) {
-        std::string methodString = tabnet::receiveMessage(clientSocket);
+  while (true) {
+    std::string methodString = tabnet::receiveMessage(clientSocket);
 
-        // Check if string is numeric
-        if (!methodString.empty() && std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
-            // Convert methodString to int
-            int method = std::stoi( methodString );
+    // Check if string is numeric
+    if (!methodString.empty() &&
+        std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
+      // Convert methodString to int
+      int method = std::stoi(methodString);
 
-            if(method > Methods::START && method < Methods::END) {
+      if (method > Methods::START && method < Methods::END) {
 
-                // Valid method: success            
-                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
-                
-                std::string data = tabnet::receiveMessage(clientSocket);
-                
-                // got data
-                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
-                
-                std::string result = "";
-                switch (method) {
-                    case Methods::test:
-                        result = worker.testCycle(data);
-                        break;
-                    case Methods::setFile:
-                        std::wcout << "set file" << std::endl;
-                        result = "";
-                        break;
-                } 
+        // Valid method: success
+        responseCode = tabnet::sendMessage(
+            clientSocket, std::to_string(Methods::success).c_str());
 
-                responseCode = tabnet::sendMessage(clientSocket, result.c_str());
-                std::string response = tabnet::receiveMessage(clientSocket);
-            } else {
-                // Bad request!
-                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
-            }
-        } else {
-            // Method not found. Bad request! Failed!
-            responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+        std::string data = tabnet::receiveMessage(clientSocket);
+
+        // got data
+        responseCode = tabnet::sendMessage(
+            clientSocket, std::to_string(Methods::success).c_str());
+
+        std::string result = "";
+        switch (method) {
+        case Methods::test:
+          result = worker.testCycle(data);
+          break;
+        case Methods::setFile:
+          std::wcout << "set file" << std::endl;
+          result = "";
+          break;
         }
 
-        // Implement controlled shutdown of this thread, if the master crashes
-        if(responseCode < 0) {
-            std::wcout << "Socket: " << clientSocket << " closed!" << std::endl;
-            close(clientSocket);
-            return;
-        }
+        responseCode = tabnet::sendMessage(clientSocket, result.c_str());
+        std::string response = tabnet::receiveMessage(clientSocket);
+      } else {
+        // Bad request!
+        responseCode = tabnet::sendMessage(
+            clientSocket, std::to_string(Methods::failed).c_str());
+      }
+    } else {
+      // Method not found. Bad request! Failed!
+      responseCode = tabnet::sendMessage(
+          clientSocket, std::to_string(Methods::failed).c_str());
     }
+
+    // Implement controlled shutdown of this thread, if the master crashes
+    if (responseCode < 0) {
+      std::wcout << "Socket: " << clientSocket << " closed!" << std::endl;
+      close(clientSocket);
+      return;
+    }
+  }
 }
