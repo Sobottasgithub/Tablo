@@ -67,8 +67,9 @@ void Networking::handleUdpDiscovery(std::string interface) {
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     Worker worker;
+    int responseCode = 0;
 
-    tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+    responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
 
     while (true) {
         std::string methodString = tabnet::receiveMessage(clientSocket);
@@ -79,14 +80,15 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             int method = std::stoi( methodString );
 
             if(method > Methods::START && method < Methods::END) {
+
                 // Valid method: success            
-                tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
-            
+                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                
                 std::string data = tabnet::receiveMessage(clientSocket);
-
+                
                 // got data
-                tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
-
+                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::success).c_str());
+                
                 std::string result = "";
                 switch (method) {
                     case Methods::test:
@@ -96,17 +98,24 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         std::wcout << "set file" << std::endl;
                         result = "";
                         break;
-                }                
+                } 
 
-                tabnet::sendMessage(clientSocket, result.c_str());
-                std::string response = tabnet::receiveMessage(clientSocket);                
+                responseCode = tabnet::sendMessage(clientSocket, result.c_str());
+                std::string response = tabnet::receiveMessage(clientSocket);
             } else {
                 // Bad request!
-                tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+                responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
             }
         } else {
             // Method not found. Bad request! Failed!
-            tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+            responseCode = tabnet::sendMessage(clientSocket, std::to_string(Methods::failed).c_str());
+        }
+
+        // Implement controlled shutdown of this thread, if the master crashes
+        if(responseCode < 0) {
+            std::wcout << "Socket: " << clientSocket << " closed!" << std::endl;
+            close(clientSocket);
+            return;
         }
     }
 }

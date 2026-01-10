@@ -82,10 +82,16 @@ namespace tabnet {
       return broadcastIP;
   }
 
-  void sendMessage(int socket, std::string initialMessage) {
-      std::string encryptedMessage = tabcrypt::encrypt(secret, initialMessage);
-      const char* message = encryptedMessage.c_str();
-      send(socket, message, strlen(message), 0);
+  int sendMessage(int socket, std::string initialMessage) {
+    std::string encryptedMessage = tabcrypt::encrypt(secret, initialMessage);
+    const char *message = encryptedMessage.c_str();
+    ssize_t n = send(socket, message, strlen(message), MSG_NOSIGNAL);
+    if (n < 0) {
+      if (errno == EPIPE || errno == ECONNRESET) {
+        return -1;
+      }
+    }
+    return 0;
   }
 
 
