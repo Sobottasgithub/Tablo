@@ -56,9 +56,10 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     
     // TCP
     std::map<std::string, int> connections;
-    while (true) {
+    std::vector<std::string> nodeIps;
+    while (clientSessionManager.isConnected()) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
-        std::vector<std::string> nodeIps = Networking::getKeys(connections);
+        nodeIps = Networking::getKeys(connections);
 
         // sort vectors to compare them
         std::sort(newNodeIps.begin(), newNodeIps.end());
@@ -143,7 +144,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
     }
-    
+
+    // Close node con
+    for(int index = 0; index < connections.size(); index++) {
+        close(connections[nodeIps[index]]);
+    }
+    std::wcout << "Terminate handleClientConnection for " << clientSocket << std::endl;
     udpDiscoveryThread.join();
 }
 

@@ -1,9 +1,13 @@
+#include <csignal>
 #include <iostream>
 
 #include "utils/networking.h"
 
 int main(int argc, char *argv[])
 {
+    // Prevents crash when tcp send failes
+    signal(SIGPIPE, SIG_IGN);
+
     std::wcout << "Tablo Master" << std::endl;
     if (argc > 0) {
         for(int index = 0; index < argc; index++) {

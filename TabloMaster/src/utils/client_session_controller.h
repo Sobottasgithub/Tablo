@@ -12,6 +12,7 @@ class ClientSessionManager
       ClientSessionManager();
       ClientSessionManager(int socket);
       void sessionControllerCycle();
+      bool isConnected();
       bool hasOrder(); 
       std::map<std::string, std::string> popOrder();
       void pushSolution(std::string solution); 
@@ -21,6 +22,7 @@ class ClientSessionManager
       int socket;
       std::vector<std::map<std::string, std::string>> orderCollection;
       std::vector<std::string> solutionCollection;
+      bool connected = true;
       std::mutex mtx;
 
       bool isNumeric(const std::string& string);
