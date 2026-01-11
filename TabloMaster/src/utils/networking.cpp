@@ -57,6 +57,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     // TCP
     std::map<std::string, int> connections;
     std::vector<std::string> nodeIps;
+    int responseCode = 0;
     while (clientSessionManager.isConnected()) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
         nodeIps = Networking::getKeys(connections);
@@ -77,7 +78,8 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else if(newNodeIps == nodeIps) {
-            while (clientSessionManager.hasOrder()) {
+            bool nodeShutdown = false;
+            while (clientSessionManager.hasOrder() && !nodeShutdown) {
                 std::map<std::string, std::string> order = clientSessionManager.popOrder();
                 std::wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << std::endl;
                 std::string method = order.at("method").c_str();
@@ -87,14 +89,14 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
                     int currentSocket = connections[nodeIps[index]];
                 
-                    tabnet::sendMessage(currentSocket, method.c_str());
+                    responseCode =  tabnet::sendMessage(currentSocket, method.c_str());
                     std::string status = tabnet::receiveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        tabnet::sendMessage(currentSocket, content.c_str());
+                        responseCode = tabnet::sendMessage(currentSocket, content.c_str());
                         std::string status = tabnet::receiveMessage(currentSocket);
                         if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
                             std::string recievedData = tabnet::receiveMessage(currentSocket);
-                            tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
+                            responseCode = tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
                             std::wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
                             clientSessionManager.pushSolution(recievedData);
                         } else {
@@ -102,6 +104,13 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         }
                     } else {
                         std::wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << std::endl;
+                    }
+
+                    if (responseCode < 0) {
+                        std::wcout << "-------Break loop" << std::endl;
+                        udpDiscovery.removeNodeAddress(nodeIps[index]);
+                        nodeShutdown = true;
+                        break;
                     }
                 }
             }

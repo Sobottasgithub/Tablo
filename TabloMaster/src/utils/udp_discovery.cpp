@@ -148,3 +148,8 @@ std::vector<std::string> UdpDiscovery::getNodeAdresses() {
     return nodeIPAddresses;
 }
 
+void UdpDiscovery::removeNodeAddress(std::string nodeAddress) {
+    std::lock_guard<std::mutex> lock(mtx);
+    nodeIPAddresses.erase(find(nodeIPAddresses.begin(), nodeIPAddresses.end(), nodeAddress));
+}
+

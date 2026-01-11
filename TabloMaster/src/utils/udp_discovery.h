@@ -10,6 +10,7 @@ class UdpDiscovery
     public:
         void udpDiscoveryCycle(std::string interface);
         std::vector<std::string> getNodeAdresses();
+        void removeNodeAddress(std::string nodeAddress); 
         
     private:
         std::vector<std::string> nodeIPAddresses = {};
