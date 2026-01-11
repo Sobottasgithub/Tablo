@@ -107,7 +107,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     }
 
                     if (responseCode < 0) {
-                        std::wcout << "-------Break loop" << std::endl;
+                        responseCode = 0;
                         udpDiscovery.removeNodeAddress(nodeIps[index]);
                         nodeShutdown = true;
                         break;
