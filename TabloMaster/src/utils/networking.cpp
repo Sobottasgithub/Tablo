@@ -123,12 +123,16 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                 if(std::find(nodeIps.begin(), nodeIps.end(), newNodeIps[index]) == nodeIps.end()) {
                     // Create new connection
                     int newSocket = socket(AF_INET, SOCK_STREAM, 0);
-            
+
                     sockaddr_in nodeAddress;
                     nodeAddress.sin_family = AF_INET;
                     nodeAddress.sin_port = htons(4004);
                     nodeAddress.sin_addr.s_addr = inet_addr(newNodeIps[index].c_str());
-                    connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
+
+                    if(connect(newSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress)) == -1) {
+                        udpDiscovery.removeNodeAddress(newNodeIps[index]);
+                        continue;
+                    }
 
                     std::string respCode = tabnet::receiveMessage(newSocket);
 
@@ -146,6 +150,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
                     close(connections[nodeIps[index]]);
                     connections.erase(nodeIps[index]);
+                    nodeIps.erase(nodeIps.begin() + index);
                 }
             }
         } else {
