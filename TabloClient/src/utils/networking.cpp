@@ -1,3 +1,5 @@
+#include "networking.h"
+
 #include <iostream>
 #include <cstring>
 
@@ -10,7 +12,7 @@
 #include <sys/poll.h>
 #include <regex>
 
-#include "networking.h"
+#include "tabnet.h"
 
 Networking::Networking() {}
 
@@ -27,41 +29,33 @@ void Networking::networkingCycle(std::string tabloMaster) {
   // sending connection request
   connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 
-  int count = 0;
   while(true) {
-
-    // WIP: TODO: implement Tablonet send and receive
     int orderCollectionSize = orderCollection.size();
-    std::string orderCollectionSizeString = std::to_string(orderCollectionSize);
-    const char* orderCount = orderCollectionSizeString.c_str();
-    send(clientSocket, orderCount, strlen(orderCount), 0);
-    recieveMessage(clientSocket);
+    tabnet::sendMessage(clientSocket, std::to_string(orderCollectionSize));
+    tabnet::receiveMessage(clientSocket);
     for(int index = 0; index < orderCollectionSize; index++) {
       std::map<std::string, std::string> order= orderCollection[0];
       orderCollection.erase(orderCollection.begin());
-      std::string methodString = order.begin()->first;
-      // WIP: This will be deleted when tablonet is implemented:
-      const char* method = methodString.c_str();
-      std::string data = order[methodString];
+      std::string method = order.begin()->first;
 
-      const char* content = data.c_str();
-      send(clientSocket, method, strlen(method), 0);
-      recieveMessage(clientSocket);
-      send(clientSocket, content, strlen(content), 0);
-      recieveMessage(clientSocket);
-      count ++;
+      // Send method
+      tabnet::sendMessage(clientSocket, method);
+      tabnet::receiveMessage(clientSocket);
+      // Send content
+      tabnet::sendMessage(clientSocket, order[method]);
+      tabnet::receiveMessage(clientSocket);
     }
 
-    //recieve
+    //receive
     const char* success = "100";
-    std::string recievedMessage = recieveMessage(clientSocket);
-    if (Networking::isNumeric(recievedMessage)) {
-      int count = std::stoi(recievedMessage);
+    std::string receivedMessage = tabnet::receiveMessage(clientSocket);
+    if (Networking::isNumeric(receivedMessage)) {
+      int count = std::stoi(receivedMessage);
       if (count != 0) {
-        send(clientSocket, success, strlen(success), 0);
+        tabnet::sendMessage(clientSocket, success);
         for(int i = 0; i < count; i++) {
-          solutionCollection.push_back(recieveMessage(clientSocket));
-          send(clientSocket, success, strlen(success), 0);
+          solutionCollection.push_back(tabnet::receiveMessage(clientSocket));
+          tabnet::sendMessage(clientSocket, success);
         }
       }
     } else {
@@ -87,21 +81,6 @@ void Networking::pushOrder(int method, std::string content) {
   std::map<std::string, std::string> order;
   order[std::to_string(method)] = content;
   orderCollection.push_back(order);
-}
-
-std::string Networking::recieveMessage(int socket) {
-    pollfd pfd{};
-    pfd.fd = socket;
-    pfd.events = POLLIN;
-
-    int ret = poll(&pfd, 1, 10000);
-    if (ret > 0 && (pfd.revents & POLLIN)) {
-        char buffer[1024]{};
-        ssize_t n = recv(socket, buffer, sizeof(buffer)-1, 0);
-        if (n <= 0) return "";
-        return std::string(buffer, n);
-    }
-    return "";
 }
 
 bool Networking::isNumeric(const std::string& string) {
