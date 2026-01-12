@@ -2,7 +2,9 @@
 #include <cstring>
 
 #include <arpa/inet.h>
+#include <mutex>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/poll.h>
@@ -10,13 +12,9 @@
 
 #include "networking.h"
 
-Networking::Networking() {
-  std::wcout << "Start tablo client socket..." << std::endl;
-}
+Networking::Networking() {}
 
-Networking::Networking(std::string tabloMaster) {
-  std::wcout << "tablo Master: " << tabloMaster.c_str() << std::endl;
-
+void Networking::networkingCycle(std::string tabloMaster) {
   // creating socket
   int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -29,15 +27,23 @@ Networking::Networking(std::string tabloMaster) {
   // sending connection request
   connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
 
-  // WIP: Will be compleatly rewritten: only for testing
   int count = 0;
   while(true) {
-    const char* orderCount = "2";
+
+    // WIP: TODO: implement Tablonet send and receive
+    int orderCollectionSize = orderCollection.size();
+    std::string orderCollectionSizeString = std::to_string(orderCollectionSize);
+    const char* orderCount = orderCollectionSizeString.c_str();
     send(clientSocket, orderCount, strlen(orderCount), 0);
     recieveMessage(clientSocket);
-    for(int index = 0; index < 2; index++) {
-      const char* method = "401";
-      std::string data = "test" + std::to_string(count);
+    for(int index = 0; index < orderCollectionSize; index++) {
+      std::map<std::string, std::string> order= orderCollection[0];
+      orderCollection.erase(orderCollection.begin());
+      std::string methodString = order.begin()->first;
+      // WIP: This will be deleted when tablonet is implemented:
+      const char* method = methodString.c_str();
+      std::string data = order[methodString];
+
       const char* content = data.c_str();
       send(clientSocket, method, strlen(method), 0);
       recieveMessage(clientSocket);
@@ -54,11 +60,9 @@ Networking::Networking(std::string tabloMaster) {
       if (count != 0) {
         send(clientSocket, success, strlen(success), 0);
         for(int i = 0; i < count; i++) {
-          std::wcout << recieveMessage(clientSocket).c_str() << std::endl;
+          solutionCollection.push_back(recieveMessage(clientSocket));
           send(clientSocket, success, strlen(success), 0);
         }
-      } else {
-        std::wcout << "No solutions!" << std::endl;
       }
     } else {
       std::wcout << "Count failed!" << std::endl;
@@ -66,7 +70,26 @@ Networking::Networking(std::string tabloMaster) {
   }
 }
 
- std::string Networking::recieveMessage(int socket) {
+bool Networking::hasSolution() {
+  std::lock_guard<std::mutex> lock(mtx);
+  return !solutionCollection.empty();
+}
+
+std::string Networking::popSolution() {
+  std::lock_guard<std::mutex> lock(mtx);
+  std::string solution = solutionCollection[0];
+  solutionCollection.erase(solutionCollection.begin());
+  return solution;
+}
+
+void Networking::pushOrder(int method, std::string content) {
+  std::lock_guard<std::mutex> lock(mtx);
+  std::map<std::string, std::string> order;
+  order[std::to_string(method)] = content;
+  orderCollection.push_back(order);
+}
+
+std::string Networking::recieveMessage(int socket) {
     pollfd pfd{};
     pfd.fd = socket;
     pfd.events = POLLIN;
