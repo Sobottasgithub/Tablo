@@ -89,11 +89,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
                     int currentSocket = connections[nodeIps[index]];
                 
-                    responseCode =  tabnet::sendMessage(currentSocket, method.c_str());
+                    responseCode = tabnet::sendMessage(currentSocket, method.c_str());
                     std::string status = tabnet::receiveMessage(currentSocket);
                     if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
                         responseCode = tabnet::sendMessage(currentSocket, content.c_str());
                         std::string status = tabnet::receiveMessage(currentSocket);
+                        responseCode = tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str()); 
                         if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
                             std::string recievedData = tabnet::receiveMessage(currentSocket);
                             responseCode = tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str());

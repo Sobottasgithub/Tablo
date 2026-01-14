@@ -85,6 +85,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         // got data
         responseCode = tabnet::sendMessage(
             clientSocket, std::to_string(Methods::success).c_str());
+        tabnet::receiveMessage(clientSocket);
 
         std::string result = "";
         switch (method) {
