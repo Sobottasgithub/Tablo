@@ -82,8 +82,8 @@ namespace tabnet {
       return broadcastIP;
   }
 
-  int sendMessage(int socket, int action, std::string payload) {
-    Packet data = {action, payload};
+  int sendMessage(int socket, int method, std::string payload) {
+    Packet data = {method, payload};
     //std::string encryptedMessage = tabcrypt::encrypt(secret, data);
     ssize_t n = send(socket, (const char*)&data, sizeof(data), MSG_NOSIGNAL);
     if (n < 0) {
