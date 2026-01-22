@@ -7,7 +7,8 @@ enum Methods {
   
   START = 400,
   test = 401,
-  setFile = 402,
+  size = 402,
+  setFile = 403,
   END
 }; 
 
