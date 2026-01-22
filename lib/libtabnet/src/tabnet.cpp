@@ -82,10 +82,10 @@ namespace tabnet {
       return broadcastIP;
   }
 
-  int sendMessage(int socket, std::string initialMessage) {
-    std::string encryptedMessage = tabcrypt::encrypt(secret, initialMessage);
-    const char *message = encryptedMessage.c_str();
-    ssize_t n = send(socket, message, strlen(message), MSG_NOSIGNAL);
+  int sendMessage(int socket, int action, std::string payload) {
+    Packet data = {action, payload};
+    //std::string encryptedMessage = tabcrypt::encrypt(secret, data);
+    ssize_t n = send(socket, (const char*)&data, sizeof(data), MSG_NOSIGNAL);
     if (n < 0) {
       if (errno == EPIPE || errno == ECONNRESET) {
         return -1;
@@ -95,19 +95,20 @@ namespace tabnet {
   }
 
 
-  std::string receiveMessage(int socket) {
+  Packet receiveMessage(int socket) {
+      Packet data;
+      
       pollfd pfd{};
       pfd.fd = socket;
       pfd.events = POLLIN;
 
       int ret = poll(&pfd, 1, 10000);
       if (ret > 0 && (pfd.revents & POLLIN)) {
-          char buffer[1024]{};
-          ssize_t size = recv(socket, buffer, sizeof(buffer)-1, 0);
-          if (size <= 0) return "";
-          return tabcrypt::decrypt(secret, std::string(buffer, size));
+          ssize_t size = recv(socket, (char*)&data, sizeof(data)-1, 0);
+          if (size <= 0) return data;
+          return data;
       }
-      return "";
+      return data;
   }
 
   bool isValidIpV4(std::string &ipString){
