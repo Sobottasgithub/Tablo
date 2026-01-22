@@ -13,6 +13,7 @@
 #include <regex>
 
 #include "tabnet.h"
+#include "methods.h"
 
 Networking::Networking() {}
 
@@ -31,35 +32,51 @@ void Networking::networkingCycle(std::string tabloMaster) {
 
   while(true) {
     int orderCollectionSize = orderCollection.size();
-    tabnet::sendMessage(clientSocket, std::to_string(orderCollectionSize));
-    tabnet::receiveMessage(clientSocket);
-    for(int index = 0; index < orderCollectionSize; index++) {
-      std::map<std::string, std::string> order= orderCollection[0];
-      orderCollection.erase(orderCollection.begin());
-      std::string method = order.begin()->first;
+    tabnet::sendMessage(clientSocket, Methods::size, std::to_string(orderCollectionSize));
+    tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+    if (response.method == Methods::success) {
+      for(int index = 0; index < orderCollectionSize; index++) {
+        std::map<int, std::string> order = orderCollection[0];
+        orderCollection.erase(orderCollection.begin());
+        int method = order.begin()->first;
 
-      // Send method
-      tabnet::sendMessage(clientSocket, method);
-      tabnet::receiveMessage(clientSocket);
-      // Send content
-      tabnet::sendMessage(clientSocket, order[method]);
-      tabnet::receiveMessage(clientSocket);
+        // Send data
+        tabnet::sendMessage(clientSocket, method, order[method]);
+        tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+        if (response.method == Methods::failed) {
+          std::wcout << "Something went wrong while sending the order! Master response: " << response.payload.c_str() << std::endl;
+        } else {
+          std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+          std::wcout << "With following payload" << response.payload.c_str() << std::endl;
+        }
+      }
+    } else if (response.method == Methods::failed) {
+      std::wcout << "Something went wrong while sending the size! Master response: " << response.payload.c_str() << std::endl;
+    } else {
+      std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+      std::wcout << "With following payload" << response.payload.c_str() << std::endl;
     }
 
     //receive
-    const char* success = "100";
-    std::string receivedMessage = tabnet::receiveMessage(clientSocket);
-    if (Networking::isNumeric(receivedMessage)) {
-      int count = std::stoi(receivedMessage);
+    tabnet::Packet receivedPacket = tabnet::receiveMessage(clientSocket);
+    if (receivedPacket.method == Methods::size) {
+      int count = std::stoi(receivedPacket.payload);
       if (count != 0) {
-        tabnet::sendMessage(clientSocket, success);
+        tabnet::sendMessage(clientSocket, Methods::success, "");
         for(int i = 0; i < count; i++) {
-          solutionCollection.push_back(tabnet::receiveMessage(clientSocket));
-          tabnet::sendMessage(clientSocket, success);
+          tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+          if (response.method == Methods::response) {
+            solutionCollection.push_back(response.payload);
+            tabnet::sendMessage(clientSocket, Methods::success, "");
+          } else {
+            std::wcout << "Expected: " << Methods::response << " (response) got: " << receivedPacket.method << std::endl;
+            tabnet::sendMessage(clientSocket, Methods::failed, "Expected method response");
+          }
         }
       }
     } else {
-      std::wcout << "Count failed!" << std::endl;
+      std::wcout << "Expected: " << Methods::size << " (size) got: " << receivedPacket.method << std::endl;
+      tabnet::sendMessage(clientSocket, Methods::failed, "Expected method size");
     }
   }
 }
@@ -78,8 +95,8 @@ std::string Networking::popSolution() {
 
 void Networking::pushOrder(int method, std::string content) {
   std::lock_guard<std::mutex> lock(mtx);
-  std::map<std::string, std::string> order;
-  order[std::to_string(method)] = content;
+  std::map<int, std::string> order;
+  order[method] = content;
   orderCollection.push_back(order);
 }
 

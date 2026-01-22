@@ -17,7 +17,7 @@ class Networking
     void pushOrder(int method, std::string content); 
 
   private:
-    std::vector<std::map<std::string, std::string>> orderCollection;
+    std::vector<std::map<int, std::string>> orderCollection;
     std::vector<std::string> solutionCollection;
     std::mutex mtx;
 
