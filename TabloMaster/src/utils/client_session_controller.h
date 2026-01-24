@@ -15,13 +15,13 @@ class ClientSessionManager
       bool isConnected();
       bool hasOrder(); 
       tabnet::Packet popOrder();
-      void pushSolution(std::string solution); 
+      void pushSolution(tabnet::Packet); 
       void setSocket(int socket);
 
     private:       
       int socket;
       std::vector<tabnet::Packet> orderCollection;
-      std::vector<std::string> solutionCollection;
+      std::vector<tabnet::Packet> solutionCollection;
       bool connected = true;
       std::mutex mtx;
 

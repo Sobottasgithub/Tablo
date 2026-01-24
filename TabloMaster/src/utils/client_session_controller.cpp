@@ -46,7 +46,7 @@ void ClientSessionManager::sessionControllerCycle() {
     if (solutionCollectionSize > 0) {
       if (tabnet::receiveMessage(this->socket).method == Methods::success) {
         for(int index = 0; index < solutionCollectionSize; index++) {
-          responseCode = tabnet::sendMessage(this->socket, Methods::response, solutionCollection[0].c_str());
+          responseCode = tabnet::sendMessage(this->socket, solutionCollection[0].method, solutionCollection[0].payload);
           if (tabnet::receiveMessage(this->socket).method == Methods::success) {
             solutionCollection.erase(solutionCollection.begin());
           } else {
@@ -82,7 +82,7 @@ tabnet::Packet ClientSessionManager::popOrder() {
   return emptyPacket;
 }
 
-void ClientSessionManager::pushSolution(std::string solution) {
+void ClientSessionManager::pushSolution(tabnet::Packet solution) {
   std::lock_guard<std::mutex> lock(mtx);
   solutionCollection.push_back(solution);
 }

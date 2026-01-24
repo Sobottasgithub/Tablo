@@ -1,6 +1,9 @@
 #include "udp_discovery.h"
 
 #include "tabnet.h"
+#include "networking.h"
+#include "methods.h"
+#include "client_session_controller.h"
 
 #include <iostream>
 #include <cstring>
@@ -15,10 +18,6 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-
-#include "networking.h"
-#include "methods.h"
-#include "client_session_controller.h"
 
 Networking::Networking(std::string interface) {
     std::wcout << "Start socket..." << std::endl;
@@ -80,31 +79,22 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         } else if(newNodeIps == nodeIps) {
             bool nodeShutdown = false;
             while (clientSessionManager.hasOrder() && !nodeShutdown) {
-                std::map<std::string, std::string> order = clientSessionManager.popOrder();
-                std::wcout << "method: " << order.at("method").c_str() << " | content: "<< order.at("content").c_str() << std::endl;
-                std::string method = order.at("method").c_str();
-                std::string content = order.at("content").c_str();
+                tabnet::Packet order = clientSessionManager.popOrder();
+                std::wcout << "method: " << order.method << " | content: " << order.payload.c_str() << std::endl;
                 
                 for(int index = 0; index < connections.size(); index++) {
-
                     int currentSocket = connections[nodeIps[index]];
                 
-                    responseCode = tabnet::sendMessage(currentSocket, method.c_str());
-                    std::string status = tabnet::receiveMessage(currentSocket);
-                    if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                        responseCode = tabnet::sendMessage(currentSocket, content.c_str());
-                        std::string status = tabnet::receiveMessage(currentSocket);
-                        responseCode = tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str()); 
-                        if (!status.empty() && std::all_of(status.begin(), status.end(), ::isdigit) && std::stoi(status) == Methods::success) {
-                            std::string recievedData = tabnet::receiveMessage(currentSocket);
-                            responseCode = tabnet::sendMessage(currentSocket, std::to_string(Methods::success).c_str());
-                            std::wcout << "Response: " << recievedData.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
-                            clientSessionManager.pushSolution(recievedData);
-                        } else {
-                            std::wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << std::endl;
-                        }
+                    responseCode = tabnet::sendMessage(currentSocket, order.method, order.payload);
+                    tabnet::Packet status = tabnet::receiveMessage(currentSocket);
+                    // TODO: needs a receive here maybe
+                    if (status.method == Methods::success) {
+                        tabnet::Packet receivedData = tabnet::receiveMessage(currentSocket);
+                        responseCode = tabnet::sendMessage(currentSocket, Methods::success, "");
+                        std::wcout << "Response: " << receivedData.method << " > " << receivedData.payload.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
+                        clientSessionManager.pushSolution(receivedData);
                     } else {
-                        std::wcout << "Method " << method.c_str() << " failed with status: " << status.c_str() << std::endl;
+                        std::wcout << "Send failed!" << std::endl;
                     }
 
                     if (responseCode < 0) {
@@ -135,12 +125,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                         continue;
                     }
 
-                    std::string respCode = tabnet::receiveMessage(newSocket);
+                    tabnet::Packet responseCode = tabnet::receiveMessage(newSocket);
 
                     // handshake compleate
-                    if(!respCode.empty() && std::all_of(respCode.begin(), respCode.end(), ::isdigit) && std::stoi(respCode) == Methods::success) {
+                    if(responseCode.method == Methods::success) {
                         connections.insert({newNodeIps[index], newSocket});
-                        std::wcout << "Connection established: " << respCode.c_str() << " at ip: " << newNodeIps[index].c_str() << std::endl;
+                        std::wcout << "Connection established: " << responseCode.method << " at ip: " << newNodeIps[index].c_str() << std::endl;
                     }
                 }
             }

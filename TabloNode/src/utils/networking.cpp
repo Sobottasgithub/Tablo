@@ -62,53 +62,31 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   Worker worker;
   int responseCode = 0;
 
-  responseCode = tabnet::sendMessage(clientSocket,
-                                     std::to_string(Methods::success).c_str());
+  responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
 
   while (true) {
-    std::string methodString = tabnet::receiveMessage(clientSocket);
+    tabnet::Packet data = tabnet::receiveMessage(clientSocket);
+    if (data.method > Methods::START && data.method < Methods::END) {
 
-    // Check if string is numeric
-    if (!methodString.empty() &&
-        std::all_of(methodString.begin(), methodString.end(), ::isdigit)) {
-      // Convert methodString to int
-      int method = std::stoi(methodString);
+      responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
+      //tabnet::receiveMessage(clientSocket);
 
-      if (method > Methods::START && method < Methods::END) {
-
-        // Valid method: success
-        responseCode = tabnet::sendMessage(
-            clientSocket, std::to_string(Methods::success).c_str());
-
-        std::string data = tabnet::receiveMessage(clientSocket);
-
-        // got data
-        responseCode = tabnet::sendMessage(
-            clientSocket, std::to_string(Methods::success).c_str());
-        tabnet::receiveMessage(clientSocket);
-
-        std::string result = "";
-        switch (method) {
-        case Methods::test:
-          result = worker.testCycle(data);
-          break;
-        case Methods::setFile:
-          std::wcout << "set file" << std::endl;
-          result = "";
-          break;
-        }
-
-        responseCode = tabnet::sendMessage(clientSocket, result.c_str());
-        std::string response = tabnet::receiveMessage(clientSocket);
-      } else {
-        // Bad request!
-        responseCode = tabnet::sendMessage(
-            clientSocket, std::to_string(Methods::failed).c_str());
+      std::string result = "";
+      switch (data.method) {
+      case Methods::test:
+        result = worker.testCycle(data.payload);
+        break;
+      case Methods::setFile:
+        std::wcout << "set file" << std::endl;
+        result = "";
+        break;
       }
+
+      responseCode = tabnet::sendMessage(clientSocket, Methods::response, result.c_str());
+      tabnet::Packet response = tabnet::receiveMessage(clientSocket);
     } else {
-      // Method not found. Bad request! Failed!
-      responseCode = tabnet::sendMessage(
-          clientSocket, std::to_string(Methods::failed).c_str());
+      // Bad request!
+      responseCode = tabnet::sendMessage(clientSocket, Methods::failed, "Unexpected Method!");
     }
 
     // Implement controlled shutdown of this thread, if the master crashes
