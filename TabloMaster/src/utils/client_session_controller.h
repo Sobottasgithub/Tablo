@@ -2,9 +2,9 @@
 #define CLIENT_SESSION_CONTROLLER_H
 
 #include <string>
-#include <map>
 #include <vector>
 #include <mutex>
+#include "tabnet.h"
 
 class ClientSessionManager
 {
@@ -14,13 +14,13 @@ class ClientSessionManager
       void sessionControllerCycle();
       bool isConnected();
       bool hasOrder(); 
-      std::map<std::string, std::string> popOrder();
+      tabnet::Packet popOrder();
       void pushSolution(std::string solution); 
       void setSocket(int socket);
 
     private:       
       int socket;
-      std::vector<std::map<std::string, std::string>> orderCollection;
+      std::vector<tabnet::Packet> orderCollection;
       std::vector<std::string> solutionCollection;
       bool connected = true;
       std::mutex mtx;

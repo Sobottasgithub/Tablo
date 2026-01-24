@@ -1,6 +1,7 @@
 #include "client_session_controller.h"
 
 #include "tabnet.h"
+#include "methods.h"
 
 #include <mutex>
 #include <string>
@@ -9,8 +10,6 @@
 #include <regex>
 #include <cstring>
 #include <sys/socket.h>
-
-#include "methods.h"
 
 ClientSessionManager::ClientSessionManager() {}
 
@@ -27,28 +26,35 @@ void ClientSessionManager::sessionControllerCycle() {
   
   while (responseCode >= 0) {
     // Recieve orders
-    std::string orderCountString = tabnet::receiveMessage(this->socket);
-    responseCode = tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
-    if (isNumeric(orderCountString)) {
-      int orderCount = std::stoi(orderCountString);
-      for (int index = 0; index < orderCount; index++) {
-        std::string method  = tabnet::receiveMessage(this->socket);
-        responseCode = tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
-        std::string content = tabnet::receiveMessage(this->socket);
-        responseCode = tabnet::sendMessage(this->socket, std::to_string(Methods::success).c_str());
-        orderCollection.push_back({ {"method", method}, {"content", content} });
+    tabnet::Packet orderCount = tabnet::receiveMessage(this->socket);
+    if (orderCount.method == Methods::size) {
+      responseCode = tabnet::sendMessage(this->socket, Methods::success, "");
+      
+      for (int index = 0; index < std::stoi(orderCount.payload); index++) {
+        orderCollection.push_back(tabnet::receiveMessage(this->socket));
+        responseCode = tabnet::sendMessage(this->socket, Methods::success, "");
       }
+    } else {
+      responseCode = tabnet::sendMessage(this->socket, Methods::failed, "");
+      std::wcout << "Something went wrong during receiving size!" << std::endl;
+      std::wcout << "Got: " << orderCount.method << " instead of " << Methods::size << " (size)" << std::endl;
     }
 
     // Send solutions
     int solutionCollectionSize = solutionCollection.size();
-    responseCode = tabnet::sendMessage(this->socket, std::to_string(solutionCollectionSize).c_str());
+    responseCode = tabnet::sendMessage(this->socket, Methods::size, std::to_string(solutionCollectionSize));
     if (solutionCollectionSize > 0) {
-      tabnet::receiveMessage(this->socket);
-      for(int index = 0; index < solutionCollectionSize; index++) {
-        responseCode = tabnet::sendMessage(this->socket, solutionCollection[0].c_str());
-        tabnet::receiveMessage(this->socket);
-        solutionCollection.erase(solutionCollection.begin());
+      if (tabnet::receiveMessage(this->socket).method == Methods::success) {
+        for(int index = 0; index < solutionCollectionSize; index++) {
+          responseCode = tabnet::sendMessage(this->socket, Methods::response, solutionCollection[0].c_str());
+          if (tabnet::receiveMessage(this->socket).method == Methods::success) {
+            solutionCollection.erase(solutionCollection.begin());
+          } else {
+            std::wcout << "Send of solution failed!" << std::endl;
+          }
+        }
+      } else {
+        std::wcout << "Send of size failed!" << std::endl;
       }
     }
   }
@@ -65,15 +71,15 @@ bool ClientSessionManager::isConnected() {
   return connected;
 }
 
-std::map<std::string, std::string> ClientSessionManager::popOrder() {
+tabnet::Packet ClientSessionManager::popOrder() {
   std::lock_guard<std::mutex> lock(mtx);
   if (!orderCollection.empty()) {
-    std::map<std::string, std::string> firstOrder = orderCollection[0];
+    tabnet::Packet firstOrder = orderCollection[0];
     orderCollection.erase(orderCollection.begin());  
     return firstOrder;
   }
-  std::map<std::string, std::string> emptyMap;
-  return emptyMap;
+  tabnet::Packet emptyPacket;
+  return emptyPacket;
 }
 
 void ClientSessionManager::pushSolution(std::string solution) {
