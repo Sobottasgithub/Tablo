@@ -1,6 +1,7 @@
 #include "udp_discovery.h"
 
 #include "tabnet.h"
+#include "methods.h"
 
 #include <iostream>
 #include <string>
@@ -42,32 +43,38 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
     std::wcout << "Listening on UDP port " << port << std::endl;
     while (true) {
         // Get UDP Discovery packet
-        std::string masterIP = tabnet::receiveMessage(udpSocket);
-        if (masterIP.length() != 0 && tabnet::isValidIpV4(masterIP)) {
-            // DEBUG ONLY:
-            //std::wcout << masterIP.c_str() << std::endl;
+        tabnet::Packet masterIP = tabnet::receiveMessage(udpSocket);
+        if (masterIP.method == Methods::ip) {
+            if (masterIP.payload.length() != 0 && tabnet::isValidIpV4(masterIP.payload)) {
+                // DEBUG ONLY:
+                //std::wcout << masterIP.c_str() << std::endl;
 
-            // Send response over TCP
-            int recieveSocket = 0;
-            struct sockaddr_in masterAddress;
-            masterAddress.sin_family = AF_INET;
-            masterAddress.sin_port = htons(4001);
+                // Send response over TCP
+                int recieveSocket = 0;
+                struct sockaddr_in masterAddress;
+                masterAddress.sin_family = AF_INET;
+                masterAddress.sin_port = htons(4001);
 
-            if ((recieveSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-                std::wcout << "Socket creation error" << std::endl;
-                continue;
+                if ((recieveSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                    std::wcout << "Socket creation error" << std::endl;
+                    continue;
+                }
+                if (inet_pton(AF_INET, masterIP.payload.c_str(), &masterAddress.sin_addr) <= 0) {
+                    std::wcout << "Address not supported" << std::endl;
+                    continue;
+                }
+                if (connect(recieveSocket, (struct sockaddr*)&masterAddress, sizeof(masterAddress)) < 0) {
+                    std::wcout << "Connection failed" << std::endl;
+                    continue;
+                }
+                //send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
+                tabnet::sendMessage(recieveSocket, Methods::ip, containerIP.c_str());
+                close(recieveSocket);
+            } else {
+                std::wcout << "Invalid ip!" << std::endl;
             }
-            if (inet_pton(AF_INET, masterIP.c_str(), &masterAddress.sin_addr) <= 0) {
-                std::wcout << "Address not supported" << std::endl;
-                continue;
-            }
-            if (connect(recieveSocket, (struct sockaddr*)&masterAddress, sizeof(masterAddress)) < 0) {
-                std::wcout << "Connection failed" << std::endl;
-                continue;
-            }
-            //send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
-            tabnet::sendMessage(recieveSocket, containerIP.c_str());
-            close(recieveSocket);
+        } else {
+            std::wcout << "Expected" << Methods::ip << " (ip) but got: " << masterIP.method << std::endl;
         }
     }
     close(udpSocket);

@@ -1,6 +1,7 @@
 #include "udp_discovery.h"
 
 #include "tabnet.h"
+#include "methods.h"
 
 #include <iostream>
 #include <cstring>
@@ -38,11 +39,8 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
 
     // Init: server socket   
     int serverSocket;
-    const char* message = containerIP.c_str();
     struct sockaddr_in broadcast{}, receiverAddress{};
     const int port = 4000;
-    const int bufferSize = 1024;
-    char buffer[bufferSize];
 
     // Create socket
     if ((serverSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -102,8 +100,9 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     }
 
     while(true) { 
-        // Send message   
-        if (sendto(serverSocket, message, strlen(message), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+        // Send message
+        tabnet::Packet packet = {Methods::ip, containerIP.c_str()};   
+        if (sendto(serverSocket, (const char*)&packet, sizeof(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
             std::wcout << "Broadcast failed!" << std::endl;
             close(serverSocket);
             return;
@@ -126,13 +125,12 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
             //std::wcout << "Timeout: no connection" << std::endl;
             continue;
         } else {
-            ssize_t valread = read(tcpNodeSocket, buffer, sizeof(buffer));
-            // DEBUG ONLY:
-            //std::wcout << "Received: " << buffer << std::endl;
+            tabnet::Packet data;
+            ssize_t valread = read(tcpNodeSocket, (char*)&data, sizeof(data)-1);
 
             // Add ip to discovered Ip's if not already in vector
-            if (std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(buffer)) == nodeIPAddresses.end()) {
-                nodeIPAddresses.push_back(std::string(buffer));
+            if (data.method == Methods::ip && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(data.payload)) == nodeIPAddresses.end()) {
+                nodeIPAddresses.push_back(std::string(data.payload));
             }
 
             close(tcpNodeSocket);

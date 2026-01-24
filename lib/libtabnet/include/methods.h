@@ -4,6 +4,7 @@
 enum Methods {
   success = 100,
   failed = 200,
+  ip = 300,
   
   START = 400,
   test = 401,
