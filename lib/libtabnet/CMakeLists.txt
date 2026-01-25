@@ -9,12 +9,14 @@ include_directories(include)
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 # file(GLOB_RECURSE HEADERS "include/*.h")
 
+find_library(protobuf protobuf)
+
 add_library(tabnet SHARED ${SOURCES})
 
 target_include_directories(tabnet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-# Link against the tabcrypt library
-target_link_libraries(tabnet PRIVATE tabcrypt)
+# Link against the tabcrypt and protobuf library
+target_link_libraries(tabnet PRIVATE tabcrypt ${protobuf})
 
 install(TARGETS tabnet DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
