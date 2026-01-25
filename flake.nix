@@ -10,7 +10,15 @@
 
       version = "1.2";
 
-      packages = with pkgs; [ cmake gcc gnumake ];
+      packages = with pkgs; [
+        cmake
+        gcc
+        gnumake
+        protobuf
+        protoc-gen-go
+        protoc-gen-go-grpc
+        grpc-tools
+      ];
     in {
 
       packages.${system} = let
@@ -56,18 +64,19 @@
         tablo-client-docker = mkTabloDocker "tablo-client" { };
       };
 
-      devShells.${system}.default =
-        let devPackages = packages ++ [ pkgs.bridge-utils pkgs.clang-tools ];
-        in pkgs.mkShell {
-          packages = devPackages;
+      devShells.${system}.default = let
+        devPackages = packages
+          ++ [ pkgs.bridge-utils pkgs.clang-tools pkgs.protobuf ];
+      in pkgs.mkShell {
+        packages = devPackages;
 
-          inputsFrom = [ self.packages.${system}.default ];
+        inputsFrom = [ self.packages.${system}.default ];
 
-          shellHook = ''
-            git status
-            cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-          '';
-        };
+        shellHook = ''
+          git status
+          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        '';
+      };
 
     };
 }
