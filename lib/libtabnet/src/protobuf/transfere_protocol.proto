@@ -1,0 +1,8 @@
+edition = "2023";
+
+package libtabnet;
+
+message Packet {
+  int32 method = 1;
+  string payload = 2;
+}

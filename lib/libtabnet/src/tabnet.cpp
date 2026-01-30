@@ -1,6 +1,7 @@
 #include "../include/tabnet.h"
 
 #include "tabcrypt.h"
+#include "protobuf/transfere_protocol.pb.h"
 
 #include <stdatomic.h>
 #include <string>
