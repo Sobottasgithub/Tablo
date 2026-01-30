@@ -18,7 +18,7 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 # file(GLOB_RECURSE HEADERS "include/*.h")
 
 set(PROTO_FILES
-  src/protobuf/transfere_protocol.proto
+  src/protobuf/transfer_protocol.proto
 )
 
 add_library(tabnet SHARED ${SOURCES} ${PROTO_SRCS})

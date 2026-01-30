@@ -1,7 +1,7 @@
 #include "../include/tabnet.h"
 
 #include "tabcrypt.h"
-#include "protobuf/transfere_protocol.pb.h"
+#include "protobuf/transfer_protocol.pb.h"
 
 #include <stdatomic.h>
 #include <string>
@@ -84,7 +84,7 @@ namespace tabnet {
   }
 
   int sendMessage(int socket, int method, std::string payload) {
-    transfereprotocol::SerializedPacket SerializedData;
+    transferprotocol::SerializedPacket SerializedData;
     SerializedData.set_method(method);
     SerializedData.set_payload(payload);
     std::string dataString = SerializedData.SerializeAsString();
@@ -108,7 +108,7 @@ namespace tabnet {
 
   Packet receiveMessage(int socket) {
       std::string dataString;
-      transfereprotocol::SerializedPacket SerializedData;
+      transferprotocol::SerializedPacket SerializedData;
       Packet data;
       
       pollfd pfd{};

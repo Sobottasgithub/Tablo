@@ -1,6 +1,6 @@
 edition = "2023";
 
-package transfereprotocol;
+package transferprotocol;
 
 message SerializedPacket {
   int32 method = 1;

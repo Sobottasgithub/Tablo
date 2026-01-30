@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-protoc --cpp_out=./ lib/libtabnet/src/protobuf/transfere_protocol.proto
+protoc --cpp_out=./ lib/libtabnet/src/protobuf/transfer_protocol.proto
