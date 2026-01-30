@@ -21,7 +21,7 @@ set(PROTO_FILES
   src/protobuf/transfere_protocol.proto
 )
 
-add_library(tabnet SHARED ${SOURCES} ${PROTO_SRCS} ${PROTO_HDRS})
+add_library(tabnet SHARED ${SOURCES} ${PROTO_SRCS})
 
 protobuf_generate(
   TARGET tabnet
@@ -36,7 +36,7 @@ target_include_directories(tabnet PUBLIC
 )
 
 # Link against the tabcrypt and protobuf library
-target_link_libraries(tabnet PRIVATE tabcrypt ${protobuf})
+target_link_libraries(tabnet PRIVATE tabcrypt protobuf::libprotobuf)
 
 install(TARGETS tabnet DESTINATION lib)
 install(DIRECTORY include/ DESTINATION include)
