@@ -4,16 +4,31 @@ project(tabnet)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(include)
+
+# find_library(protobuf protobuf)
+
+find_package(protobuf REQUIRED)
+
+include_directories(
+  include
+  ${Protobuf_INCLUDE_DIRS}
+)
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 # file(GLOB_RECURSE HEADERS "include/*.h")
 
-find_library(protobuf protobuf)
+set(PROTO_FILES
+  src/protobuf/transfere_protocol.proto
+)
 
-add_library(tabnet SHARED ${SOURCES})
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
-target_include_directories(tabnet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(tabnet SHARED ${SOURCES} ${PROTO_SRCS} ${PROTO_HDRS})
+
+target_include_directories(tabnet PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR} # for protobuf
+)
 
 # Link against the tabcrypt and protobuf library
 target_link_libraries(tabnet PRIVATE tabcrypt ${protobuf})
