@@ -84,24 +84,22 @@ namespace tabnet {
   }
 
   int sendMessage(int socket, int method, std::string payload) {
-    transferprotocol::SerializedPacket SerializedData;
-    SerializedData.set_method(method);
-    SerializedData.set_payload(payload);
-    std::string dataString = SerializedData.SerializeAsString();
+    transferprotocol::SerializedPacket serializedData;
+    serializedData.set_method(method);
+    serializedData.set_payload(payload);
 
-    std::wcout << "-------------------------------" << std::endl;
-    std::wcout << dataString.c_str() << std::endl;
-    std::wcout << "-------------------------------" << std::endl;
 
-    
-    
+    size_t size = serializedData.ByteSizeLong(); 
+    void *buffer = malloc(size);
+    serializedData.SerializeToArray(buffer, size);
+        
     //std::string encryptedMessage = tabcrypt::encrypt(secret, data);
-    ssize_t n = send(socket, (const char*)&dataString, sizeof(dataString), MSG_NOSIGNAL);
-    if (n < 0) {
-      if (errno == EPIPE || errno == ECONNRESET) {
-        return -1;
-      }
-    }
+    ssize_t n = send(socket, buffer, size, MSG_NOSIGNAL);
+     if (n < 0) {
+       if (errno == EPIPE || errno == ECONNRESET) {
+         return -1;
+       }
+     }
     return 0;
   }
 
@@ -117,8 +115,9 @@ namespace tabnet {
 
       int ret = poll(&pfd, 1, 10000);
       if (ret > 0 && (pfd.revents & POLLIN)) {
-          ssize_t size = recv(socket, (char*)&dataString, sizeof(dataString)-1, 0);
-          SerializedData.ParseFromString(dataString);
+          char* buffer = new char[1024];
+          ssize_t size = recv(socket, buffer, 1024, 0);
+          SerializedData.ParseFromArray(buffer, size);
 
           data = {SerializedData.method(), SerializedData.payload()};
           
