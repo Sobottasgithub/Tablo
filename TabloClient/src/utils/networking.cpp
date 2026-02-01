@@ -43,8 +43,8 @@ void Networking::networkingCycle(std::string tabloMaster) {
         // Send data
         tabnet::sendMessage(clientSocket, method, order[method]);
         tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-        if (response.method == Methods::failed) {
-          std::wcout << "Something went wrong while sending the order! Master response: " << response.payload.c_str() << std::endl;
+        if (response.method == Methods::success) {
+          std::wcout << "Send succeded!" << std::endl;
         } else {
           std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
           std::wcout << "With following payload" << response.payload.c_str() << std::endl;

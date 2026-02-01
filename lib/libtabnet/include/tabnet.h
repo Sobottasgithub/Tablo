@@ -14,6 +14,7 @@ namespace tabnet {
   int sendMessage(int socket, int method, std::string payload);
   Packet receiveMessage(int socket);
   bool isValidIpV4(std::string &ipString);
+  bool isNumeric(const std::string& string);
 }
 
 #endif

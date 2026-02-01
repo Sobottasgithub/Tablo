@@ -1,6 +1,7 @@
 #include "../include/tabnet.h"
 
 #include "tabcrypt.h"
+#include "methods.h"
 #include "protobuf/transfer_protocol.pb.h"
 
 #include <stdatomic.h>
@@ -8,6 +9,7 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <net/if.h>
 #include <cstring>
@@ -88,12 +90,25 @@ namespace tabnet {
     serializedData.set_method(method);
     serializedData.set_payload(payload);
 
-
     size_t size = serializedData.ByteSizeLong(); 
     void *buffer = malloc(size);
     serializedData.SerializeToArray(buffer, size);
         
     //std::string encryptedMessage = tabcrypt::encrypt(secret, data);
+    std::string stringSize = std::to_string(size);
+    ssize_t s = send(socket, stringSize.c_str(), sizeof(stringSize.c_str()), MSG_NOSIGNAL);
+
+    pollfd pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLIN;
+
+    int ret = poll(&pfd, 1, 10000);
+
+    if (ret > 0 && (pfd.revents & POLLIN)) {
+        char bufferSizeChar[32] = { 0 };
+        ssize_t tempSize = recv(socket, bufferSizeChar, sizeof(bufferSizeChar), 0);
+    }
+    
     ssize_t n = send(socket, buffer, size, MSG_NOSIGNAL);
      if (n < 0) {
        if (errno == EPIPE || errno == ECONNRESET) {
@@ -114,9 +129,19 @@ namespace tabnet {
       pfd.events = POLLIN;
 
       int ret = poll(&pfd, 1, 10000);
+
+      int bufferSize = 1024;
       if (ret > 0 && (pfd.revents & POLLIN)) {
-          char* buffer = new char[1024];
-          ssize_t size = recv(socket, buffer, 1024, 0);
+          char bufferSizeChar[32] = { 0 };
+          ssize_t tempSize = recv(socket, bufferSizeChar, sizeof(bufferSizeChar), 0);
+          bufferSize = std::stoi(bufferSizeChar);
+      }
+      
+      ssize_t s = send(socket, "100", sizeof("100"), MSG_NOSIGNAL);
+      
+      if (ret > 0 && (pfd.revents & POLLIN)) {
+          char* buffer = new char[bufferSize];
+          ssize_t size = recv(socket, buffer, bufferSize, 0);
           SerializedData.ParseFromArray(buffer, size);
 
           data = {SerializedData.method(), SerializedData.payload()};
@@ -156,5 +181,12 @@ namespace tabnet {
       if (count != 4) return false;
 
       return true;
+  }
+
+  bool isNumeric(const std::string& string) {
+    static const std::regex numberRegex(
+        R"(^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$)"
+    );
+    return std::regex_match(string, numberRegex);
   }
 }
