@@ -123,8 +123,10 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
             //std::wcout << "Timeout: no connection" << std::endl;
             continue;
         } else {
-            tabnet::Packet data;
-            ssize_t valread = read(tcpNodeSocket, (char*)&data, sizeof(data)-1);
+            // tabnet::Packet data;
+            // ssize_t valread = read(tcpNodeSocket, (char*)&data, sizeof(data)-1);
+
+            tabnet::Packet data = tabnet::receiveMessage(tcpNodeSocket);
 
             // Add ip to discovered Ip's if not already in vector
             if (data.method == Methods::ip && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(data.payload)) == nodeIPAddresses.end()) {
