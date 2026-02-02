@@ -96,19 +96,9 @@ namespace tabnet {
         
     //std::string encryptedMessage = tabcrypt::encrypt(secret, data);
     std::string stringSize = std::to_string(size);
-    ssize_t s = send(socket, stringSize.c_str(), sizeof(stringSize.c_str()), MSG_NOSIGNAL);
-
-    pollfd pfd{};
-    pfd.fd = socket;
-    pfd.events = POLLIN;
-
-    int ret = poll(&pfd, 1, 10000);
-
-    if (ret > 0 && (pfd.revents & POLLIN)) {
-        char bufferSizeChar[32] = { 0 };
-        ssize_t tempSize = recv(socket, bufferSizeChar, sizeof(bufferSizeChar), 0);
-    }
     
+    // Size has to be 8!
+    ssize_t s = send(socket, stringSize.c_str(), 8, MSG_NOSIGNAL);    
     ssize_t n = send(socket, buffer, size, MSG_NOSIGNAL);
      if (n < 0) {
        if (errno == EPIPE || errno == ECONNRESET) {
@@ -132,12 +122,14 @@ namespace tabnet {
 
       int bufferSize = 1024;
       if (ret > 0 && (pfd.revents & POLLIN)) {
-          char bufferSizeChar[32] = { 0 };
+          char bufferSizeChar[8] = { 0 };
           ssize_t tempSize = recv(socket, bufferSizeChar, sizeof(bufferSizeChar), 0);
-          bufferSize = std::stoi(bufferSizeChar);
+          if (isNumeric(bufferSizeChar)) {
+              bufferSize = std::stoi(bufferSizeChar);
+          } else {
+              std::wcout << "ReceiveMessage: Error: Bytes are not numeric!" << std::endl;
+          }
       }
-      
-      ssize_t s = send(socket, "100", sizeof("100"), MSG_NOSIGNAL);
       
       if (ret > 0 && (pfd.revents & POLLIN)) {
           char* buffer = new char[bufferSize];
