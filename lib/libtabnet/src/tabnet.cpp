@@ -108,6 +108,25 @@ namespace tabnet {
     return 0;
   }
 
+  int sendMessageTo(int socket, const sockaddr_in& broadcast, int method, std::string payload) {
+      transferprotocol::SerializedPacket serializedData;
+      serializedData.set_method(method);
+      serializedData.set_payload(payload);
+
+      size_t size = serializedData.ByteSizeLong();
+      void *buffer = malloc(size);
+      serializedData.SerializeToArray(buffer, size);
+
+      std::string stringSize = std::to_string(size);
+      
+      if (sendto(socket, stringSize.c_str(), 8, 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+          std::wcout << "Sendto Failed!" << std::endl;
+          close(socket);
+          return -1;
+      }
+
+      return 0;
+  }
 
   Packet receiveMessage(int socket) {
       std::string dataString;

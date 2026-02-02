@@ -101,13 +101,11 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
 
     while(true) { 
         // Send message
-        tabnet::Packet packet = {Methods::ip, containerIP.c_str()};   
-        if (sendto(serverSocket, (const char*)&packet, sizeof(packet), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+        if (tabnet::sendMessageTo(serverSocket, broadcast, Methods::ip, containerIP.c_str()) != 0) {
             std::wcout << "Broadcast failed!" << std::endl;
-            close(serverSocket);
             return;
         }
-
+        
         // Accept incoming connection
         int flags = fcntl(tcpMasterSocket, F_GETFL, 0);
         fcntl(tcpMasterSocket, F_SETFL, flags | O_NONBLOCK);
