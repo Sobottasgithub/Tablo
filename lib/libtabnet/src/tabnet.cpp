@@ -120,8 +120,12 @@ namespace tabnet {
       std::string stringSize = std::to_string(size);
       
       if (sendto(socket, stringSize.c_str(), 8, 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
-          std::wcout << "Sendto Failed!" << std::endl;
-          close(socket);
+          std::wcout << "size: Sendto Failed!" << std::endl;
+          return -1;
+      }
+
+      if (sendto(socket, buffer, size, 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+          std::wcout << "buffer: Sendto Failed!" << std::endl;
           return -1;
       }
 
