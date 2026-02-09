@@ -14,6 +14,7 @@ namespace tabnet {
   std::string getLocalIpAddress(std::string interface);
   std::string getBroadcastIpAddress();
   int sendMessage(int socket, int method, std::string payload);
+  int sendPacket(int socket, tabnet::Packet packet);
   int sendMessageTo(int socket, const sockaddr_in& broadcast, int method, std::string payload);
   Packet receiveMessage(int socket);
   bool isValidIpV4(std::string &ipString);

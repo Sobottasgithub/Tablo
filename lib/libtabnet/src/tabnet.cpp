@@ -85,6 +85,10 @@ namespace tabnet {
       return broadcastIP;
   }
 
+  int sendPacket(int socket, tabnet::Packet packet) {
+      return sendMessage(socket, packet.method, packet.payload);
+  }
+
   int sendMessage(int socket, int method, std::string payload) {
     transferprotocol::SerializedPacket serializedData;
     serializedData.set_method(method);
