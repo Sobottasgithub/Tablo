@@ -6,12 +6,12 @@
 #include <mutex>
 
 #include "tabnet.h"
-#include "worker.h"
+#include "methods.h"
 
 // Cycle
 void Worker::solveOrderCycle() {
     while (true) {
-        orderSize = getOrderCollectionSize();
+        int orderSize = getOrderCollectionSize();
         if (orderSize > 0) {
             for (int count; count < orderSize; count++) {
                 tabnet::Packet order = getOrder();
@@ -19,7 +19,7 @@ void Worker::solveOrderCycle() {
                 switch (order.method) {
                     case Methods::test:
                         pushSolution(Worker::test(order));
-                        break
+                        break;
 
                     case Methods::setFile:
                         pushSolution(Worker::setFile(order));
