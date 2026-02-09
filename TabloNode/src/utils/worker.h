@@ -1,17 +1,24 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <thread>
-#include <bits/stdc++.h>
 #include <vector>
+
+#include "tabnet.h"
 
 class Worker
 {
     public:
-        Worker();
-        std::string testCycle(std::string data);
+        void solveOrderCycle();
+        
+        tabnet::Packet getOrder();
+        void pushOrder(tabnet::Packet packet);
+        
+        tabnet::Packet getSolution();
+        void pushSolution(tabnet::Packet packet);
+        
+    private:
+        vector<tabnet::Packet> solutions;
+        vector<tabnet::Packet> orders;
 };
 
 #endif

@@ -8,10 +8,22 @@
 #include <bits/stdc++.h>
 #include <vector>
 
-Worker::Worker() {
-    std::wcout << "" << std::endl;
+void Worker::solveOrderCycle() {
+    
 }
 
-std::string Worker::testCycle(std::string data) {
-    return data;
+tabnet::Packet Worker::getOrder() {
+    
+}
+
+void Worker::pushOrder(tabnet::Packet packet) {
+    
+}
+
+tabnet::Packet Worker::getSolution() {
+    
+}
+
+void Worker::pushSolution(tabnet::Packet packet) {
+    
 }
