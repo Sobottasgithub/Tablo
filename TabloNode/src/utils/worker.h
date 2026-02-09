@@ -27,8 +27,8 @@ class Worker
         
     private:
         std::mutex mtx;
-        vector<tabnet::Packet> solutions;
-        vector<tabnet::Packet> orders;
+        std::vector<tabnet::Packet> solutions;
+        std::vector<tabnet::Packet> orders;
 };
 
 #endif

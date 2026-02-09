@@ -70,10 +70,10 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     responseCode = tabnet::sendMessage(clientSocket, Methods::size, std::to_string(solutionCollectionSize));
     tabnet::Packet response = tabnet::receiveMessage(clientSocket);
     if (response.method == Methods::success) {
-      for(int index = 0; index < orderCollectionSize; index++) {
+      for(int index = 0; index < solutionCollectionSize; index++) {
         
         // Send data
-        responseCode = tabnet::sendMessage(clientSocket, worker.getSolution());
+        responseCode = tabnet::sendPacket(clientSocket, worker.getSolution());
         tabnet::Packet response = tabnet::receiveMessage(clientSocket);
         if (response.method == Methods::success) {
           std::wcout << "Send succeded!" << std::endl;
