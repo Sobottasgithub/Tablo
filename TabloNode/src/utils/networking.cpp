@@ -60,7 +60,7 @@ void Networking::handleUdpDiscovery(std::string interface) {
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   Worker worker;
-  std::thread workerThread = std::thread(worker.solveOrderCycle, this);
+  std::thread workerThread = std::thread(&Worker::solveOrderCycle, &worker);
 
   while (true) {
     int responseCode = 0;
