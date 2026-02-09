@@ -2,6 +2,7 @@
 #define WORKER_H
 
 #include <vector>
+#include <mutex>
 
 #include "tabnet.h"
 
