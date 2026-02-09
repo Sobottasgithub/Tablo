@@ -60,36 +60,52 @@ void Networking::handleUdpDiscovery(std::string interface) {
 
 void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   Worker worker;
-  int responseCode = 0;
-
-  responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
+  std::thread workerThread = std::thread(worker.solveOrderCycle, this);
 
   while (true) {
-    tabnet::Packet data = tabnet::receiveMessage(clientSocket);
-    if (data.method > Methods::START && data.method < Methods::END) {
-
-      responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
-      //tabnet::receiveMessage(clientSocket);
-
-      std::string result = "";
-      switch (data.method) {
-      case Methods::test:
-        result = worker.testCycle(data.payload);
-        break;
-      case Methods::setFile:
-        std::wcout << "set file" << std::endl;
-        result = "";
-        break;
+    int responseCode = 0;
+    
+    // -> Hand back finished solution 
+    int solutionCollectionSize = worker.getSolutionCollectionSize();
+    responseCode = tabnet::sendMessage(clientSocket, Methods::size, std::to_string(solutionCollectionSize));
+    tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+    if (response.method == Methods::success) {
+      for(int index = 0; index < orderCollectionSize; index++) {
+        
+        // Send data
+        responseCode = tabnet::sendMessage(clientSocket, worker.getSolution());
+        tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+        if (response.method == Methods::success) {
+          std::wcout << "Send succeded!" << std::endl;
+        } else {
+          std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+          std::wcout << "With following payload" << response.payload.c_str() << std::endl;
+        }
       }
-
-      responseCode = tabnet::sendMessage(clientSocket, Methods::response, result.c_str());
-      tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+    } else if (response.method == Methods::failed) {
+      std::wcout << "Something went wrong while sending the size! Master response: " << response.payload.c_str() << std::endl;
     } else {
-      // Bad request!
-      responseCode = tabnet::sendMessage(clientSocket, Methods::failed, "Unexpected Method!");
+      std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+      std::wcout << "With following payload" << response.payload.c_str() << std::endl;
     }
 
-    // Implement controlled shutdown of this thread, if the master crashes
+    //receive
+    tabnet::Packet receivedPacket = tabnet::receiveMessage(clientSocket);
+    if (receivedPacket.method == Methods::size) {
+      int count = std::stoi(receivedPacket.payload);
+      if (count != 0) {
+        responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
+        for(int i = 0; i < count; i++) {
+          tabnet::Packet order = tabnet::receiveMessage(clientSocket);
+          worker.pushOrder(order);
+        }
+      }
+    } else {
+      std::wcout << "Expected: " << Methods::size << " (size) got: " << receivedPacket.method << std::endl;
+      responseCode = tabnet::sendMessage(clientSocket, Methods::failed, "Expected method size");
+    }
+
+    // Controlled shutdown of this thread, if the master crashes
     if (responseCode < 0) {
       std::wcout << "Socket: " << clientSocket << " closed!" << std::endl;
       close(clientSocket);
