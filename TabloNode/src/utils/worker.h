@@ -15,8 +15,12 @@ class Worker
         
         tabnet::Packet getSolution();
         void pushSolution(tabnet::Packet packet);
+
+        int getSolutionCollectionSize();
+        int getOrderCollectionSize();
         
     private:
+        std::mutex mtx;
         vector<tabnet::Packet> solutions;
         vector<tabnet::Packet> orders;
 };
