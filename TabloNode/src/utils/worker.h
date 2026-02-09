@@ -8,8 +8,14 @@
 class Worker
 {
     public:
+        // Cycle
         void solveOrderCycle();
-        
+
+        // Logic functions
+        tabnet::Packet test(tabnet::Packet packet);
+        tabnet::Packet setFile(tabnet::Packet packet);
+
+        // Service logic
         tabnet::Packet getOrder();
         void pushOrder(tabnet::Packet packet);
         

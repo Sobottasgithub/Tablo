@@ -6,11 +6,46 @@
 #include <mutex>
 
 #include "tabnet.h"
+#include "worker.h"
 
+// Cycle
 void Worker::solveOrderCycle() {
-    
+    while (true) {
+        orderSize = getOrderCollectionSize();
+        if (orderSize > 0) {
+            for (int count; count < orderSize; count++) {
+                tabnet::Packet order = getOrder();
+
+                switch (order.method) {
+                    case Methods::test:
+                        pushSolution(Worker::test(order));
+                        break
+
+                    case Methods::setFile:
+                        pushSolution(Worker::setFile(order));
+                        break;
+                        
+                    default:
+                        std::wcout << "Unknown action: " << order.method << " -> Expected a method between " << Methods::START << " and " << Methods::END << std::endl;
+                        break;
+                }
+            }
+        }
+    }
 }
 
+// Logic functions
+tabnet::Packet Worker::test(tabnet::Packet packet) {
+    tabnet::Packet solution;
+    solution.method = Methods::response;
+    solution.payload = packet.payload;
+}
+
+tabnet::Packet Worker::setFile(tabnet::Packet packet) {
+    return packet;
+}
+
+// Service logic
 tabnet::Packet Worker::getOrder() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!orders.empty()) {
