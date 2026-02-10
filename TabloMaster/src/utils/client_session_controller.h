@@ -25,8 +25,6 @@ class ClientSessionManager
       std::vector<tabnet::Packet> solutionCollection;
       bool connected = true;
       std::mutex mtx;
-
-      bool isNumeric(const std::string& string);
 };
 
 #endif
