@@ -15,6 +15,7 @@ class ClientSessionManager
       bool isConnected();
       bool hasOrder(); 
       tabnet::Packet popOrder();
+      int getOrderCollectionSize();
       void pushSolution(tabnet::Packet); 
       void setSocket(int socket);
 

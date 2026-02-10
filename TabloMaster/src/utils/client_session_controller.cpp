@@ -87,6 +87,11 @@ void ClientSessionManager::pushSolution(tabnet::Packet solution) {
   solutionCollection.push_back(solution);
 }
 
+int ClientSessionManager::getOrderCollectionSize() {
+  std::lock_guard<std::mutex> lock(mtx);
+  return orderCollection.size();
+}
+
 bool ClientSessionManager::isNumeric(const std::string& string) {
     static const std::regex numberRegex(
         R"(^[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?$)"

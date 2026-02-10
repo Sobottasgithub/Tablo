@@ -79,22 +79,39 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         } else if(newNodeIps == nodeIps) {
             bool nodeShutdown = false;
             while (clientSessionManager.hasOrder() && !nodeShutdown) {
-                tabnet::Packet order = clientSessionManager.popOrder();
-                std::wcout << "method: " << order.method << " | content: " << order.payload.c_str() << std::endl;
-                
                 for(int index = 0; index < connections.size(); index++) {
                     int currentSocket = connections[nodeIps[index]];
-                
-                    responseCode = tabnet::sendMessage(currentSocket, order.method, order.payload);
-                    tabnet::Packet status = tabnet::receiveMessage(currentSocket);
-                    // TODO: needs a receive here maybe
-                    if (status.method == Methods::success) {
-                        tabnet::Packet receivedData = tabnet::receiveMessage(currentSocket);
+                    
+                    // Distribute to nodes
+                    tabnet::Packet solutionCount = tabnet::receiveMessage(currentSocket);
+                    if (solutionCount.method == Methods::size) {
+                      responseCode = tabnet::sendMessage(currentSocket, Methods::success, "");
+      
+                      for (int index = 0; index < std::stoi(solutionCount.payload); index++) {
+                        clientSessionManager.pushSolution(tabnet::receiveMessage(currentSocket));
                         responseCode = tabnet::sendMessage(currentSocket, Methods::success, "");
-                        std::wcout << "Response: " << receivedData.method << " > " << receivedData.payload.c_str() << " | Node: " << nodeIps[index].c_str() << std::endl;
-                        clientSessionManager.pushSolution(receivedData);
+                      }
                     } else {
-                        std::wcout << "Send failed!" << std::endl;
+                      responseCode = tabnet::sendMessage(currentSocket, Methods::failed, "");
+                      std::wcout << "Something went wrong during receiving size!" << std::endl;
+                      std::wcout << "Got: " << solutionCount.method << " instead of " << Methods::size << " (size)" << std::endl;
+                    }
+
+                    // Send orders
+                    int orderCollectionSize = clientSessionManager.getOrderCollectionSize();
+                    responseCode = tabnet::sendMessage(currentSocket, Methods::size, std::to_string(orderCollectionSize));
+                    if (orderCollectionSize > 0) {
+                      if (tabnet::receiveMessage(currentSocket).method == Methods::success) {
+                        for(int index = 0; index < orderCollectionSize; index++) {
+                          responseCode = tabnet::sendPacket(currentSocket, clientSessionManager.popOrder());
+                          tabnet::Packet response = tabnet::receiveMessage(currentSocket);
+                          if (response.method != Methods::success) {
+                            std::wcout << "Send order to node failed: got " << response.method << std::endl;
+                          }
+                        }
+                      } else {
+                        std::wcout << "Send of size failed!" << std::endl;
+                      }
                     }
 
                     if (responseCode < 0) {
