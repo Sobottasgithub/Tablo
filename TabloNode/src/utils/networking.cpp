@@ -62,9 +62,10 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   Worker worker;
   std::thread workerThread = std::thread(&Worker::solveOrderCycle, &worker);
 
+  // Compleate Handshake
+  int responseCode = tabnet::sendMessage(clientSocket, Methods::success, ""); 
+
   while (true) {
-    int responseCode = 0;
-    
     // -> Hand back finished solution 
     int solutionCollectionSize = worker.getSolutionCollectionSize();
     responseCode = tabnet::sendMessage(clientSocket, Methods::size, std::to_string(solutionCollectionSize));
