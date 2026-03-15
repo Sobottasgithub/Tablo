@@ -66,15 +66,18 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   int responseCode = tabnet::sendMessage(clientSocket, Methods::success, ""); 
 
   while (true) {
-    // -> Hand back finished solution 
+
+    // // -> Hand back finished solution 
     int solutionCollectionSize = worker.getSolutionCollectionSize();
     responseCode = tabnet::sendMessage(clientSocket, Methods::size, std::to_string(solutionCollectionSize));
     tabnet::Packet response = tabnet::receiveMessage(clientSocket);
+    std::wcout << solutionCollectionSize << "<--- size" << std::endl;
     if (response.method == Methods::success) {
       for(int index = 0; index < solutionCollectionSize; index++) {
-        
         // Send data
-        responseCode = tabnet::sendPacket(clientSocket, worker.getSolution());
+        tabnet::Packet solution = worker.getSolution();
+        std::wcout << "Handing back solution" << solution.method << std::endl;
+        responseCode = tabnet::sendPacket(clientSocket, solution);
         tabnet::Packet response = tabnet::receiveMessage(clientSocket);
         if (response.method == Methods::success) {
           std::wcout << "Send succeded!" << std::endl;
@@ -90,6 +93,8 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
       std::wcout << "With following payload" << response.payload.c_str() << std::endl;
     }
 
+    responseCode = tabnet::sendMessage(clientSocket, Methods::ready, "");
+    
     //receive
     tabnet::Packet receivedPacket = tabnet::receiveMessage(clientSocket);
     if (receivedPacket.method == Methods::size) {
@@ -99,6 +104,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         for(int i = 0; i < count; i++) {
           tabnet::Packet order = tabnet::receiveMessage(clientSocket);
           worker.pushOrder(order);
+          responseCode = tabnet::sendMessage(clientSocket, Methods::success, "");
         }
       }
     } else {
@@ -111,6 +117,6 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
       std::wcout << "Socket: " << clientSocket << " closed!" << std::endl;
       close(clientSocket);
       return;
-    }
+    }    
   }
 }

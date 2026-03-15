@@ -2,7 +2,9 @@
 #define METHODS_H
 
 enum Methods {
+  empty = 10,
   success = 100,
+  ready = 110,
   failed = 200,
   ip = 300,
   

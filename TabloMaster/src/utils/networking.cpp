@@ -1,3 +1,4 @@
+#include "node_session_controller.h"
 #include "udp_discovery.h"
 
 #include "tabnet.h"
@@ -54,12 +55,12 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     );
     
     // TCP
-    std::map<std::string, int> connections;
+    std::vector<Connection> connections;
     std::vector<std::string> nodeIps;
     int responseCode = 0;
     while (clientSessionManager.isConnected()) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
-        nodeIps = Networking::getKeys(connections);
+        nodeIps = getIps();
 
         // sort vectors to compare them
         std::sort(newNodeIps.begin(), newNodeIps.end());
@@ -71,57 +72,39 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                 // Close connections with nodes that dont exist anymore
                 for (int index = 0; index < nodeIps.size(); index++) {
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
-                    close(connections[nodeIps[index]]);
-                    connections.erase(nodeIps[index]);
+                    close(getConnectionAtIp(nodeIps[index]).socket);
+                    removeConnectionAtIp(nodeIps[index]);
                 }
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         } else if(newNodeIps == nodeIps) {
             bool nodeShutdown = false;
-            while (clientSessionManager.hasOrder() && !nodeShutdown) {
-                for(int index = 0; index < connections.size(); index++) {
-                    int currentSocket = connections[nodeIps[index]];
-                    
-                    // Distribute to nodes
-                    tabnet::Packet solutionCount = tabnet::receiveMessage(currentSocket);
-                    if (solutionCount.method == Methods::size) {
-                      responseCode = tabnet::sendMessage(currentSocket, Methods::success, "");
-      
-                      for (int index = 0; index < std::stoi(solutionCount.payload); index++) {
-                        clientSessionManager.pushSolution(tabnet::receiveMessage(currentSocket));
-                        responseCode = tabnet::sendMessage(currentSocket, Methods::success, "");
-                      }
-                    } else {
-                      responseCode = tabnet::sendMessage(currentSocket, Methods::failed, "");
-                      std::wcout << "Something went wrong during receiving size!" << std::endl;
-                      std::wcout << "Got: " << solutionCount.method << " instead of " << Methods::size << " (size)" << std::endl;
-                    }
+            while (!nodeShutdown) {
+                std::wcout << "Cycle: ----> line 83" << std::endl;
+                // TODO: Replace with real distribution later
+                std::vector<tabnet::Packet> orders;
+                // while(clientSessionManager.hasOrder()) {
+                //     orders.push_back(clientSessionManager.popOrder());
+                // }
+                
+                // for(int index = 0; index < connections.size(); index++) {
+                //     Connection currentConnection = connections[index];
 
-                    // Send orders
-                    int orderCollectionSize = clientSessionManager.getOrderCollectionSize();
-                    responseCode = tabnet::sendMessage(currentSocket, Methods::size, std::to_string(orderCollectionSize));
-                    if (orderCollectionSize > 0) {
-                      if (tabnet::receiveMessage(currentSocket).method == Methods::success) {
-                        for(int index = 0; index < orderCollectionSize; index++) {
-                          responseCode = tabnet::sendPacket(currentSocket, clientSessionManager.popOrder());
-                          tabnet::Packet response = tabnet::receiveMessage(currentSocket);
-                          if (response.method != Methods::success) {
-                            std::wcout << "Send order to node failed: got " << response.method << std::endl;
-                          }
-                        }
-                      } else {
-                        std::wcout << "Send of size failed!" << std::endl;
-                      }
-                    }
+                //     // Hand orders to Node
+                //     for (int index = 0; index < orders.size(); index++) {
+                //         std::wcout << "HAND OUT ORDER!" << std::endl;
+                //         //currentConnection.controller->pushOrder(orders[index]);
+                //         //tabnet::Packet packet = {Methods::test, "sdfsdf"};
+                //         //NodeSessionController* instance = currentConnection.controller;
+                //         //instance->pushOrder(packet);
+                //     }
 
-                    if (responseCode < 0) {
-                        std::wcout << "Close node connection at: " << nodeIps[index].c_str() << std::endl;
-                        responseCode = 0;
-                        udpDiscovery.removeNodeAddress(nodeIps[index]);
-                        nodeShutdown = true;
-                        break;
-                    }
-                }
+                //     // Get solutions from Node
+                //     while (currentConnection.controller->hasSolution()) {
+                //         std::wcout << "POP SOLUTION!" << std::endl;
+                //         clientSessionManager.pushSolution(currentConnection.controller->popSolution());
+                //     }
+                // }
             }
         } else if (newNodeIps != nodeIps) {
             std::wcout << "New nodes!" << std::endl;
@@ -146,19 +129,42 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     tabnet::Packet responseCode = tabnet::receiveMessage(newSocket);
 
                     // handshake compleate
-                    if(responseCode.method == Methods::success) {
-                        connections.insert({newNodeIps[index], newSocket});
+                    if(responseCode.method == Methods::success) {                        
+                        NodeSessionController* nodeSessionController = new NodeSessionController();
+                        
+                        // -------------- SOMETHING BETWEEN HERE AND [END] causes the crash 100% 
+
+                        std::thread* nodeSessionCycleThread = new std::thread(
+                            &NodeSessionController::sessionControllerCycleWrapper,
+                            nodeSessionController,
+                            newSocket
+                        );
+
+                        Connection connection = {newNodeIps[index], newSocket, nodeSessionCycleThread, nodeSessionController};
+                        connections.push_back(connection);
+                        
+                        // [END] ----------------------------------
+                        
                         std::wcout << "Connection established: " << responseCode.method << " at ip: " << newNodeIps[index].c_str() << std::endl;
+
+                        //NOTE:: Compiles and works until here than crashes with:
+                        // terminate called without an active exception
+                        // fish: Job 1, 'tablo-master --interface enp39s0' terminated by signal SIGABRT (Abort)
+                        
+                        // -- The rest crashes because the socket conn is not held (commented out iun node_session_controller)
+
                     }
                 }
             }
-                        
+            std::wcout << "[START] Close connections with nodes that dont exist anymore" << std::endl;   
             // Close connections with nodes that dont exist anymore
             for (int index = 0; index < nodeIps.size(); index++) {
+                std::wcout << "-- Iterating over nodeIPS" << std::endl;
                 if(std::find(newNodeIps.begin(), newNodeIps.end(), nodeIps[index]) == newNodeIps.end()) {
+                    // NOTE: This is NOT tested! (yet)
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
-                    close(connections[nodeIps[index]]);
-                    connections.erase(nodeIps[index]);
+                    close(getConnectionAtIp(nodeIps[index]).socket);
+                    removeConnectionAtIp(nodeIps[index]);
                     nodeIps.erase(nodeIps.begin() + index);
                 }
             }
@@ -170,20 +176,35 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
     // Close node con
     for(int index = 0; index < connections.size(); index++) {
-        close(connections[nodeIps[index]]);
+        close(getConnectionAtIp(nodeIps[index]).socket);
     }
     std::wcout << "Terminate handleClientConnection for " << clientSocket << std::endl;
     udpDiscoveryThread.join();
 }
 
-std::vector<std::string> Networking::getKeys(std::map<std::string, int> hashmap) {
+std::vector<std::string> Networking::getIps() {
     std::vector<std::string> keys;
-    // preallocate memory of exact size
-    keys.reserve(hashmap.size());
-
-    for (const auto& pair : hashmap) {
-        keys.push_back(pair.first);
+    for (const Connection& con : connections) {
+        keys.push_back(con.ip);
     }
-
     return keys;
+}
+
+void Networking::removeConnectionAtIp(std::string ip) {
+    for (int index = 0; index < connections.size(); index++) {
+        if (connections[index].ip == ip) {
+            connections.erase(connections.begin() + index);
+            return;
+        }
+    }
+}
+
+Networking::Connection Networking::getConnectionAtIp(std::string ip) {
+    for (int index = 0; index < connections.size(); index++) {
+        if (connections[index].ip == ip) {
+            return connections[index];
+        }
+    }
+    Connection emptyCon;
+    return emptyCon;
 }

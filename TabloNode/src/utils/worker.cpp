@@ -18,13 +18,17 @@ void Worker::solveOrderCycle() {
 
                 switch (order.method) {
                     case Methods::test:
+                        std::wcout << "TEST!" << std::endl;
                         pushSolution(Worker::test(order));
                         break;
 
                     case Methods::setFile:
                         pushSolution(Worker::setFile(order));
                         break;
-                        
+
+                    case Methods::empty:
+                        break;
+                    
                     default:
                         std::wcout << "Unknown action: " << order.method << " -> Expected a method between " << Methods::START << " and " << Methods::END << std::endl;
                         break;
@@ -39,6 +43,7 @@ tabnet::Packet Worker::test(tabnet::Packet packet) {
     tabnet::Packet solution;
     solution.method = Methods::response;
     solution.payload = packet.payload;
+    return solution;
 }
 
 tabnet::Packet Worker::setFile(tabnet::Packet packet) {
@@ -54,6 +59,7 @@ tabnet::Packet Worker::getOrder() {
         return firstOrder;
     }
     tabnet::Packet emptyPacket;
+    emptyPacket.method = Methods::empty;
     return emptyPacket;
 }
 
