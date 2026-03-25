@@ -19,7 +19,6 @@ class NodeSessionController
       int getOrderCollectionSize();
       void pushSolution(tabnet::Packet);
       void pushOrder(tabnet::Packet order); 
-      static void sessionControllerCycleWrapper(NodeSessionController* nodeSessionController, int socket);
       
     private:       
       int socket;

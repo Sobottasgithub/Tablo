@@ -12,11 +12,6 @@
 #include <sys/socket.h>
 #include <thread>
 
-static void sessionControllerCycleWrapper(NodeSessionController* nodeSessionController, int socket) {
-  nodeSessionController->sessionControllerCycle(socket);
-}
-
-
 NodeSessionController::NodeSessionController() {}
 
 void NodeSessionController::sessionControllerCycle(int socket) {
