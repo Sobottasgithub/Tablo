@@ -6,6 +6,7 @@
 #include "methods.h"
 #include "client_session_controller.h"
 
+#include <cstddef>
 #include <iostream>
 #include <cstring>
 #include <memory_resource>
@@ -72,7 +73,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                 // Close connections with nodes that dont exist anymore
                 for (int index = 0; index < nodeIps.size(); index++) {
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
-                    close(getConnectionAtIp(nodeIps[index]).socket);
+                    close(getConnectionAtIp(nodeIps[index])->socket);
                     removeConnectionAtIp(nodeIps[index]);
                 }
             }
@@ -130,29 +131,22 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
                     // handshake compleate
                     if(responseCode.method == Methods::success) {                        
-                        NodeSessionController* nodeSessionController = new NodeSessionController();
-                        
-                        // -------------- SOMETHING BETWEEN HERE AND [END] causes the crash 100% 
+                        auto nodeSessionController = std::make_unique<NodeSessionController>();
 
-                        std::thread* nodeSessionCycleThread = new std::thread(
-                            &NodeSessionController::sessionControllerCycleWrapper,
-                            nodeSessionController,
+                        std::thread nodeSessionCycleThread(
+                            &NodeSessionController::sessionControllerCycle,
+                            nodeSessionController.get(),
                             newSocket
                         );
 
-                        Connection connection = {newNodeIps[index], newSocket, nodeSessionCycleThread, nodeSessionController};
-                        connections.push_back(connection);
-                        
-                        // [END] ----------------------------------
-                        
+                        connections.emplace_back(Connection{
+                            newNodeIps[index],
+                            newSocket,
+                            std::move(nodeSessionCycleThread),
+                            std::move(nodeSessionController)
+                        });
+                                                
                         std::wcout << "Connection established: " << responseCode.method << " at ip: " << newNodeIps[index].c_str() << std::endl;
-
-                        //NOTE:: Compiles and works until here than crashes with:
-                        // terminate called without an active exception
-                        // fish: Job 1, 'tablo-master --interface enp39s0' terminated by signal SIGABRT (Abort)
-                        
-                        // -- The rest crashes because the socket conn is not held (commented out iun node_session_controller)
-
                     }
                 }
             }
@@ -163,7 +157,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                 if(std::find(newNodeIps.begin(), newNodeIps.end(), nodeIps[index]) == newNodeIps.end()) {
                     // NOTE: This is NOT tested! (yet)
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;
-                    close(getConnectionAtIp(nodeIps[index]).socket);
+                    close(getConnectionAtIp(nodeIps[index])->socket);
                     removeConnectionAtIp(nodeIps[index]);
                     nodeIps.erase(nodeIps.begin() + index);
                 }
@@ -176,7 +170,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
 
     // Close node con
     for(int index = 0; index < connections.size(); index++) {
-        close(getConnectionAtIp(nodeIps[index]).socket);
+        close(getConnectionAtIp(nodeIps[index])->socket);
     }
     std::wcout << "Terminate handleClientConnection for " << clientSocket << std::endl;
     udpDiscoveryThread.join();
@@ -199,12 +193,11 @@ void Networking::removeConnectionAtIp(std::string ip) {
     }
 }
 
-Networking::Connection Networking::getConnectionAtIp(std::string ip) {
+Networking::Connection* Networking::getConnectionAtIp(std::string ip) {
     for (int index = 0; index < connections.size(); index++) {
         if (connections[index].ip == ip) {
-            return connections[index];
+            return &connections[index];
         }
     }
-    Connection emptyCon;
-    return emptyCon;
+    return nullptr;
 }

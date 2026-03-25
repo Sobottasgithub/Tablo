@@ -16,11 +16,17 @@ class Networking
         void handleClientConnection(int serverSocket, int clientSocket);
 
     private:
+        // struct Connection {
+        //     std::string ip;
+        //     int socket;
+        //     std::thread* controllerThread;
+        //     NodeSessionController* controller;            
+        // };
         struct Connection {
             std::string ip;
             int socket;
-            std::thread* controllerThread;
-            NodeSessionController* controller;            
+            std::thread thread;
+            std::unique_ptr<NodeSessionController> controller;
         };
 
         std::vector<Connection> connections;
@@ -30,7 +36,7 @@ class Networking
 
         std::vector<std::string> getIps();
         void removeConnectionAtIp(std::string ip);
-        Connection getConnectionAtIp(std::string ip);
+        Connection* getConnectionAtIp(std::string ip);
 };
 
 #endif
