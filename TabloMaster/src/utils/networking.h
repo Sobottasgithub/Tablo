@@ -27,6 +27,8 @@ class Networking
             int socket;
             std::thread thread;
             std::unique_ptr<NodeSessionController> controller;
+
+            Connection(std::string ip_, int sock_, std::thread t, std::unique_ptr<NodeSessionController> ctrl): ip(std::move(ip_)), socket(sock_), thread(std::move(t)), controller(std::move(ctrl)) {}
         };
 
         std::vector<Connection> connections;

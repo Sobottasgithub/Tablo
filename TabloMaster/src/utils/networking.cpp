@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <iostream>
 #include <cstring>
+#include <memory>
 #include <memory_resource>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -81,31 +82,27 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
         } else if(newNodeIps == nodeIps) {
             bool nodeShutdown = false;
             while (!nodeShutdown) {
-                std::wcout << "Cycle: ----> line 83" << std::endl;
                 // TODO: Replace with real distribution later
                 std::vector<tabnet::Packet> orders;
-                // while(clientSessionManager.hasOrder()) {
-                //     orders.push_back(clientSessionManager.popOrder());
-                // }
+                while(clientSessionManager.hasOrder()) {
+                    orders.push_back(clientSessionManager.popOrder());
+                }
                 
-                // for(int index = 0; index < connections.size(); index++) {
-                //     Connection currentConnection = connections[index];
+                for (int i = 0; i < connections.size(); i++) {
+                    Connection* currentConnection = &connections[i];
 
-                //     // Hand orders to Node
-                //     for (int index = 0; index < orders.size(); index++) {
-                //         std::wcout << "HAND OUT ORDER!" << std::endl;
-                //         //currentConnection.controller->pushOrder(orders[index]);
-                //         //tabnet::Packet packet = {Methods::test, "sdfsdf"};
-                //         //NodeSessionController* instance = currentConnection.controller;
-                //         //instance->pushOrder(packet);
-                //     }
+                    for (int j = 0; j < orders.size(); j++) {
+                        std::wcout << "HAND OUT ORDER!" << std::endl;
+                        currentConnection->controller->pushOrder(orders[j]);
+                    }
 
-                //     // Get solutions from Node
-                //     while (currentConnection.controller->hasSolution()) {
-                //         std::wcout << "POP SOLUTION!" << std::endl;
-                //         clientSessionManager.pushSolution(currentConnection.controller->popSolution());
-                //     }
-                // }
+                    while (currentConnection->controller->hasSolution()) {
+                        std::wcout << "POP SOLUTION!" << std::endl;
+                        clientSessionManager.pushSolution(
+                            currentConnection->controller->popSolution()
+                        );
+                    }
+                }
             }
         } else if (newNodeIps != nodeIps) {
             std::wcout << "New nodes!" << std::endl;
@@ -133,7 +130,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     if(responseCode.method == Methods::success) {                        
                         auto nodeSessionController = std::make_unique<NodeSessionController>();
 
-                        std::thread nodeSessionCycleThread(
+                         std::thread nodeSessionCycleThread(
                             &NodeSessionController::sessionControllerCycle,
                             nodeSessionController.get(),
                             newSocket
