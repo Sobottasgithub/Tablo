@@ -17,11 +17,10 @@ for attr in "${ATTRS[@]}"; do
   nix build ".#${attr}" -o "${out}"
   echo "Build finished, locating image artifact for ${attr}..."
   # try to find a tar* in the output
-  tarfile="result-${attr}"
 
-  if [[ -n "$tarfile" ]]; then
-    echo "Found tar artifact: ${tarfile}"
-    load_output="$(docker load -i "${tarfile}")"
+  if [[ -n "$out" ]]; then
+    echo "Loading from result dir: ${out}"
+    load_output="$(docker load -i "${out}")"
     echo "${load_output}"
     # Parse "Loaded image: repo:tag"
     image_ref="$(printf '%s\n' "${load_output}" | awk -F': ' '/Loaded image: /{print $2}' | tr -d '\r' | tail -n1 || true)"

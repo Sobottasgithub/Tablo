@@ -17,6 +17,7 @@
         cmake
         gcc
         gnumake
+        protobuf
       ];
     in
     {
@@ -56,28 +57,38 @@
               tag = version;
               config = {
                 Cmd = [ "${tablo-full}/bin/${name}" ];
-              } // extraConfig;
+              }
+              // extraConfig;
             };
         in
         {
           inherit tablo-full;
           default = tablo-full;
-          tablo-node-docker = mkTabloDocker "tablo-node" {};
-          tablo-master-docker = mkTabloDocker "tablo-master" {};
+          tablo-node-docker = mkTabloDocker "tablo-node" { };
+          tablo-master-docker = mkTabloDocker "tablo-master" { };
 
           # used for client containers not deployed via swarm
-          tablo-client-docker = mkTabloDocker "tablo-client" {};
+          tablo-client-docker = mkTabloDocker "tablo-client" { };
         };
 
-      devShells.${system}.default = pkgs.mkShell {
-        inherit packages;
+      devShells.${system}.default =
+        let
+          devPackages = packages ++ [
+            pkgs.bridge-utils
+            pkgs.clang-tools
+            pkgs.protobuf
+          ];
+        in
+        pkgs.mkShell {
+          packages = devPackages;
 
-        inputsFrom = [ self.packages.${system}.default ];
+          inputsFrom = [ self.packages.${system}.default ];
 
-        shellHook = ''
-          git status
-        '';
-      };
+          shellHook = ''
+            git status
+            cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          '';
+        };
 
     };
 }

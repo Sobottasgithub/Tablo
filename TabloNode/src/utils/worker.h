@@ -1,22 +1,35 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <thread>
-#include <bits/stdc++.h>
 #include <vector>
+#include <mutex>
+
+#include "tabnet.h"
 
 class Worker
 {
     public:
-        Worker();
-        void queTask(std::string);
-        std::string getOutput();
+        // Cycle
+        void solveOrderCycle();
 
+        // Logic functions
+        tabnet::Packet test(tabnet::Packet packet);
+        tabnet::Packet setFile(tabnet::Packet packet);
+
+        // Service logic
+        tabnet::Packet getOrder();
+        void pushOrder(tabnet::Packet packet);
+        
+        tabnet::Packet getSolution();
+        void pushSolution(tabnet::Packet packet);
+
+        int getSolutionCollectionSize();
+        int getOrderCollectionSize();
+        
     private:
-        std::vector<std::string> inQue;
-        std::vector<std::string> outQue;
+        std::mutex mtx;
+        std::vector<tabnet::Packet> solutions;
+        std::vector<tabnet::Packet> orders;
 };
 
 #endif
