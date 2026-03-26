@@ -1,7 +1,7 @@
 #ifndef METHODS_H
 #define METHODS_H
 
-enum Methods {
+enum METHODS {
   empty = 10,
   success = 100,
   ready = 110,

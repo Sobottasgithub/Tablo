@@ -27,27 +27,27 @@ void ClientSessionManager::sessionControllerCycle() {
   while (responseCode >= 0) {
     // Recieve orders
     tabnet::Packet orderCount = tabnet::receiveMessage(this->socket);
-    if (orderCount.method == Methods::size) {
-      responseCode = tabnet::sendMessage(this->socket, Methods::success, "");
+    if (orderCount.method == METHODS::size) {
+      responseCode = tabnet::sendMessage(this->socket, METHODS::success, "");
       
       for (int index = 0; index < std::stoi(orderCount.payload); index++) {
         orderCollection.push_back(tabnet::receiveMessage(this->socket));
-        responseCode = tabnet::sendMessage(this->socket, Methods::success, "");
+        responseCode = tabnet::sendMessage(this->socket, METHODS::success, "");
       }
     } else {
-      responseCode = tabnet::sendMessage(this->socket, Methods::failed, "");
+      responseCode = tabnet::sendMessage(this->socket, METHODS::failed, "");
       std::wcout << "Something went wrong during receiving size!" << std::endl;
-      std::wcout << "Got: " << orderCount.method << " instead of " << Methods::size << " (size)" << std::endl;
+      std::wcout << "Got: " << orderCount.method << " instead of " << METHODS::size << " (size)" << std::endl;
     }
 
     // Send solutions
     int solutionCollectionSize = solutionCollection.size();
-    responseCode = tabnet::sendMessage(this->socket, Methods::size, std::to_string(solutionCollectionSize));
+    responseCode = tabnet::sendMessage(this->socket, METHODS::size, std::to_string(solutionCollectionSize));
     if (solutionCollectionSize > 0) {
-      if (tabnet::receiveMessage(this->socket).method == Methods::success) {
+      if (tabnet::receiveMessage(this->socket).method == METHODS::success) {
         for(int index = 0; index < solutionCollectionSize; index++) {
           responseCode = tabnet::sendMessage(this->socket, solutionCollection[0].method, solutionCollection[0].payload);
-          if (tabnet::receiveMessage(this->socket).method == Methods::success) {
+          if (tabnet::receiveMessage(this->socket).method == METHODS::success) {
             solutionCollection.erase(solutionCollection.begin());
           } else {
             std::wcout << "Send of solution failed!" << std::endl;

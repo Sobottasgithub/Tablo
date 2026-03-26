@@ -32,9 +32,9 @@ void Networking::networkingCycle(std::string tabloMaster) {
 
   while(true) {
     int orderCollectionSize = orderCollection.size();
-    tabnet::sendMessage(clientSocket, Methods::size, std::to_string(orderCollectionSize));
+    tabnet::sendMessage(clientSocket, METHODS::size, std::to_string(orderCollectionSize));
     tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-    if (response.method == Methods::success) {
+    if (response.method == METHODS::success) {
       for(int index = 0; index < orderCollectionSize; index++) {
         std::map<int, std::string> order = orderCollection[0];
         orderCollection.erase(orderCollection.begin());
@@ -43,40 +43,40 @@ void Networking::networkingCycle(std::string tabloMaster) {
         // Send data
         tabnet::sendMessage(clientSocket, method, order[method]);
         tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-        if (response.method == Methods::success) {
+        if (response.method == METHODS::success) {
           std::wcout << "Send succeded!" << std::endl;
         } else {
-          std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+          std::wcout << "Expected: " << METHODS::success << " (success) or " << METHODS::failed << " (failed), but got " << response.method << std::endl;
           std::wcout << "With following payload" << response.payload.c_str() << std::endl;
         }
       }
-    } else if (response.method == Methods::failed) {
+    } else if (response.method == METHODS::failed) {
       std::wcout << "Something went wrong while sending the size! Master response: " << response.payload.c_str() << std::endl;
     } else {
-      std::wcout << "Expected: " << Methods::success << " (success) or " << Methods::failed << " (failed), but got " << response.method << std::endl;
+      std::wcout << "Expected: " << METHODS::success << " (success) or " << METHODS::failed << " (failed), but got " << response.method << std::endl;
       std::wcout << "With following payload" << response.payload.c_str() << std::endl;
     }
 
     //receive
     tabnet::Packet receivedPacket = tabnet::receiveMessage(clientSocket);
-    if (receivedPacket.method == Methods::size) {
+    if (receivedPacket.method == METHODS::size) {
       int count = std::stoi(receivedPacket.payload);
       if (count != 0) {
-        tabnet::sendMessage(clientSocket, Methods::success, "");
+        tabnet::sendMessage(clientSocket, METHODS::success, "");
         for(int i = 0; i < count; i++) {
           tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-          if (response.method == Methods::response) {
+          if (response.method == METHODS::response) {
             solutionCollection.push_back(response.payload);
-            tabnet::sendMessage(clientSocket, Methods::success, "");
+            tabnet::sendMessage(clientSocket, METHODS::success, "");
           } else {
-            std::wcout << "Expected: " << Methods::response << " (response) got: " << receivedPacket.method << std::endl;
-            tabnet::sendMessage(clientSocket, Methods::failed, "Expected method response");
+            std::wcout << "Expected: " << METHODS::response << " (response) got: " << receivedPacket.method << std::endl;
+            tabnet::sendMessage(clientSocket, METHODS::failed, "Expected method response");
           }
         }
       }
     } else {
-      std::wcout << "Expected: " << Methods::size << " (size) got: " << receivedPacket.method << std::endl;
-      tabnet::sendMessage(clientSocket, Methods::failed, "Expected method size");
+      std::wcout << "Expected: " << METHODS::size << " (size) got: " << receivedPacket.method << std::endl;
+      tabnet::sendMessage(clientSocket, METHODS::failed, "Expected method size");
     }
   }
 }

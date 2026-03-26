@@ -101,7 +101,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
 
     while(true) { 
         // Send message
-        if (tabnet::sendMessageTo(serverSocket, broadcast, Methods::ip, containerIP.c_str()) != 0) {
+        if (tabnet::sendMessageTo(serverSocket, broadcast, METHODS::ip, containerIP.c_str()) != 0) {
             std::wcout << "Broadcast failed!" << std::endl;
             return;
         }
@@ -129,7 +129,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
             tabnet::Packet data = tabnet::receiveMessage(tcpNodeSocket);
 
             // Add ip to discovered Ip's if not already in vector
-            if (data.method == Methods::ip && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(data.payload)) == nodeIPAddresses.end()) {
+            if (data.method == METHODS::ip && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(data.payload)) == nodeIPAddresses.end()) {
                 nodeIPAddresses.push_back(std::string(data.payload));
             }
 

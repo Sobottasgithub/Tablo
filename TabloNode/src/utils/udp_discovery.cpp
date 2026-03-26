@@ -44,7 +44,7 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
     while (true) {
         // Get UDP Discovery packet
         tabnet::Packet masterIP = tabnet::receiveMessage(udpSocket);
-        if (masterIP.method == Methods::ip) {
+        if (masterIP.method == METHODS::ip) {
             if (masterIP.payload.length() != 0 && tabnet::isValidIpV4(masterIP.payload)) {
                 // DEBUG ONLY:
                 //std::wcout << masterIP.c_str() << std::endl;
@@ -68,13 +68,13 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
                     continue;
                 }
                 //send(recieveSocket, containerIP.c_str(), containerIP.size(), 0);
-                tabnet::sendMessage(recieveSocket, Methods::ip, containerIP.c_str());
+                tabnet::sendMessage(recieveSocket, METHODS::ip, containerIP.c_str());
                 close(recieveSocket);
             } else {
                 std::wcout << "Invalid ip!" << std::endl;
             }
         } else {
-            std::wcout << "Expected" << Methods::ip << " (ip) but got: " << masterIP.method << std::endl;
+            std::wcout << "Expected" << METHODS::ip << " (ip) but got: " << masterIP.method << std::endl;
         }
     }
     close(udpSocket);

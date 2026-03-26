@@ -124,7 +124,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     tabnet::Packet responseCode = tabnet::receiveMessage(newSocket);
 
                     // handshake compleate
-                    if(responseCode.method == Methods::success) {                        
+                    if(responseCode.method == METHODS::success) {                        
                         auto nodeSessionController = std::make_unique<NodeSessionController>();
 
                          std::thread nodeSessionCycleThread(

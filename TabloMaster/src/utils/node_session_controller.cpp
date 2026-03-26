@@ -24,32 +24,32 @@ void NodeSessionController::sessionControllerCycle(int socket) {
     // Receive solutions
     tabnet::Packet solutionCount = tabnet::receiveMessage(socket);
     std::wcout << "solutionCount " << solutionCount.method << " payload " << solutionCount.payload.c_str() << std::endl;
-    if (solutionCount.method == Methods::size) {
-      responseCode = tabnet::sendMessage(socket, Methods::success, "");
+    if (solutionCount.method == METHODS::size) {
+      responseCode = tabnet::sendMessage(socket, METHODS::success, "");
 
       for (int index = 0; index < std::stoi(solutionCount.payload); index++) {
         tabnet::Packet packet = tabnet::receiveMessage(socket);
         std::wcout << "GOT SOLUTION -----> " << packet.method << std::endl;
         pushSolution(packet);
-        responseCode = tabnet::sendMessage(socket, Methods::success, "");
+        responseCode = tabnet::sendMessage(socket, METHODS::success, "");
       }
     } else {
-      responseCode = tabnet::sendMessage(socket, Methods::failed, "");
+      responseCode = tabnet::sendMessage(socket, METHODS::failed, "");
       std::wcout << "Something went wrong during receiving size!" << std::endl;
-      std::wcout << "Got: " << solutionCount.method << " instead of " << Methods::size << " (size)" << std::endl;
+      std::wcout << "Got: " << solutionCount.method << " instead of " << METHODS::size << " (size)" << std::endl;
     }
 
     tabnet::Packet ready = tabnet::receiveMessage(socket);
       
     // Send orders
     int orderCollectionSize = getOrderCollectionSize();
-    responseCode = tabnet::sendMessage(socket, Methods::size, std::to_string(orderCollectionSize));
+    responseCode = tabnet::sendMessage(socket, METHODS::size, std::to_string(orderCollectionSize));
     if (orderCollectionSize > 0) {
-      if (tabnet::receiveMessage(socket).method == Methods::success) {
+      if (tabnet::receiveMessage(socket).method == METHODS::success) {
         for(int index = 0; index < orderCollectionSize; index++) {
           responseCode = tabnet::sendPacket(socket, popOrder());
           tabnet::Packet response = tabnet::receiveMessage(socket);
-          if (response.method != Methods::success) {
+          if (response.method != METHODS::success) {
             std::wcout << "Send order to node failed: got " << response.method << std::endl;
           }
         }
