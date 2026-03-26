@@ -18,7 +18,6 @@ void Worker::solveOrderCycle() {
 
                 switch (order.method) {
                     case METHODS::test:
-                        std::wcout << "TEST!" << std::endl;
                         pushSolution(Worker::test(order));
                         break;
 

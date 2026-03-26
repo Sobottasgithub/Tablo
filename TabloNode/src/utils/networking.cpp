@@ -66,22 +66,17 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
   int responseCode = tabnet::sendMessage(clientSocket, METHODS::success, ""); 
 
   while (true) {
-
-    // // -> Hand back finished solution 
+    // Hand back finished solution 
     int solutionCollectionSize = worker.getSolutionCollectionSize();
     responseCode = tabnet::sendMessage(clientSocket, METHODS::size, std::to_string(solutionCollectionSize));
     tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-    std::wcout << solutionCollectionSize << "<--- size" << std::endl;
     if (response.method == METHODS::success) {
       for(int index = 0; index < solutionCollectionSize; index++) {
         // Send data
         tabnet::Packet solution = worker.getSolution();
-        std::wcout << "Handing back solution" << solution.method << std::endl;
         responseCode = tabnet::sendPacket(clientSocket, solution);
         tabnet::Packet response = tabnet::receiveMessage(clientSocket);
-        if (response.method == METHODS::success) {
-          std::wcout << "Send succeded!" << std::endl;
-        } else {
+        if (response.method != METHODS::success) {
           std::wcout << "Expected: " << METHODS::success << " (success) or " << METHODS::failed << " (failed), but got " << response.method << std::endl;
           std::wcout << "With following payload" << response.payload.c_str() << std::endl;
         }

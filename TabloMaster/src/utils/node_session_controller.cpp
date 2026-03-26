@@ -16,20 +16,15 @@ NodeSessionController::NodeSessionController() {}
 
 void NodeSessionController::sessionControllerCycle(int socket) {
   this->socket = socket;
-  std::wcout << "CYCLE STARTED" << std::endl;
 
   int responseCode = 0;
-  
   while (responseCode >= 0) {
     // Receive solutions
     tabnet::Packet solutionCount = tabnet::receiveMessage(socket);
-    std::wcout << "solutionCount " << solutionCount.method << " payload " << solutionCount.payload.c_str() << std::endl;
     if (solutionCount.method == METHODS::size) {
       responseCode = tabnet::sendMessage(socket, METHODS::success, "");
-
       for (int index = 0; index < std::stoi(solutionCount.payload); index++) {
         tabnet::Packet packet = tabnet::receiveMessage(socket);
-        std::wcout << "GOT SOLUTION -----> " << packet.method << std::endl;
         pushSolution(packet);
         responseCode = tabnet::sendMessage(socket, METHODS::success, "");
       }

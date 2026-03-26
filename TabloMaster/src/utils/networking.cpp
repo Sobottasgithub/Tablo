@@ -144,7 +144,7 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     }
                 }
             }
-            std::wcout << "[CLOSE] Connections with nodes that dont exist anymore" << std::endl;   
+            
             // Close connections with nodes that dont exist anymore
             for (int index = 0; index < nodeIps.size(); index++) {
                 std::wcout << "Iterating over nodeIPS" << std::endl;
