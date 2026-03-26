@@ -57,12 +57,11 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     );
     
     // TCP
-    std::vector<Connection> connections;
     std::vector<std::string> nodeIps;
     int responseCode = 0;
     while (clientSessionManager.isConnected()) {
         std::vector<std::string> newNodeIps = udpDiscovery.getNodeAdresses();
-        nodeIps = getIps();
+        nodeIps = getIps(); 
 
         // sort vectors to compare them
         std::sort(newNodeIps.begin(), newNodeIps.end());
@@ -92,12 +91,10 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                     Connection* currentConnection = &connections[i];
 
                     for (int j = 0; j < orders.size(); j++) {
-                        std::wcout << "HAND OUT ORDER!" << std::endl;
                         currentConnection->controller->pushOrder(orders[j]);
                     }
 
                     while (currentConnection->controller->hasSolution()) {
-                        std::wcout << "POP SOLUTION!" << std::endl;
                         clientSessionManager.pushSolution(
                             currentConnection->controller->popSolution()
                         );
@@ -143,14 +140,14 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
                             std::move(nodeSessionController)
                         });
                                                 
-                        std::wcout << "Connection established: " << responseCode.method << " at ip: " << newNodeIps[index].c_str() << std::endl;
+                        std::wcout << "Connection established: " << responseCode.method << " at ip: " << newNodeIps[index].c_str() << " | Connections.size(): " << connections.size() << std::endl;
                     }
                 }
             }
-            std::wcout << "[START] Close connections with nodes that dont exist anymore" << std::endl;   
+            std::wcout << "[CLOSE] Connections with nodes that dont exist anymore" << std::endl;   
             // Close connections with nodes that dont exist anymore
             for (int index = 0; index < nodeIps.size(); index++) {
-                std::wcout << "-- Iterating over nodeIPS" << std::endl;
+                std::wcout << "Iterating over nodeIPS" << std::endl;
                 if(std::find(newNodeIps.begin(), newNodeIps.end(), nodeIps[index]) == newNodeIps.end()) {
                     // NOTE: This is NOT tested! (yet)
                     std::wcout << "Close connection: " << nodeIps[index].c_str() << std::endl;

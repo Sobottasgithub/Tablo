@@ -16,12 +16,6 @@ class Networking
         void handleClientConnection(int serverSocket, int clientSocket);
 
     private:
-        // struct Connection {
-        //     std::string ip;
-        //     int socket;
-        //     std::thread* controllerThread;
-        //     NodeSessionController* controller;            
-        // };
         struct Connection {
             std::string ip;
             int socket;
