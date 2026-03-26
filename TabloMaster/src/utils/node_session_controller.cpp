@@ -108,6 +108,11 @@ void NodeSessionController::pushSolution(tabnet::Packet solution) {
   solutionCollection.push_back(solution);
 }
 
+void NodeSessionController::pushOrder(tabnet::Packet order) {
+  std::lock_guard<std::mutex> lock(mtx);
+  orderCollection.push_back(order);
+}
+
 int NodeSessionController::getOrderCollectionSize() {
   std::lock_guard<std::mutex> lock(mtx);
   return orderCollection.size();
