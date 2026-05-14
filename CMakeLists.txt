@@ -4,21 +4,35 @@ project(tablo)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Tablo shared libraries
+# Build options
 
-# libtabcrypt
-add_subdirectory(lib/libtabcrypt)
+option(DEF_LIBTABCRYPT "Build libtabcrypt" ON)
+option(DEF_LIBTABNET "Build libtabnet" ON)
 
-# libtabnet
-add_subdirectory(lib/libtabnet)
+option(DEF_CLIENT "Build TabloClient" ON)
+option(DEF_MASTER "Build TabloMaster" ON)
+option(DEF_NODE "Build TabloNode" ON)
 
-# Test executables
+# Shared libraries
 
-add_subdirectory(TCTest)
+if(DEF_LIBTABCRYPT)
+    add_subdirectory(lib/libtabcrypt)
+endif()
 
+if(DEF_LIBTABNET)
+    add_subdirectory(lib/libtabnet)
+endif()
 
-# TabloClient, TabloMaster and TabloNode executables (provided by own CMakeLists.txt files)
+# Executables
 
-add_subdirectory(TabloClient)
-add_subdirectory(TabloMaster)
-add_subdirectory(TabloNode)
+if(DEF_CLIENT)
+    add_subdirectory(TabloClient)
+endif()
+
+if(DEF_MASTER)
+    add_subdirectory(TabloMaster)
+endif()
+
+if(DEF_NODE)
+    add_subdirectory(TabloNode)
+endif()
