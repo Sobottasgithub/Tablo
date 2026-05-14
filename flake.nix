@@ -3,10 +3,17 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    ttp2 = {
+      url = "github:Sobottasgithub/ttp2";
+    };
   };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      ttp2,
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
