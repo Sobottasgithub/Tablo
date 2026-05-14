@@ -8,8 +8,9 @@ file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 add_executable(tablo-node ${SOURCES})
 
-# Link against the tabcrypt and tabnet library
+# Link against libs
 target_link_libraries(tablo-node PRIVATE tabcrypt)
 target_link_libraries(tablo-node PRIVATE tabnet)
+target_link_libraries(tablo-node PRIVATE ttp2)
 
 install(TARGETS tablo-node DESTINATION bin)
