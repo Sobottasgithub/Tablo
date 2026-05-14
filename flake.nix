@@ -22,7 +22,7 @@
         inherit system;
       };
 
-      version = "1.2";
+      version = "1.3";
 
       libttp2 = ttp2.packages.${system}.lib;
 
@@ -40,7 +40,7 @@
           mkTabloPackage =
             {
               pname,
-              buildTarget,
+              buildTarget ? pname,
 
               enableLibtabcrypt ? false,
               enableLibtabnet ? false,
@@ -106,7 +106,6 @@
 
           tablo-node = mkTabloPackage {
             pname = "tablo-node";
-            buildTarget = "TabloNode";
 
             enableNode = true;
 
@@ -118,7 +117,6 @@
 
           tablo-client = mkTabloPackage {
             pname = "tablo-client";
-            buildTarget = "TabloClient";
 
             enableClient = true;
             enableLibtabcrypt = true;
@@ -132,7 +130,6 @@
 
           tablo-master = mkTabloPackage {
             pname = "tablo-master";
-            buildTarget = "TabloMaster";
 
             enableMaster = true;
             enableLibtabcrypt = true;
@@ -141,6 +138,35 @@
             extraInputs = [
               libtabcrypt
               libtabnet
+            ];
+          };
+
+          tablo-full = mkTabloPackage {
+            pname = "tablo-full";
+            buildTarget = "all";
+
+            enableLibtabcrypt = true;
+            enableLibtabnet = true;
+
+            enableNode = true;
+            enableClient = true;
+            enableMaster = true;
+
+            extraInputs = [
+              libtabcrypt
+              libtabnet
+            ];
+          };
+
+          tablo = pkgs.symlinkJoin {
+            name = "tablo-${version}";
+
+            paths = [
+              libtabcrypt
+              libtabnet
+              tablo-node
+              tablo-client
+              tablo-master
             ];
           };
 
@@ -157,13 +183,17 @@
         in
         {
           inherit
+            tablo
             tablo-node
             tablo-client
             tablo-master
+            tablo-full
+            libtabcrypt
+            libtabnet
             libttp2
             ;
 
-          default = tablo-node;
+          default = tablo;
 
           tablo-node-docker = mkTabloDocker tablo-node "tablo-node";
 
