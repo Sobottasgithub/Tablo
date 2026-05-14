@@ -3,25 +3,34 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    ttp2 = {
+      url = "github:Sobottasgithub/ttp2";
+    };
   };
 
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      ttp2,
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
 
       version = "1.2";
 
+      libttp2 = ttp2.packages.${system}.lib;
+
       packages = with pkgs; [
         cmake
         gcc
         gnumake
         protobuf
+        libttp2
       ];
     in
     {
-
       packages.${system} =
         let
           tablo-full = pkgs.stdenv.mkDerivation {
@@ -62,7 +71,7 @@
             };
         in
         {
-          inherit tablo-full;
+          inherit tablo-full libttp2;
           default = tablo-full;
           tablo-node-docker = mkTabloDocker "tablo-node" { };
           tablo-master-docker = mkTabloDocker "tablo-master" { };
