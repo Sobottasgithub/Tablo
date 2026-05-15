@@ -1,7 +1,7 @@
 #include <csignal>
 #include <iostream>
 
-#include "utils/networking.h"
+#include "utils/network_manager.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,12 +9,12 @@ int main(int argc, char *argv[])
     if (argc > 0) {
         for(int index = 0; index < argc; index++) {
             if (std::string(argv[index]).rfind("--interface", 0) == 0) {
-                Networking networking(argv[index+1]);
+                NetworkManager networkManager(argv[index+1]);
             }
         }
     } else {
         // Use config file to set Interface (TODO)
-        Networking networking("eth0");
+        NetworkManager networkManager("eth0");
     }
 
     return 0;
