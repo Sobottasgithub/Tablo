@@ -28,11 +28,6 @@ void NetworkManager::networkingCycle(std::string tabloMaster) {
     }
     
     clientSessionController = std::make_shared<ClientSessionController>(serverSocket);
-
-    auto controller = clientSessionController;
-    std::thread networkThread([controller]() {
-      controller->networkingSession();
-    });
 }
 
 bool NetworkManager::hasResponse() {
