@@ -1,14 +1,12 @@
-
 #include "worker.h"
 #include <iostream>
 
 #include <vector>
 #include <mutex>
 
-#include "tabnet.h"
-#include "methods.h"
 
 // Cycle
+/*
 void Worker::solveOrderCycle() {
     while (true) {
         int orderSize = getOrderCollectionSize();
@@ -92,3 +90,4 @@ int Worker::getOrderCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
     return orders.size();
 }
+*/

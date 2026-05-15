@@ -5,7 +5,7 @@
 #include <mutex>
 
 #include "tabnet.h"
-
+/*
 class Worker
 {
     public:
@@ -31,5 +31,5 @@ class Worker
         std::vector<tabnet::Packet> solutions;
         std::vector<tabnet::Packet> orders;
 };
-
+*/
 #endif

@@ -1,7 +1,6 @@
 #include "udp_discovery.h"
 
 #include "tabnet.h"
-#include "methods.h"
 
 #include <iostream>
 #include <string>
@@ -13,6 +12,7 @@
 #include <unistd.h>
 #include <sys/poll.h>
 
+/*
 UdpDiscovery::UdpDiscovery(std::string interface) {
     std::wcout << "Start udp discovery..." << std::endl;
     
@@ -80,3 +80,4 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
     close(udpSocket);
 }
 
+*/

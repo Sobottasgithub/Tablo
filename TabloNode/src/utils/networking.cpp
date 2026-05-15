@@ -2,7 +2,6 @@
 
 #include "tabnet.h"
 
-#include "methods.h"
 #include "udp_discovery.h"
 #include "worker.h"
 
@@ -16,6 +15,7 @@
 #include <thread>
 #include <vector>
 
+/*
 Networking::Networking(std::string interface) {
   std::wcout << "Start Socket...." << std::endl;
 
@@ -115,3 +115,4 @@ void Networking::handleClientConnection(int serverSocket, int clientSocket) {
     }    
   }
 }
+*/
