@@ -1,10 +1,12 @@
 #ifndef NETWORKING_H
 #define NETWORKING_H
 
+#include <client_session_controller.h>
 #include <string>
 #include <map>
 #include <vector>
 #include <mutex>
+#include <memory>
 
 class Networking
 {
@@ -12,17 +14,12 @@ class Networking
     Networking();
     void networkingCycle(std::string tabloMaster);
 
-    bool hasSolution();
-    std::string popSolution();
-    void pushOrder(int method, std::string content); 
+    bool hasResponse();
+    ClientSessionController::Packet popResponse();
+    void pushRequest(ClientSessionController::Packet packet);
 
   private:
-    std::vector<std::map<int, std::string>> orderCollection;
-    std::vector<std::string> solutionCollection;
-    std::mutex mtx;
-
-    std::string recieveMessage(int socket);
-    bool isNumeric(const std::string& string);
+    std::shared_ptr<ClientSessionController> clientSessionController;
 };
 
 #endif

@@ -1,28 +1,48 @@
 #include "networking.h"
 
+#include <client_session_controller.h>
 #include <iostream>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <thread>
+#include <memory>
+#include <type_traits>
 
 Networking::Networking() {}
 
 void Networking::networkingCycle(std::string tabloMaster) {
+    int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(4003);
+    serverAddress.sin_addr.s_addr = inet_addr(tabloMaster.c_str());
+
+    int connectionResult = connect(serverSocket, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
+    
+    if (connectionResult < 0 && errno != EINPROGRESS) {
+        std::wcout << "Connection failed!" << std::endl;
+        return;
+    }
+    
+    clientSessionController = std::make_shared<ClientSessionController>(serverSocket);
+
+    auto controller = clientSessionController;
+    std::thread networkThread([controller]() {
+      controller->networkingSession();
+    });
 }
 
-bool Networking::hasSolution() {
-  std::lock_guard<std::mutex> lock(mtx);
-  return !solutionCollection.empty();
+bool Networking::hasResponse() {
+  auto controller = clientSessionController;
+  return controller.hasResponse();
 }
 
-std::string Networking::popSolution() {
-  std::lock_guard<std::mutex> lock(mtx);
-  std::string solution = solutionCollection[0];
-  solutionCollection.erase(solutionCollection.begin());
-  return solution;
+ClientSessionController::Packet Networking::popResponse() {
+  
 }
 
-void Networking::pushOrder(int method, std::string content) {
-  std::lock_guard<std::mutex> lock(mtx);
-  std::map<int, std::string> order;
-  order[method] = content;
-  orderCollection.push_back(order);
+void Networking::pushRequest(ClientSessionController::Packet packet) {
+  
 }
-
