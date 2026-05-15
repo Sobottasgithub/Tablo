@@ -23,13 +23,22 @@ Cli::Cli(std::string tabloMaster) {
     std::cin >> content;
     std::wcout << std::endl;
 
-    // networkManager.pushRequest();
+    ClientSessionController::Packet packet;
+    packet.id = 1; //TODO: autoincrement in TTP2
+
+    ClientSessionController::Standard payload;
+    payload.payload = content;
+    packet.payload = payload;
+
+    networkManager.pushRequest(packet);
 
     std::wcout << "Waiting for solution..." << std::endl;
     while (!networkManager.hasResponse()) {} // Wait for solution
 
-    //TODO: pop response and display
-    
+    ClientSessionController::Packet response = networkManager.popResponse();
+    ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
+
+    std::wcout << "response: " << responsePayload.payload.c_str() << std::endl;    
   }
 }
 
