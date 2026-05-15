@@ -14,11 +14,11 @@ The following ports are used to establish the network tablo needs:
 ### 2 Deploy
 
 ```cmd
-nix shell
-./build-image-nix.sh
-tablo-master --interface YOURINTERFACE
-tablo-node --interface YOURINTERFACE
-tablo-client --master YOURMASTERSIP
+sudo nix-collect-garbage -d
+nix build --log-format bar-with-logs
+nix run .#tablo-master -- --interface INTERFACENAME
+nix run .#tablo-node -- --interface INTERFACENAME
+nix run .#tablo-client -- --master MASTERIPV4
 ```
 
 ## Deploy with DOCKER
