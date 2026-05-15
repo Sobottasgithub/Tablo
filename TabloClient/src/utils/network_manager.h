@@ -1,5 +1,5 @@
-#ifndef NETWORKING_H
-#define NETWORKING_H
+#ifndef NETWORK_MANAGER_H
+#define NETWORK_MANAGER_H
 
 #include <client_session_controller.h>
 #include <string>
@@ -8,10 +8,10 @@
 #include <mutex>
 #include <memory>
 
-class Networking
+class NetworkManager
 {
   public:
-    Networking();
+    NetworkManager();
     void networkingCycle(std::string tabloMaster);
 
     bool hasResponse();

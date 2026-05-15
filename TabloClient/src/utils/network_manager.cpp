@@ -1,4 +1,4 @@
-#include "networking.h"
+#include "network_manager.h"
 
 #include <client_session_controller.h>
 #include <iostream>
@@ -9,9 +9,9 @@
 #include <memory>
 #include <type_traits>
 
-Networking::Networking() {}
+NetworkManager::NetworkManager() {}
 
-void Networking::networkingCycle(std::string tabloMaster) {
+void NetworkManager::networkingCycle(std::string tabloMaster) {
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     sockaddr_in serverAddress;
@@ -34,15 +34,15 @@ void Networking::networkingCycle(std::string tabloMaster) {
     });
 }
 
-bool Networking::hasResponse() {
+bool NetworkManager::hasResponse() {
   auto controller = clientSessionController;
-  return controller.hasResponse();
+  return controller->hasResponse();
 }
 
-ClientSessionController::Packet Networking::popResponse() {
+ClientSessionController::Packet NetworkManager::popResponse() {
   
 }
 
-void Networking::pushRequest(ClientSessionController::Packet packet) {
+void NetworkManager::pushRequest(ClientSessionController::Packet packet) {
   
 }

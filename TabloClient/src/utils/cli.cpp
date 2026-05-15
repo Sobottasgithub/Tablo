@@ -1,18 +1,19 @@
 #include "cli.h"
 
+#include <client_session_controller.h>
 #include <string>
 #include <iostream>
 #include <thread>
 
-#include "networking.h"
+#include "network_manager.h"
 
 Cli::Cli(std::string tabloMaster) {
   std::wcout << "Client! Tablo master at: " << tabloMaster.c_str() << std::endl;
-  Networking networking;
+  NetworkManager networkManager;
 
   std::thread networkingThread(
-      &Networking::networkingCycle,
-      &networking,
+      &NetworkManager::networkingCycle,
+      &networkManager,
       tabloMaster
   );
   
@@ -22,12 +23,13 @@ Cli::Cli(std::string tabloMaster) {
     std::cin >> content;
     std::wcout << std::endl;
 
-    networking.pushOrder(1, content);
+    // networkManager.pushRequest();
 
     std::wcout << "Waiting for solution..." << std::endl;
-    while (!networking.hasSolution()) {} // Wait for solution
+    while (!networkManager.hasResponse()) {} // Wait for solution
 
-    std::wcout << networking.popSolution().c_str() << std::endl;
+    //TODO: pop response and display
+    
   }
 }
 
