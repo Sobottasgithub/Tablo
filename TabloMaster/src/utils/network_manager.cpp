@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <thread>
+#include <memory>
 
 NetworkManager::NetworkManager(std::string interface) {
     std::wcout << "Start socket..." << std::endl;
@@ -65,9 +66,25 @@ NetworkManager::NetworkManager(std::string interface) {
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
-    std::wcout << "HELLO FROM HANDLE CLIENT CONN!" << std::endl;
+    std::wcout << "Handle client conn" << std::endl;
     // TODO: add packet distribution logic here
 
+    auto serverSessionController = std::make_shared<ServerSessionController>(serverSocket, clientSocket);
+
+    std::thread networkingSession([serverSessionController]() {
+        serverSessionController->networkingSession();
+    });
+
+    while (serverSessionController->isConnected()) {
+        if (serverSessionController->hasRequest()) {
+            ServerSessionController::Packet packet = serverSessionController->popRequest();
+            std::wcout << "Received packet id: " << packet.id << std::endl;
+            serverSessionController->pushResponse(packet);
+        }
+    }
+
+    std::wcout << "Terminated!" << std::endl;
+    networkingSession.detach();
     
     // udpDiscoveryThread.join();
 }
