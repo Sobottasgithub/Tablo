@@ -20,7 +20,8 @@ void NetworkManager::networkingCycle(std::string tabloMaster) {
     serverAddress.sin_addr.s_addr = inet_addr(tabloMaster.c_str());
 
     int connectionResult = connect(serverSocket, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
-    
+
+    // Wait for server to accept
     if (connectionResult < 0 && errno != EINPROGRESS) {
         std::wcout << "Connection failed!" << std::endl;
         return;
@@ -40,9 +41,11 @@ bool NetworkManager::hasResponse() {
 }
 
 ClientSessionController::Packet NetworkManager::popResponse() {
-  
+  auto controller = clientSessionController;
+  return controller->popResponse();
 }
 
 void NetworkManager::pushRequest(ClientSessionController::Packet packet) {
-  
+  auto controller = clientSessionController;
+  controller->pushRequest(packet);
 }
