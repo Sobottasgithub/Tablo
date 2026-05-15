@@ -11,11 +11,9 @@ Cli::Cli(std::string tabloMaster) {
   std::wcout << "Client! Tablo master at: " << tabloMaster.c_str() << std::endl;
   NetworkManager networkManager;
 
-  std::thread networkingThread(
-      &NetworkManager::networkingCycle,
-      &networkManager,
-      tabloMaster
-  );
+  if (networkManager.createSocket(tabloMaster) < 0) {
+    return;
+  }
   
   while (true) {
     std::string content;

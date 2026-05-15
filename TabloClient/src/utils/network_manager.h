@@ -12,7 +12,8 @@ class NetworkManager
 {
   public:
     NetworkManager();
-    void networkingCycle(std::string tabloMaster);
+
+    int createSocket(std::string tabloMaster);
 
     bool hasResponse();
     ClientSessionController::Packet popResponse();

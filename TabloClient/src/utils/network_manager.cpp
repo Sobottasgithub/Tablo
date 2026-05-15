@@ -11,7 +11,7 @@
 
 NetworkManager::NetworkManager() {}
 
-void NetworkManager::networkingCycle(std::string tabloMaster) {
+int NetworkManager::createSocket(std::string tabloMaster) {
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     sockaddr_in serverAddress;
@@ -24,10 +24,11 @@ void NetworkManager::networkingCycle(std::string tabloMaster) {
     // Wait for server to accept
     if (connectionResult < 0 && errno != EINPROGRESS) {
         std::wcout << "Connection failed!" << std::endl;
-        return;
+        return -1;
     }
     
     clientSessionController = std::make_shared<ClientSessionController>(serverSocket);
+    return 0;
 }
 
 bool NetworkManager::hasResponse() {
