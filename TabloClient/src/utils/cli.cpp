@@ -1,9 +1,7 @@
 #include "cli.h"
 
-#include <ostream>
 #include <string>
 #include <iostream>
-#include <regex>
 #include <thread>
 
 #include "networking.h"
@@ -19,17 +17,12 @@ Cli::Cli(std::string tabloMaster) {
   );
   
   while (true) {
-    int method;
-    std::wcout << "Method: ";
-    std::cin >> method;
-    std::wcout << std::endl;
-
     std::string content;
     std::wcout << "Content: ";
     std::cin >> content;
     std::wcout << std::endl;
 
-    networking.pushOrder(method, content);
+    networking.pushOrder(1, content);
 
     std::wcout << "Waiting for solution..." << std::endl;
     while (!networking.hasSolution()) {} // Wait for solution

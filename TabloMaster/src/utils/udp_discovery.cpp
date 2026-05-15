@@ -1,8 +1,5 @@
 #include "udp_discovery.h"
 
-#include "tabnet.h"
-#include "methods.h"
-
 #include <iostream>
 #include <cstring>
 #include <netinet/in.h>
@@ -20,6 +17,7 @@
 #include <fcntl.h>
 
 void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
+    /*
     std::wcout << "Start Udp discovery..." << std::endl;
 
     std::string containerIP = tabnet::getLocalIpAddress(interface);
@@ -139,6 +137,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     }
     close(serverSocket);
     std::wcout << "UDP socket closed..." << std::endl;
+    */
 }
 
 std::vector<std::string> UdpDiscovery::getNodeAdresses() {
