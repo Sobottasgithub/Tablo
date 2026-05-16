@@ -1,5 +1,7 @@
 #include "udp_discovery.h"
 
+#include <server_session_controller.h>
+
 #include <iostream>
 #include <cstring>
 #include <netinet/in.h>
@@ -17,11 +19,11 @@
 #include <fcntl.h>
 
 void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
-    /*
     std::wcout << "Start Udp discovery..." << std::endl;
 
-    std::string containerIP = tabnet::getLocalIpAddress(interface);
-    std::string broadcastIP = tabnet::getBroadcastIpAddress();
+    ServerSessionController serverSessionController;
+    std::string containerIP = serverSessionController.getLocalIpAddress(interface);
+    std::string broadcastIP = serverSessionController.getBroadcastIpAddress();
 
     std::wcout << "Container IP: " << containerIP.c_str() << " | Broadcast IP: " << broadcastIP.c_str() << std::endl;
 
@@ -99,7 +101,7 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
 
     while(true) { 
         // Send message
-        if (tabnet::sendMessageTo(serverSocket, broadcast, METHODS::ip, containerIP.c_str()) != 0) {
+        if (sendMessageTo(serverSocket, broadcast, containerIP.c_str()) != 0) {
             std::wcout << "Broadcast failed!" << std::endl;
             return;
         }
@@ -121,14 +123,11 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
             //std::wcout << "Timeout: no connection" << std::endl;
             continue;
         } else {
-            // tabnet::Packet data;
-            // ssize_t valread = read(tcpNodeSocket, (char*)&data, sizeof(data)-1);
-
-            tabnet::Packet data = tabnet::receiveMessage(tcpNodeSocket);
+            std::string data = receiveMessage(tcpNodeSocket);
 
             // Add ip to discovered Ip's if not already in vector
-            if (data.method == METHODS::ip && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), std::string(data.payload)) == nodeIPAddresses.end()) {
-                nodeIPAddresses.push_back(std::string(data.payload));
+            if (serverSessionController.isValidIpV4(data) && std::find(nodeIPAddresses.begin(), nodeIPAddresses.end(), data) == nodeIPAddresses.end()) {
+                nodeIPAddresses.push_back(data);
             }
 
             close(tcpNodeSocket);
@@ -137,7 +136,38 @@ void UdpDiscovery::udpDiscoveryCycle(std::string interface) {
     }
     close(serverSocket);
     std::wcout << "UDP socket closed..." << std::endl;
-    */
+}
+
+int UdpDiscovery::sendMessageTo(int socket, const sockaddr_in& broadcast, std::string payload) {
+  if (sendto(socket, payload.data(), payload.size(), 0, (struct sockaddr*)&broadcast, sizeof(broadcast)) < 0) {
+      std::wcout << "buffer: Sendto Failed!" << std::endl;
+      return -1;
+  }
+
+  return 0;
+}
+
+std::string UdpDiscovery::receiveMessage(int socket) {
+  std::string data;
+  pollfd pfd{};
+  pfd.fd = socket;
+  pfd.events = POLLIN;
+
+  int ret = poll(&pfd, 1, 10000);
+
+  int bufferSize = 1024;
+  if (ret > 0 && (pfd.revents & POLLIN)) {
+      char* buffer = new char[bufferSize];
+      ssize_t size = recv(socket, buffer, bufferSize, 0);
+
+      std::wcout << "BUffer: "<< buffer << std::endl;
+      
+      data = buffer;
+    
+      if (size <= 0) return data;
+      return data;
+  }
+  return data;
 }
 
 std::vector<std::string> UdpDiscovery::getNodeAdresses() {

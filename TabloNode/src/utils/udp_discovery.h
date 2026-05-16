@@ -7,6 +7,10 @@ class UdpDiscovery
 {
     public:
         UdpDiscovery(std::string interface);
+
+    private:
+        std::string receiveMessage(int socket);
+        int sendMessage(int socket, std::string payload);
 };
 
 #endif
