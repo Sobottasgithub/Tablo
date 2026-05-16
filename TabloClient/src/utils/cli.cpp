@@ -22,7 +22,6 @@ Cli::Cli(std::string tabloMaster) {
     std::cin >> content;
 
     Networking::Packet packet;
-    packet.id = 1; //TODO: autoincrement in TTP2
 
     Networking::Standard payload;
     payload.payload = content;
@@ -36,7 +35,7 @@ Cli::Cli(std::string tabloMaster) {
     ClientSessionController::Packet response = networkManager.popResponse();
     ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
 
-    std::wcout << "response: " << responsePayload.payload.c_str() << std::endl;    
+    std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;    
   }
 }
 
