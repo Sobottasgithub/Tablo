@@ -3,8 +3,7 @@
 
 #include <client_session_controller.h>
 #include <string>
-#include <map>
-#include <vector>
+#include <thread>
 #include <mutex>
 #include <memory>
 

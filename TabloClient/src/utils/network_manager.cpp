@@ -26,22 +26,25 @@ int NetworkManager::createSocket(std::string tabloMaster) {
         std::wcout << "Connection failed!" << std::endl;
         return -1;
     }
-    
+
     clientSessionController = std::make_shared<ClientSessionController>(serverSocket);
+
+    std::thread networkThread([this]() {
+        clientSessionController->networkingSession();
+    });
+    networkThread.detach();
+
     return 0;
 }
 
 bool NetworkManager::hasResponse() {
-  auto controller = clientSessionController;
-  return controller->hasResponse();
+  return clientSessionController->hasResponse();
 }
 
 ClientSessionController::Packet NetworkManager::popResponse() {
-  auto controller = clientSessionController;
-  return controller->popResponse();
+  return clientSessionController->popResponse();
 }
 
-void NetworkManager::pushRequest(ClientSessionController::Packet packet) {
-  auto controller = clientSessionController;
-  controller->pushRequest(packet);
+void NetworkManager::pushRequest(Networking::Packet packet) {
+  clientSessionController->pushRequest(packet);
 }

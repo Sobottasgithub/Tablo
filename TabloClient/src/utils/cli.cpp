@@ -12,6 +12,7 @@ Cli::Cli(std::string tabloMaster) {
   NetworkManager networkManager;
 
   if (networkManager.createSocket(tabloMaster) < 0) {
+    std::wcout << "Create network manager failed!" << std::endl;
     return;
   }
   
@@ -19,12 +20,11 @@ Cli::Cli(std::string tabloMaster) {
     std::string content;
     std::wcout << "Content: ";
     std::cin >> content;
-    std::wcout << std::endl;
 
-    ClientSessionController::Packet packet;
+    Networking::Packet packet;
     packet.id = 1; //TODO: autoincrement in TTP2
 
-    ClientSessionController::Standard payload;
+    Networking::Standard payload;
     payload.payload = content;
     packet.payload = payload;
 
