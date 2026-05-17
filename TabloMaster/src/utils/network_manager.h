@@ -4,7 +4,7 @@
 #include <string>
 #include <thread>
 
-// #include "udp_discovery.h"
+#include "udp_discovery.h"
 
 class NetworkManager
 {
@@ -13,8 +13,8 @@ class NetworkManager
         void handleClientConnection(int serverSocket, int clientSocket);
 
     private:
-        // UdpDiscovery udpDiscovery;
-        // std::thread udpDiscoveryThread;
+        UdpDiscovery udpDiscovery;
+        std::thread udpDiscoveryThread;
 };
 
 #endif

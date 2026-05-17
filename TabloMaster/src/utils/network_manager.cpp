@@ -1,6 +1,6 @@
-// #include "udp_discovery.h"
-
 #include "network_manager.h"
+
+#include "udp_discovery.h"
 
 #include <server_session_controller.h>
 
@@ -14,7 +14,7 @@
 
 NetworkManager::NetworkManager(std::string interface) {
     std::wcout << "Start socket..." << std::endl;
-    // udpDiscoveryThread = std::thread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
+    std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
 
     ServerSessionController tempServerSessionController;
     std::string containerIP = tempServerSessionController.getLocalIpAddress(interface);
@@ -62,11 +62,17 @@ NetworkManager::NetworkManager(std::string interface) {
             }
         }
     }
-    // TODO: Implement accept client here
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
     std::wcout << "Handle client conn" << std::endl;
+
+    std::vector<std::string> nodes = udpDiscovery.getNodeAdresses();
+    for (int index = 0; index < nodes.size(); index++) {
+        std::wcout << "node: " << nodes[index].c_str() << std::endl;
+    }
+
+    
     // TODO: add packet distribution logic here
 
     auto serverSessionController = std::make_shared<ServerSessionController>(serverSocket, clientSocket);
@@ -86,5 +92,5 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     std::wcout << "Terminated!" << std::endl;
     networkingSession.detach();
     
-    // udpDiscoveryThread.join();
+    udpDiscoveryThread.join();
 }
