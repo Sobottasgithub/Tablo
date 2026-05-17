@@ -1,11 +1,11 @@
 #ifndef WORKER_H
 #define WORKER_H
 
+#include <server_session_controller.h>
+
 #include <vector>
 #include <mutex>
 
-#include "tabnet.h"
-/*
 class Worker
 {
     public:
@@ -13,23 +13,23 @@ class Worker
         void solveOrderCycle();
 
         // Logic functions
-        tabnet::Packet test(tabnet::Packet packet);
-        tabnet::Packet setFile(tabnet::Packet packet);
+        ServerSessionController::Packet test(ServerSessionController::Packet packet);
+        ServerSessionController::Packet setFile(ServerSessionController::Packet packet);
 
         // Service logic
-        tabnet::Packet getOrder();
-        void pushOrder(tabnet::Packet packet);
+        ServerSessionController::Packet getOrder();
+        void pushOrder(ServerSessionController::Packet packet);
         
-        tabnet::Packet getSolution();
-        void pushSolution(tabnet::Packet packet);
+        ServerSessionController::Packet getSolution();
+        void pushSolution(ServerSessionController::Packet packet);
 
         int getSolutionCollectionSize();
         int getOrderCollectionSize();
         
     private:
         std::mutex mtx;
-        std::vector<tabnet::Packet> solutions;
-        std::vector<tabnet::Packet> orders;
+        std::vector<ServerSessionController::Packet> solutions;
+        std::vector<ServerSessionController::Packet> orders;
 };
-*/
+
 #endif

@@ -1,34 +1,23 @@
 #include "worker.h"
-#include <iostream>
 
+#include <server_session_controller.h>
+
+#include <iostream>
 #include <vector>
 #include <mutex>
 
-
 // Cycle
-/*
 void Worker::solveOrderCycle() {
     while (true) {
         int orderSize = getOrderCollectionSize();
         if (orderSize > 0) {
             for (int count; count < orderSize; count++) {
-                tabnet::Packet order = getOrder();
+                ServerSessionController::Packet order = getOrder();
 
-                switch (order.method) {
-                    case METHODS::test:
+                if (std::holds_alternative<ServerSessionController::Standard>(order.payload)) {
                         pushSolution(Worker::test(order));
-                        break;
-
-                    case METHODS::setFile:
-                        pushSolution(Worker::setFile(order));
-                        break;
-
-                    case METHODS::empty:
-                        break;
-                    
-                    default:
-                        std::wcout << "Unknown action: " << order.method << " -> Expected a method between " << METHODS::START << " and " << METHODS::END << std::endl;
-                        break;
+                } else {
+                    std::wcout << "Unknown payload type!" << std::endl;                    
                 }
             }
         }
@@ -36,47 +25,43 @@ void Worker::solveOrderCycle() {
 }
 
 // Logic functions
-tabnet::Packet Worker::test(tabnet::Packet packet) {
-    tabnet::Packet solution;
-    solution.method = METHODS::response;
-    solution.payload = packet.payload;
-    return solution;
+ServerSessionController::Packet Worker::test(ServerSessionController::Packet packet) {
+    return packet;
 }
 
-tabnet::Packet Worker::setFile(tabnet::Packet packet) {
+ServerSessionController::Packet Worker::setFile(ServerSessionController::Packet packet) {
     return packet;
 }
 
 // Service logic
-tabnet::Packet Worker::getOrder() {
+ServerSessionController::Packet Worker::getOrder() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!orders.empty()) {
-        tabnet::Packet firstOrder = orders[0];
+        ServerSessionController::Packet firstOrder = orders[0];
         orders.erase(orders.begin());
         return firstOrder;
     }
-    tabnet::Packet emptyPacket;
-    emptyPacket.method = METHODS::empty;
+    ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushOrder(tabnet::Packet packet) {
+void Worker::pushOrder(ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     orders.push_back(packet);
 }
 
-tabnet::Packet Worker::getSolution() {
+ServerSessionController::Packet Worker::getSolution() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!solutions.empty()) {
-        tabnet::Packet firstSolution = solutions[0];
+        ServerSessionController::Packet firstSolution = solutions[0];
         solutions.erase(solutions.begin());
         return firstSolution;
     }
-    tabnet::Packet emptyPacket;
+    ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushSolution(tabnet::Packet packet) {
+void Worker::pushSolution(ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     solutions.push_back(packet);
 }
@@ -90,4 +75,3 @@ int Worker::getOrderCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
     return orders.size();
 }
-*/
