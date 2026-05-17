@@ -159,8 +159,6 @@ std::string UdpDiscovery::receiveMessage(int socket) {
   if (ret > 0 && (pfd.revents & POLLIN)) {
       char* buffer = new char[bufferSize];
       ssize_t size = recv(socket, buffer, bufferSize, 0);
-
-      std::wcout << "BUffer: "<< buffer << std::endl;
       
       data = buffer;
     
