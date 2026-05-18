@@ -11,7 +11,7 @@ void Worker::solveRequestCycle() {
     while (true) {
         int requestSize = getRequestCollectionSize();
         if (requestSize > 0) {
-            for (int count; count < requestSize; count++) {
+            for (int count = 0; count < requestSize; count++) {
                 ServerSessionController::Packet request = getRequest();
 
                 if (std::holds_alternative<ServerSessionController::Standard>(request.payload)) {
