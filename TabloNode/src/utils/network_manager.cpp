@@ -92,12 +92,12 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
   });
 
   Worker worker;
-  std::thread workerThread = std::thread(&Worker::solveOrderCycle, &worker);
+  std::thread workerThread = std::thread(&Worker::solveRequestCycle, &worker);
 
   while (serverSessionController->isConnected()) {
     if (serverSessionController->hasRequest()) {
      std::wcout << "Received Request!" << std::endl;
-     worker.pushOrder(serverSessionController->popRequest());
+     worker.pushRequest(serverSessionController->popRequest());
     }
 
     while (worker.getSolutionCollectionSize() > 0) {

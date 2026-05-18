@@ -7,15 +7,15 @@
 #include <mutex>
 
 // Cycle
-void Worker::solveOrderCycle() {
+void Worker::solveRequestCycle() {
     while (true) {
-        int orderSize = getOrderCollectionSize();
-        if (orderSize > 0) {
-            for (int count; count < orderSize; count++) {
-                ServerSessionController::Packet order = getOrder();
+        int requestSize = getRequestCollectionSize();
+        if (requestSize > 0) {
+            for (int count; count < requestSize; count++) {
+                ServerSessionController::Packet request = getRequest();
 
-                if (std::holds_alternative<ServerSessionController::Standard>(order.payload)) {
-                        pushSolution(Worker::test(order));
+                if (std::holds_alternative<ServerSessionController::Standard>(request.payload)) {
+                        pushSolution(Worker::test(request));
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
                 }
@@ -34,20 +34,20 @@ ServerSessionController::Packet Worker::setFile(ServerSessionController::Packet 
 }
 
 // Service logic
-ServerSessionController::Packet Worker::getOrder() {
+ServerSessionController::Packet Worker::getRequest() {
     std::lock_guard<std::mutex> lock(mtx);
-    if (!orders.empty()) {
-        ServerSessionController::Packet firstOrder = orders[0];
-        orders.erase(orders.begin());
-        return firstOrder;
+    if (!requests.empty()) {
+        ServerSessionController::Packet firstRequest = requests[0];
+        requests.erase(requests.begin());
+        return firstRequest;
     }
     ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushOrder(ServerSessionController::Packet packet) {
+void Worker::pushRequest(ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
-    orders.push_back(packet);
+    requests.push_back(packet);
 }
 
 ServerSessionController::Packet Worker::getSolution() {
@@ -71,7 +71,7 @@ int Worker::getSolutionCollectionSize() {
     return solutions.size();
 }
 
-int Worker::getOrderCollectionSize() {
+int Worker::getRequestCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
-    return orders.size();
+    return requests.size();
 }
