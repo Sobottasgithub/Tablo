@@ -100,9 +100,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
      worker.pushRequest(serverSessionController->popRequest());
     }
 
-    while (worker.getSolutionCollectionSize() > 0) {
-      std::wcout << "Hand back Solution" << std::endl;
-      serverSessionController->pushResponse(worker.getSolution());
+    while (worker.getResponseCollectionSize() > 0) {
+      std::wcout << "Hand back Response" << std::endl;
+      serverSessionController->pushResponse(worker.getResponse());
     }
   }
 }

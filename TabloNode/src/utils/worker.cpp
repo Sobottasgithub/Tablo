@@ -15,7 +15,7 @@ void Worker::solveRequestCycle() {
                 ServerSessionController::Packet request = getRequest();
 
                 if (std::holds_alternative<ServerSessionController::Standard>(request.payload)) {
-                        pushSolution(Worker::test(request));
+                        pushResponse(Worker::test(request));
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
                 }
@@ -50,25 +50,25 @@ void Worker::pushRequest(ServerSessionController::Packet packet) {
     requests.push_back(packet);
 }
 
-ServerSessionController::Packet Worker::getSolution() {
+ServerSessionController::Packet Worker::getResponse() {
     std::lock_guard<std::mutex> lock(mtx);
-    if (!solutions.empty()) {
-        ServerSessionController::Packet firstSolution = solutions[0];
-        solutions.erase(solutions.begin());
-        return firstSolution;
+    if (!responses.empty()) {
+        ServerSessionController::Packet firstResponse = responses[0];
+        responses.erase(responses.begin());
+        return firstResponse;
     }
     ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushSolution(ServerSessionController::Packet packet) {
+void Worker::pushResponse(ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
-    solutions.push_back(packet);
+    responses.push_back(packet);
 }
 
-int Worker::getSolutionCollectionSize() {
+int Worker::getResponseCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
-    return solutions.size();
+    return responses.size();
 }
 
 int Worker::getRequestCollectionSize() {

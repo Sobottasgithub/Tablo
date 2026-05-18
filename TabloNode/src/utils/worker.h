@@ -20,15 +20,15 @@ class Worker
         ServerSessionController::Packet getRequest();
         void pushRequest(ServerSessionController::Packet packet);
         
-        ServerSessionController::Packet getSolution();
-        void pushSolution(ServerSessionController::Packet packet);
+        ServerSessionController::Packet getResponse();
+        void pushResponse(ServerSessionController::Packet packet);
 
-        int getSolutionCollectionSize();
+        int getResponseCollectionSize();
         int getRequestCollectionSize();
         
     private:
         std::mutex mtx;
-        std::vector<ServerSessionController::Packet> solutions;
+        std::vector<ServerSessionController::Packet> responses;
         std::vector<ServerSessionController::Packet> requests;
 };
 
