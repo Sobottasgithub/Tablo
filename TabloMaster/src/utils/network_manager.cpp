@@ -123,16 +123,28 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         // Remove disconnected nodes
         for (int index = 0; index < nodeConnections.size(); index++) {
             if(!nodeConnections[index].node->isConnected()) {
+                std::wcout << "node with ip: " << nodeConnections[index].ip.c_str() << " disconnected!" << std::endl;
                 nodeConnections.erase(nodeConnections.begin() + index);
             }
         }
 
         // Handle common business
-        while (serverSessionController->isConnected()) {
-            if (serverSessionController->hasRequest()) {
-                ServerSessionController::Packet packet = serverSessionController->popRequest();
-                std::wcout << "Received packet id: " << packet.id << std::endl;
-                serverSessionController->pushResponse(packet);
+        // WARNING: This is only temporary. The distribution logic has to be rewritten later
+        
+        // Send request
+        if (serverSessionController->hasRequest()) {
+            ServerSessionController::Packet packet = serverSessionController->popRequest();
+            std::wcout << "Received packet id: " << packet.id << std::endl;
+
+            for (int index = 0; index < nodeConnections.size(); index++) {
+                nodeConnections[index].node->pushRequest(packet);
+            }
+        }
+
+        // Receive response
+        for (int index = 0; index < nodeConnections.size(); index++) {
+            while(nodeConnections[index].node->hasResponse()) {
+                serverSessionController->pushResponse(nodeConnections[index].node->popResponse());
             }
         }
     }
