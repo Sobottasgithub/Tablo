@@ -120,6 +120,13 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             }
         }
 
+        // Remove disconnected nodes
+        for (int index = 0; index < nodeConnections.size(); index++) {
+            if(!nodeConnections[index].node->isConnected()) {
+                nodeConnections.erase(nodeConnections.begin() + index);
+            }
+        }
+
         // Handle common business
         while (serverSessionController->isConnected()) {
             if (serverSessionController->hasRequest()) {
