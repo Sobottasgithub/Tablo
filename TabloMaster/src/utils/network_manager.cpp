@@ -3,10 +3,12 @@
 #include "udp_discovery.h"
 
 #include <server_session_controller.h>
+#include <client_session_controller.h>
 
 #include <iostream>
 #include <cstring>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <thread>
@@ -66,29 +68,73 @@ NetworkManager::NetworkManager(std::string interface) {
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
     std::wcout << "Handle client conn" << std::endl;
-
-    std::vector<std::string> nodes = udpDiscovery.getNodeAdresses();
-    for (int index = 0; index < nodes.size(); index++) {
-        std::wcout << "node: " << nodes[index].c_str() << std::endl;
-    }
-
+    std::vector<Nodes> nodeConnections;
     
-    // TODO: add packet distribution logic here
-
     auto serverSessionController = std::make_shared<ServerSessionController>(serverSocket, clientSocket);
 
     std::thread networkingSession([serverSessionController]() {
         serverSessionController->networkingSession();
     });
 
-    while (serverSessionController->isConnected()) {
-        if (serverSessionController->hasRequest()) {
-            ServerSessionController::Packet packet = serverSessionController->popRequest();
-            std::wcout << "Received packet id: " << packet.id << std::endl;
-            serverSessionController->pushResponse(packet);
+    while(serverSessionController->isConnected()) {
+        // Establish new node connections
+        std::vector<std::string> discoveredNodes = udpDiscovery.getNodeAdresses();
+
+        for (int newNodeIndex = 0; newNodeIndex < discoveredNodes.size(); newNodeIndex++) {
+            bool isNew = true;
+            for (int index = 0; index < nodeConnections.size(); index++) {
+                if (nodeConnections[index].ip == discoveredNodes[index]) {
+                    isNew = false;
+                }
+            }
+
+            if (isNew) {
+                std::wcout << "Create new conn!" << std::endl;
+                std::string nodeIpv4 = discoveredNodes[newNodeIndex];
+                
+                int nodeSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+
+                sockaddr_in nodeAddress;
+                nodeAddress.sin_family = AF_INET;
+                nodeAddress.sin_port = htons(4004);
+                nodeAddress.sin_addr.s_addr = inet_addr(nodeIpv4.c_str());
+
+                int connectionResult = connect(nodeSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
+
+                // Wait for server to accept
+                if (connectionResult < 0 && errno != EINPROGRESS) {
+                    std::wcout << "Connection failed!" << std::endl;
+                    continue;
+                }
+
+                std::shared_ptr<ClientSessionController> clientSessionController = std::make_shared<ClientSessionController>(nodeSocket);
+
+                std::thread networkThread([clientSessionController]() {
+                    clientSessionController->networkingSession();
+                });
+                networkThread.detach();
+
+                Nodes newNode = {nodeIpv4, clientSessionController};
+                nodeConnections.push_back(newNode);
+                std::wcout << "Done!" << std::endl;
+            }
+        }
+
+        // Handle common business
+        while (serverSessionController->isConnected()) {
+            if (serverSessionController->hasRequest()) {
+                ServerSessionController::Packet packet = serverSessionController->popRequest();
+                std::wcout << "Received packet id: " << packet.id << std::endl;
+                serverSessionController->pushResponse(packet);
+            }
         }
     }
 
+    // Disconnect node conns if client disconnects
+    for (int index = 0; index < nodeConnections.size(); index++) {
+        nodeConnections[index].node->disconnect();
+    }
+    
     std::wcout << "Terminated!" << std::endl;
     networkingSession.detach();
     
