@@ -7,8 +7,16 @@
 
 #include "network_manager.h"
 
-Cli::Cli(std::string tabloMaster) {
+Cli::Cli(struct Argv argv) {
+  std::string tabloMaster = argv.tabloMaster;
+  std::string filePath = argv.filePath;
+  
   std::wcout << "Client! Tablo master at: " << tabloMaster.c_str() << std::endl;
+
+  if (filePath.length() != 0) {
+    std::wcout << "FilePath: " << filePath.c_str() << std::endl;
+  }
+  
   NetworkManager networkManager;
 
   if (networkManager.createSocket(tabloMaster) < 0) {

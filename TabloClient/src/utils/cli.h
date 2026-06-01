@@ -1,12 +1,13 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include <string>
+#include "argv_struct.h"
 
 class Cli
 {
   public:
-    Cli(std::string tabloMaster);
+    Cli(struct Argv argv);
+
 };
 
 #endif
