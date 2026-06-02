@@ -59,7 +59,7 @@ UdpDiscovery::UdpDiscovery(std::string interface) {
                     continue;
                 }
                 if (inet_pton(AF_INET, masterIP.c_str(), &masterAddress.sin_addr) <= 0) {
-                    std::wcout << "Address not supported" << std::endl;
+                    std::wcout << "Address not supported: " <<  masterIP.c_str() << std::endl;
                     continue;
                 }
                 if (connect(recieveSocket, (struct sockaddr*)&masterAddress, sizeof(masterAddress)) < 0) {
