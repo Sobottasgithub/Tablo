@@ -15,7 +15,9 @@ void Worker::solveRequestCycle() {
                 ServerSessionController::Packet request = getRequest();
 
                 if (std::holds_alternative<ServerSessionController::Standard>(request.payload)) {
-                        pushResponse(Worker::test(request));
+                    pushResponse(Worker::test(request));
+                } else if (std::holds_alternative<ServerSessionController::File>(request.payload)) {
+                    pushResponse(Worker::setFile(request));
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
                 }

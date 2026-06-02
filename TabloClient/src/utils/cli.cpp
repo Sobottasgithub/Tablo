@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <thread>
+#include <variant>
 
 #include "network_manager.h"
 
@@ -28,13 +29,18 @@ Cli::Cli(struct Argv argv) {
     if (file.is_open()) {
         std::string fileContent;
         std::string line;
+        int lineCount = 0;
         while (std::getline(file, line)) {
-            fileContent = fileContent + line.c_str() + "\n";
+          lineCount++;
+          fileContent = fileContent + line.c_str() + "\n";
         }
         file.close();
         
         Networking::Packet packet;
-        Networking::Standard payload;
+        Networking::File payload;
+        payload.filePath = filePath;
+        payload.start = 0;
+        payload.end = lineCount;
         payload.payload = fileContent;
         packet.payload = payload;
         
@@ -62,9 +68,19 @@ Cli::Cli(struct Argv argv) {
       if (networkManager.hasResponse()) {
         while (networkManager.hasResponse()) {
           ClientSessionController::Packet response = networkManager.popResponse();
-          ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
-
-          std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;
+          
+          if (std::holds_alternative<ClientSessionController::Standard>(response.payload)) {
+            ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
+            std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;
+          } else if (std::holds_alternative<ClientSessionController::File>(response.payload)) {
+            ClientSessionController::File responsePayload = std::get<ClientSessionController::File>(response.payload);
+            std::wcout << "Response:\nID: " << response.id
+                       << "\n----payload----\nFilePath: " << responsePayload.filePath.c_str()
+                       << "\nStart: " << responsePayload.start
+                       << "\nEnd: " << responsePayload.end
+                       << "\nPayload: " << responsePayload.payload.c_str()
+                       << "\n---------------" << std::endl; 
+          }
         }
       } else {
         std::wcout << "There are currently no packets to read!" << std::endl;
