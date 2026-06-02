@@ -43,25 +43,35 @@ Cli::Cli(struct Argv argv) {
   }
   
   while (true) {
-    std::string content;
-    std::wcout << "Content: ";
-    std::cin >> content;
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\noption:";
+    std::string option = "";
+    std::cin >> option;
+    if (option == "1") {
+      std::string content;
+      std::wcout << "Content: ";
+      std::cin >> content;
 
-    Networking::Packet packet;
+      Networking::Packet packet;
 
-    Networking::Standard payload;
-    payload.payload = content;
-    packet.payload = payload;
+      Networking::Standard payload;
+      payload.payload = content;
+      packet.payload = payload;
 
-    networkManager.pushRequest(packet);
+      networkManager.pushRequest(packet);
+    } else if (option == "2") {
+      if (networkManager.hasResponse()) {
+        while (networkManager.hasResponse()) {
+          ClientSessionController::Packet response = networkManager.popResponse();
+          ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
 
-    std::wcout << "Waiting for solution..." << std::endl;
-    while (!networkManager.hasResponse()) {} // Wait for solution
-
-    ClientSessionController::Packet response = networkManager.popResponse();
-    ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
-
-    std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;    
+          std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;
+        }
+      } else {
+        std::wcout << "There are currently no packets to read!" << std::endl;
+      }
+    } else {
+      std::wcout << "invalid" << std::endl;
+    }
   }
 }
 
