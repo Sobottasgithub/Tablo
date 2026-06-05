@@ -32,10 +32,27 @@
         "type": "github"
       }
     },
+    "nixpkgs_3": {
+      "locked": {
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "ttp2": "ttp2"
+        "ttp2": "ttp2",
+        "tud": "tud"
       }
     },
     "ttp2": {
@@ -53,6 +70,24 @@
       "original": {
         "owner": "Sobottasgithub",
         "repo": "ttp2",
+        "type": "github"
+      }
+    },
+    "tud": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_3"
+      },
+      "locked": {
+        "lastModified": 1780664888,
+        "narHash": "sha256-2btGu6C1k9oGl2wNYcdqRfYHSRE34y8z/+kY8TuY0ZY=",
+        "owner": "Sobottasgithub",
+        "repo": "tud",
+        "rev": "24ba77d3476e9904cca2aebf5eed1190fb8b1aed",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Sobottasgithub",
+        "repo": "tud",
         "type": "github"
       }
     }

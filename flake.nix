@@ -7,6 +7,10 @@
     ttp2 = {
       url = "github:Sobottasgithub/ttp2";
     };
+
+    tud = {
+      url = "github:Sobottasgithub/tud";
+    };
   };
 
   outputs =
@@ -14,6 +18,7 @@
       self,
       nixpkgs,
       ttp2,
+      tud,
     }:
     let
       system = "x86_64-linux";
@@ -25,6 +30,7 @@
       version = "1.3";
 
       libttp2 = ttp2.packages.${system}.lib;
+      libtud = tud.packages.${system}.lib;
 
       packages = with pkgs; [
         cmake
@@ -32,6 +38,7 @@
         gnumake
         protobuf
         libttp2
+        libtud
       ];
     in
     {
@@ -191,6 +198,7 @@
             libtabcrypt
             libtabnet
             libttp2
+            libtud
             ;
 
           default = tablo;
