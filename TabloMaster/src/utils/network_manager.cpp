@@ -1,9 +1,8 @@
 #include "network_manager.h"
 
-#include "udp_discovery.h"
-
 #include <server_session_controller.h>
 #include <client_session_controller.h>
+#include <server_discovery.h>
 
 #include <iostream>
 #include <cstring>
@@ -16,8 +15,12 @@
 
 NetworkManager::NetworkManager(std::string interface) {
     std::wcout << "Start socket..." << std::endl;
-    std::thread udpDiscoveryThread(&UdpDiscovery::udpDiscoveryCycle, &udpDiscovery, interface);
-
+    auto serverDiscovery = std::make_shared<ServerDiscovery>(interface, 4000, 4001, "Tablo");
+    std::thread serverDiscoveryThread([serverDiscovery]() {
+      serverDiscovery->discoveryCycle();
+    });
+    this->udpDiscovery = std::move(serverDiscovery);
+    
     ServerSessionController tempServerSessionController;
     std::string containerIP = tempServerSessionController.getLocalIpAddress(interface);
 
@@ -78,7 +81,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
     while(serverSessionController->isConnected()) {
         // Establish new node connections
-        std::vector<std::string> discoveredNodes = udpDiscovery.getNodeAdresses();
+        // std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAdresses();
+        std::vector<std::string> discoveredNodes;
 
         for (int newNodeIndex = 0; newNodeIndex < discoveredNodes.size(); newNodeIndex++) {
             bool isNew = true;
@@ -157,5 +161,5 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     std::wcout << "Terminated!" << std::endl;
     networkingSession.detach();
     
-    udpDiscoveryThread.join();
+    serverDiscoveryThread.join();
 }

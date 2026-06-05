@@ -5,8 +5,7 @@
 #include <memory>
 #include <string>
 #include <thread>
-
-#include "udp_discovery.h"
+#include <server_discovery.h>
 
 class NetworkManager
 {
@@ -19,9 +18,9 @@ class NetworkManager
           std::string ip;
           std::shared_ptr<ClientSessionController> node;  
         };
-        
-        UdpDiscovery udpDiscovery;
-        std::thread udpDiscoveryThread;
+
+        std::shared_ptr<ServerDiscovery> udpDiscovery;
+        std::thread serverDiscoveryThread;
 };
 
 #endif

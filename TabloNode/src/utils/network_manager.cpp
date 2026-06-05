@@ -1,8 +1,8 @@
 #include "network_manager.h"
 
 #include <server_session_controller.h>
+#include <client_discovery.h>
 
-#include "udp_discovery.h"
 #include "worker.h"
 
 #include <arpa/inet.h>
@@ -14,6 +14,7 @@
 #include <system_error>
 #include <thread>
 #include <vector>
+#include <memory>
 
 NetworkManager::NetworkManager(std::string interface) {
   std::wcout << "Start Socket...." << std::endl;
@@ -21,7 +22,10 @@ NetworkManager::NetworkManager(std::string interface) {
   
   std::string containerIP = serverSessionController.getLocalIpAddress(interface);
 
-  udpThread = std::thread(&NetworkManager::handleUdpDiscovery, this, interface);
+  auto clientDiscovery = std::make_shared<ClientDiscovery>(interface, 4000, 4001, "Tablo");
+  std::thread udpThread([clientDiscovery]() {
+    clientDiscovery->discoveryCycle();
+  });
 
   sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;
@@ -78,10 +82,6 @@ NetworkManager::NetworkManager(std::string interface) {
   if (udpThread.joinable()) {
     udpThread.join();
   }
-}
-
-void NetworkManager::handleUdpDiscovery(std::string interface) {
-  UdpDiscovery udpDiscovery(interface);
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
