@@ -22,31 +22,7 @@ Cli::Cli(struct Argv argv) {
     return;
   }
 
-  if (filePath.length() != 0) {
-    std::wcout << "FilePath: " << filePath.c_str() << std::endl;
-    std::ifstream file(filePath);
-    
-    if (file.is_open()) {
-        std::string fileContent;
-        std::string line;
-        int lineCount = 0;
-        while (std::getline(file, line)) {
-          lineCount++;
-          fileContent = fileContent + line.c_str() + "\n";
-        }
-        file.close();
-        
-        ttp2::Networking::Packet packet;
-        ttp2::Networking::File payload;
-        payload.filePath = filePath;
-        payload.start = 0;
-        payload.end = lineCount;
-        payload.payload = fileContent;
-        packet.payload = payload;
-        
-        networkManager.pushRequest(packet);
-    }
-  }
+  sendFile(filePath, &networkManager);
   
   while (true) {
     std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\noption:";
@@ -91,3 +67,30 @@ Cli::Cli(struct Argv argv) {
   }
 }
 
+void Cli::sendFile(std::string filePath, NetworkManager* networkManager) {
+  if (filePath.length() != 0) {
+    std::wcout << "FilePath: " << filePath.c_str() << std::endl;
+    std::ifstream file(filePath);
+    
+    if (file.is_open()) {
+        std::string fileContent;
+        std::string line;
+        int lineCount = 0;
+        while (std::getline(file, line)) {
+          lineCount++;
+          fileContent = fileContent + line.c_str() + "\n";
+        }
+        file.close();
+        
+        ttp2::Networking::Packet packet;
+        ttp2::Networking::File payload;
+        payload.filePath = filePath;
+        payload.start = 0;
+        payload.end = lineCount;
+        payload.payload = fileContent;
+        packet.payload = payload;
+        
+        networkManager->pushRequest(packet);
+    }
+  }
+}
