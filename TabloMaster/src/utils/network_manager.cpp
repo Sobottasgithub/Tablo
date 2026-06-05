@@ -81,8 +81,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
     while(serverSessionController->isConnected()) {
         // Establish new node connections
-        // std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAdresses();
-        std::vector<std::string> discoveredNodes;
+        std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
 
         for (int newNodeIndex = 0; newNodeIndex < discoveredNodes.size(); newNodeIndex++) {
             bool isNew = true;
