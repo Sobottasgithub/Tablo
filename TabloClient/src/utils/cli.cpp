@@ -25,7 +25,7 @@ Cli::Cli(struct Argv argv) {
   sendFile(filePath, &networkManager);
   
   while (true) {
-    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\noption:";
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\noption:";
     std::string option = "";
     std::cin >> option;
     if (option == "1") {
@@ -61,6 +61,12 @@ Cli::Cli(struct Argv argv) {
       } else {
         std::wcout << "There are currently no packets to read!" << std::endl;
       }
+    } else if (option == "3") {
+      std::string filePath;
+      std::wcout << "CSV Filepath:";
+      std::cin >> filePath;
+      
+      sendFile(filePath, &networkManager);
     } else {
       std::wcout << "invalid" << std::endl;
     }
@@ -69,7 +75,6 @@ Cli::Cli(struct Argv argv) {
 
 void Cli::sendFile(std::string filePath, NetworkManager* networkManager) {
   if (filePath.length() != 0) {
-    std::wcout << "FilePath: " << filePath.c_str() << std::endl;
     std::ifstream file(filePath);
     
     if (file.is_open()) {
@@ -91,6 +96,7 @@ void Cli::sendFile(std::string filePath, NetworkManager* networkManager) {
         packet.payload = payload;
         
         networkManager->pushRequest(packet);
+        std::wcout << "Send file with FilePath: " << filePath.c_str() << std::endl;
     }
   }
 }
