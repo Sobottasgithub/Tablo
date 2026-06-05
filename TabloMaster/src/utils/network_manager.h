@@ -16,7 +16,7 @@ class NetworkManager
     private:
         struct Nodes {
           std::string ip;
-          std::shared_ptr<ClientSessionController> node;  
+          std::shared_ptr<ttp2::ClientSessionController> node;  
         };
 
         std::shared_ptr<tud::ServerDiscovery> udpDiscovery;

@@ -15,11 +15,11 @@ class NetworkManager
     int createSocket(std::string tabloMaster);
 
     bool hasResponse();
-    ClientSessionController::Packet popResponse();
-    void pushRequest(ClientSessionController::Packet packet);
+    ttp2::ClientSessionController::Packet popResponse();
+    void pushRequest(ttp2::ClientSessionController::Packet packet);
 
   private:
-    std::shared_ptr<ClientSessionController> clientSessionController;
+    std::shared_ptr<ttp2::ClientSessionController> clientSessionController;
 };
 
 #endif

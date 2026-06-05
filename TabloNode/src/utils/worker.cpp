@@ -12,11 +12,11 @@ void Worker::solveRequestCycle() {
         int requestSize = getRequestCollectionSize();
         if (requestSize > 0) {
             for (int count = 0; count < requestSize; count++) {
-                ServerSessionController::Packet request = getRequest();
+                ttp2::ServerSessionController::Packet request = getRequest();
 
-                if (std::holds_alternative<ServerSessionController::Standard>(request.payload)) {
+                if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
                     pushResponse(Worker::test(request));
-                } else if (std::holds_alternative<ServerSessionController::File>(request.payload)) {
+                } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
                     pushResponse(Worker::setFile(request));
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
@@ -27,43 +27,43 @@ void Worker::solveRequestCycle() {
 }
 
 // Logic functions
-ServerSessionController::Packet Worker::test(ServerSessionController::Packet packet) {
+ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController::Packet packet) {
     return packet;
 }
 
-ServerSessionController::Packet Worker::setFile(ServerSessionController::Packet packet) {
+ttp2::ServerSessionController::Packet Worker::setFile(ttp2::ServerSessionController::Packet packet) {
     return packet;
 }
 
 // Service logic
-ServerSessionController::Packet Worker::getRequest() {
+ttp2::ServerSessionController::Packet Worker::getRequest() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!requests.empty()) {
-        ServerSessionController::Packet firstRequest = requests[0];
+        ttp2::ServerSessionController::Packet firstRequest = requests[0];
         requests.erase(requests.begin());
         return firstRequest;
     }
-    ServerSessionController::Packet emptyPacket;
+    ttp2::ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushRequest(ServerSessionController::Packet packet) {
+void Worker::pushRequest(ttp2::ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     requests.push_back(packet);
 }
 
-ServerSessionController::Packet Worker::getResponse() {
+ttp2::ServerSessionController::Packet Worker::getResponse() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!responses.empty()) {
-        ServerSessionController::Packet firstResponse = responses[0];
+        ttp2::ServerSessionController::Packet firstResponse = responses[0];
         responses.erase(responses.begin());
         return firstResponse;
     }
-    ServerSessionController::Packet emptyPacket;
+    ttp2::ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushResponse(ServerSessionController::Packet packet) {
+void Worker::pushResponse(ttp2::ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     responses.push_back(packet);
 }

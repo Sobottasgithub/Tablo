@@ -13,23 +13,23 @@ class Worker
         void solveRequestCycle();
 
         // Logic functions
-        ServerSessionController::Packet test(ServerSessionController::Packet packet);
-        ServerSessionController::Packet setFile(ServerSessionController::Packet packet);
+        ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
+        ttp2::ServerSessionController::Packet setFile(ttp2::ServerSessionController::Packet packet);
 
         // Service logic
-        ServerSessionController::Packet getRequest();
-        void pushRequest(ServerSessionController::Packet packet);
+        ttp2::ServerSessionController::Packet getRequest();
+        void pushRequest(ttp2::ServerSessionController::Packet packet);
         
-        ServerSessionController::Packet getResponse();
-        void pushResponse(ServerSessionController::Packet packet);
+        ttp2::ServerSessionController::Packet getResponse();
+        void pushResponse(ttp2::ServerSessionController::Packet packet);
 
         int getResponseCollectionSize();
         int getRequestCollectionSize();
         
     private:
         std::mutex mtx;
-        std::vector<ServerSessionController::Packet> responses;
-        std::vector<ServerSessionController::Packet> requests;
+        std::vector<ttp2::ServerSessionController::Packet> responses;
+        std::vector<ttp2::ServerSessionController::Packet> requests;
 };
 
 #endif

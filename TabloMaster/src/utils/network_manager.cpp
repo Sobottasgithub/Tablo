@@ -21,7 +21,7 @@ NetworkManager::NetworkManager(std::string interface) {
     });
     this->udpDiscovery = std::move(serverDiscovery);
     
-    ServerSessionController tempServerSessionController;
+    ttp2::ServerSessionController tempServerSessionController;
     std::string containerIP = tempServerSessionController.getLocalIpAddress(interface);
 
     sockaddr_in serverAddress;
@@ -73,7 +73,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     std::wcout << "Handle client conn" << std::endl;
     std::vector<Nodes> nodeConnections;
     
-    auto serverSessionController = std::make_shared<ServerSessionController>(serverSocket, clientSocket);
+    auto serverSessionController = std::make_shared<ttp2::ServerSessionController>(serverSocket, clientSocket);
 
     std::thread networkingSession([serverSessionController]() {
         serverSessionController->networkingSession();
@@ -110,7 +110,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     continue;
                 }
 
-                std::shared_ptr<ClientSessionController> clientSessionController = std::make_shared<ClientSessionController>(nodeSocket);
+                std::shared_ptr<ttp2::ClientSessionController> clientSessionController = std::make_shared<ttp2::ClientSessionController>(nodeSocket);
 
                 std::thread networkThread([clientSessionController]() {
                     clientSessionController->networkingSession();
@@ -136,7 +136,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         
         // Send request
         if (serverSessionController->hasRequest()) {
-            ServerSessionController::Packet packet = serverSessionController->popRequest();
+            ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
             std::wcout << "Received packet id: " << packet.id << std::endl;
 
             for (int index = 0; index < nodeConnections.size(); index++) {

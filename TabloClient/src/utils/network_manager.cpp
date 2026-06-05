@@ -27,7 +27,7 @@ int NetworkManager::createSocket(std::string tabloMaster) {
         return -1;
     }
 
-    clientSessionController = std::make_shared<ClientSessionController>(serverSocket);
+    clientSessionController = std::make_shared<ttp2::ClientSessionController>(serverSocket);
 
     std::thread networkThread([this]() {
         clientSessionController->networkingSession();
@@ -41,10 +41,10 @@ bool NetworkManager::hasResponse() {
   return clientSessionController->hasResponse();
 }
 
-ClientSessionController::Packet NetworkManager::popResponse() {
+ttp2::ClientSessionController::Packet NetworkManager::popResponse() {
   return clientSessionController->popResponse();
 }
 
-void NetworkManager::pushRequest(Networking::Packet packet) {
+void NetworkManager::pushRequest(ttp2::Networking::Packet packet) {
   clientSessionController->pushRequest(packet);
 }

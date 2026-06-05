@@ -18,7 +18,7 @@
 
 NetworkManager::NetworkManager(std::string interface) {
   std::wcout << "Start Socket...." << std::endl;
-  ServerSessionController serverSessionController;
+  ttp2::ServerSessionController serverSessionController;
   
   std::string containerIP = serverSessionController.getLocalIpAddress(interface);
 
@@ -85,7 +85,7 @@ NetworkManager::NetworkManager(std::string interface) {
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
-  auto serverSessionController = std::make_shared<ServerSessionController>(serverSocket, clientSocket);
+  auto serverSessionController = std::make_shared<ttp2::ServerSessionController>(serverSocket, clientSocket);
 
   std::thread networkingSession([serverSessionController]() {
       serverSessionController->networkingSession();

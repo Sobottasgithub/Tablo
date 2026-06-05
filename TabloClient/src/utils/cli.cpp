@@ -36,8 +36,8 @@ Cli::Cli(struct Argv argv) {
         }
         file.close();
         
-        Networking::Packet packet;
-        Networking::File payload;
+        ttp2::Networking::Packet packet;
+        ttp2::Networking::File payload;
         payload.filePath = filePath;
         payload.start = 0;
         payload.end = lineCount;
@@ -57,9 +57,9 @@ Cli::Cli(struct Argv argv) {
       std::wcout << "Content: ";
       std::cin >> content;
 
-      Networking::Packet packet;
+      ttp2::Networking::Packet packet;
 
-      Networking::Standard payload;
+      ttp2::Networking::Standard payload;
       payload.payload = content;
       packet.payload = payload;
 
@@ -67,13 +67,13 @@ Cli::Cli(struct Argv argv) {
     } else if (option == "2") {
       if (networkManager.hasResponse()) {
         while (networkManager.hasResponse()) {
-          ClientSessionController::Packet response = networkManager.popResponse();
+          ttp2::ClientSessionController::Packet response = networkManager.popResponse();
           
-          if (std::holds_alternative<ClientSessionController::Standard>(response.payload)) {
-            ClientSessionController::Standard responsePayload = std::get<ClientSessionController::Standard>(response.payload);
+          if (std::holds_alternative<ttp2::ClientSessionController::Standard>(response.payload)) {
+            ttp2::ClientSessionController::Standard responsePayload = std::get<ttp2::ClientSessionController::Standard>(response.payload);
             std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;
-          } else if (std::holds_alternative<ClientSessionController::File>(response.payload)) {
-            ClientSessionController::File responsePayload = std::get<ClientSessionController::File>(response.payload);
+          } else if (std::holds_alternative<ttp2::ClientSessionController::File>(response.payload)) {
+            ttp2::ClientSessionController::File responsePayload = std::get<ttp2::ClientSessionController::File>(response.payload);
             std::wcout << "Response:\nID: " << response.id
                        << "\n----payload----\nFilePath: " << responsePayload.filePath.c_str()
                        << "\nStart: " << responsePayload.start
