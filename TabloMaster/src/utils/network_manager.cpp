@@ -15,7 +15,7 @@
 
 NetworkManager::NetworkManager(std::string interface) {
     std::wcout << "Start socket..." << std::endl;
-    auto serverDiscovery = std::make_shared<ServerDiscovery>(interface, 4000, 4001, "Tablo");
+    auto serverDiscovery = std::make_shared<tud::ServerDiscovery>(interface, 4000, 4001, "Tablo");
     std::thread serverDiscoveryThread([serverDiscovery]() {
       serverDiscovery->discoveryCycle();
     });

@@ -22,7 +22,7 @@ NetworkManager::NetworkManager(std::string interface) {
   
   std::string containerIP = serverSessionController.getLocalIpAddress(interface);
 
-  auto clientDiscovery = std::make_shared<ClientDiscovery>(interface, 4000, 4001, "Tablo");
+  auto clientDiscovery = std::make_shared<tud::ClientDiscovery>(interface, 4000, 4001, "Tablo");
   std::thread udpThread([clientDiscovery]() {
     clientDiscovery->discoveryCycle();
   });

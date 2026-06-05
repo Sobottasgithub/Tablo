@@ -19,7 +19,7 @@ class NetworkManager
           std::shared_ptr<ClientSessionController> node;  
         };
 
-        std::shared_ptr<ServerDiscovery> udpDiscovery;
+        std::shared_ptr<tud::ServerDiscovery> udpDiscovery;
         std::thread serverDiscoveryThread;
 };
 
