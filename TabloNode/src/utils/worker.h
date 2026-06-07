@@ -14,7 +14,7 @@ class Worker
 
         // Logic functions
         ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
-        ttp2::ServerSessionController::Packet setFile(ttp2::ServerSessionController::Packet packet);
+        void setFile(ttp2::ServerSessionController::File newFile);
 
         // Service logic
         ttp2::ServerSessionController::Packet getRequest();
@@ -30,6 +30,8 @@ class Worker
         std::mutex mtx;
         std::vector<ttp2::ServerSessionController::Packet> responses;
         std::vector<ttp2::ServerSessionController::Packet> requests;
+
+        ttp2::ServerSessionController::File file;
 };
 
 #endif

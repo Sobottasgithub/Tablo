@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include <mutex>
+#include <variant>
 
 // Cycle
 void Worker::solveRequestCycle() {
@@ -17,7 +18,8 @@ void Worker::solveRequestCycle() {
                 if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
                     pushResponse(Worker::test(request));
                 } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
-                    pushResponse(Worker::setFile(request));
+                    ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
+                    Worker::setFile(file);
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
                 }
@@ -31,8 +33,9 @@ ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController
     return packet;
 }
 
-ttp2::ServerSessionController::Packet Worker::setFile(ttp2::ServerSessionController::Packet packet) {
-    return packet;
+void Worker::setFile(ttp2::ServerSessionController::File newFile) {
+    file = newFile;
+    std::wcout << file.payload.c_str() << std::endl;
 }
 
 // Service logic
