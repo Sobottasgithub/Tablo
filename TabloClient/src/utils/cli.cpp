@@ -25,7 +25,7 @@ Cli::Cli(struct Argv argv) {
   sendFile(filePath, &networkManager);
   
   while (true) {
-    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\noption:";
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4)Get Viewport\noption:";
     std::string option = "";
     std::cin >> option;
     if (option == "1") {
@@ -67,6 +67,31 @@ Cli::Cli(struct Argv argv) {
       std::cin >> filePath;
       
       sendFile(filePath, &networkManager);
+    } else if (option == "4") {
+      int xStart;
+      int xEnd;
+      int yStart;
+      int yEnd;
+
+      std::wcout << "xStart:";
+      std::cin >> xStart;
+      std::wcout << "xEnd:";
+      std::cin >> xEnd;
+      std::wcout << "yStart:";
+      std::cin >> yStart;
+      std::wcout << "yEnd:";
+      std::cin >> yEnd;
+      
+      ttp2::Networking::Packet packet;
+      ttp2::Networking::Viewport payload;
+      payload.xStart = xStart;
+      payload.xEnd = xEnd;
+      payload.yStart = yStart;
+      payload.yEnd = yEnd;
+      packet.payload = payload;
+    
+      networkManager.pushRequest(packet);
+      std::wcout << "Send Viewport request!" << std::endl;
     } else {
       std::wcout << "invalid" << std::endl;
     }
