@@ -20,6 +20,9 @@ void Worker::solveRequestCycle() {
                 } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
                     ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
                     Worker::setFile(file);
+                } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
+                    ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
+                    pushResponse(Worker::getViewport(viewportRequest));
                 } else {
                     std::wcout << "Unknown payload type!" << std::endl;                    
                 }
@@ -37,6 +40,17 @@ void Worker::setFile(ttp2::ServerSessionController::File newFile) {
     file = newFile;
     std::wcout << file.payload.c_str() << std::endl;
 }
+
+ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
+    std::wcout << viewportRequest.xStart << viewportRequest.xEnd << viewportRequest.yStart << viewportRequest.yEnd << std::endl;
+
+    viewportRequest.payload = "Viewport response from Worker!";
+    
+    ttp2::ServerSessionController::Packet packet;
+    packet.payload = viewportRequest;
+    return packet;
+}
+
 
 // Service logic
 ttp2::ServerSessionController::Packet Worker::getRequest() {

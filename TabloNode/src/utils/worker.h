@@ -12,10 +12,6 @@ class Worker
         // Cycle
         void solveRequestCycle();
 
-        // Logic functions
-        ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
-        void setFile(ttp2::ServerSessionController::File newFile);
-
         // Service logic
         ttp2::ServerSessionController::Packet getRequest();
         void pushRequest(ttp2::ServerSessionController::Packet packet);
@@ -32,6 +28,11 @@ class Worker
         std::vector<ttp2::ServerSessionController::Packet> requests;
 
         ttp2::ServerSessionController::File file;
+
+        // Logic functions
+        ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
+        void setFile(ttp2::ServerSessionController::File newFile);
+        ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::Viewport viewportRequest);
 };
 
 #endif

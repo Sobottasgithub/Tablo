@@ -56,6 +56,9 @@ Cli::Cli(struct Argv argv) {
                        << "\nEnd: " << responsePayload.end
                        << "\nPayload: " << responsePayload.payload.c_str()
                        << "\n---------------" << std::endl; 
+          } else if (std::holds_alternative<ttp2::ClientSessionController::Viewport>(response.payload)) {
+            ttp2::ClientSessionController::Viewport responseViewport = std::get<ttp2::ClientSessionController::Viewport>(response.payload);
+            std::wcout << "Viewport: " << responseViewport.payload.c_str() << std::endl;
           }
         }
       } else {
