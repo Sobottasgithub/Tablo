@@ -2,6 +2,7 @@
 #define WORKER_H
 
 #include <server_session_controller.h>
+#include "csv_manager.h"
 
 #include <vector>
 #include <mutex>
@@ -27,7 +28,7 @@ class Worker
         std::vector<ttp2::ServerSessionController::Packet> responses;
         std::vector<ttp2::ServerSessionController::Packet> requests;
 
-        ttp2::ServerSessionController::File file;
+        CsvManager csvManager;
 
         // Logic functions
         ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);

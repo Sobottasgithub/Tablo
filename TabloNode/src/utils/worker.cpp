@@ -1,6 +1,7 @@
 #include "worker.h"
 
 #include <server_session_controller.h>
+#include "csv_manager.h"
 
 #include <iostream>
 #include <vector>
@@ -37,8 +38,9 @@ ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController
 }
 
 void Worker::setFile(ttp2::ServerSessionController::File newFile) {
-    file = newFile;
-    std::wcout << file.payload.c_str() << std::endl;
+    CsvManager newCsvManager;
+    newCsvManager.setFile(newFile);
+    this->csvManager = newCsvManager;
 }
 
 ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
