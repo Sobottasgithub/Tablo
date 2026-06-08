@@ -25,7 +25,7 @@ Cli::Cli(struct Argv argv) {
   sendFile(filePath, &networkManager);
   
   while (true) {
-    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4)Get Viewport\noption:";
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\noption:";
     std::string option = "";
     std::cin >> option;
     if (option == "1") {
