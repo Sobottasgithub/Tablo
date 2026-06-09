@@ -11,6 +11,7 @@ class CsvManager {
     std::string getFilePath();
     int getRowCount();
     int getColumnCount();
+    std::string getRowByIndex(int index);
 
   private:
     ttp2::ServerSessionController::File file;
