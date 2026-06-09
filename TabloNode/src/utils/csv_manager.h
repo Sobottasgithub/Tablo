@@ -9,6 +9,8 @@ class CsvManager {
   public:
     void setFile(ttp2::ServerSessionController::File newFile);
     std::string getFilePath();
+    int getRowCount();
+    int getColumnCount();
 
   private:
     ttp2::ServerSessionController::File file;
