@@ -13,7 +13,7 @@ void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   std::wcout << "C: " << getColumnCount() << std::endl;
   std::wcout << "R: " << getRowCount() << std::endl;
   std::wcout << "SecondRow: " << getRowByIndex(2).c_str() << std::endl;
-  std::wcout << "SecondColumn: " << getColumnByIndex(2).c_str() << std::endl;
+  std::wcout << "SecondColumn: " << getColumnByIndex(1).c_str() << std::endl;
 }
 
 std::string CsvManager::getFilePath() {
@@ -85,6 +85,7 @@ std::string CsvManager::getColumnByIndex(int index) {
       if (this->file.payload[countIndex] == '\n') {
            resultRow = resultRow + '\n';
            column = 0;
+           continue;
       } else if (this->file.payload[countIndex] == ',') {
         column++;
         continue;
