@@ -13,6 +13,8 @@ class CsvManager {
     int getColumnCount();
     std::string getRowByIndex(int index);
     std::string getColumnByIndex(int index);
+    std::string getColumnByIndex(int index, std::string rows);
+    std::string getViewport(int xStart, int xEnd, int yStart, int yEnd);
 
   private:
     ttp2::ServerSessionController::File file;

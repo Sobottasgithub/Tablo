@@ -58,7 +58,11 @@ Cli::Cli(struct Argv argv) {
                        << "\n---------------" << std::endl; 
           } else if (std::holds_alternative<ttp2::ClientSessionController::Viewport>(response.payload)) {
             ttp2::ClientSessionController::Viewport responseViewport = std::get<ttp2::ClientSessionController::Viewport>(response.payload);
-            std::wcout << "Viewport: " << responseViewport.payload.c_str() << std::endl;
+            if (responseViewport.payload.length() > 0) {
+              std::wcout << responseViewport.payload.c_str() << std::endl;
+            } else {
+              std::wcout << "Empty Viewpor" << std::endl;
+            }
           }
         }
       } else {

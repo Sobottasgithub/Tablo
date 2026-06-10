@@ -44,15 +44,19 @@ void Worker::setFile(ttp2::ServerSessionController::File newFile) {
 }
 
 ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
-    std::wcout << viewportRequest.xStart << viewportRequest.xEnd << viewportRequest.yStart << viewportRequest.yEnd << std::endl;
-
-    viewportRequest.payload = "Viewport response from Worker!";
-    
     ttp2::ServerSessionController::Packet packet;
+
+    if (viewportRequest.xEnd < viewportRequest.xStart || viewportRequest.yEnd < viewportRequest.yStart) {
+        ttp2::ServerSessionController::Viewport emptyViewport;
+        packet.payload = emptyViewport;
+        return packet;
+    }
+
+    viewportRequest.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
+                                                           viewportRequest.yStart, viewportRequest.yEnd);
     packet.payload = viewportRequest;
     return packet;
 }
-
 
 // Service logic
 ttp2::ServerSessionController::Packet Worker::getRequest() {

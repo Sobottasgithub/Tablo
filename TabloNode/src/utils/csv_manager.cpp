@@ -9,11 +9,6 @@
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
-  std::wcout << this->file.payload.c_str() << std::endl;
-  std::wcout << "C: " << getColumnCount() << std::endl;
-  std::wcout << "R: " << getRowCount() << std::endl;
-  std::wcout << "SecondRow: " << getRowByIndex(2).c_str() << std::endl;
-  std::wcout << "SecondColumn: " << getColumnByIndex(1).c_str() << std::endl;
 }
 
 std::string CsvManager::getFilePath() {
@@ -78,22 +73,44 @@ std::string CsvManager::getRowByIndex(int index) {
 }
 
 std::string CsvManager::getColumnByIndex(int index) {
+  return getColumnByIndex(index, this->file.payload);
+}
+
+std::string CsvManager::getColumnByIndex(int index, std::string rows) {
   std::string resultRow;
 
   int column = 0;
-  for (int countIndex = 0; countIndex < this->file.payload.length(); countIndex++) {
-      if (this->file.payload[countIndex] == '\n') {
+  for (int countIndex = 0; countIndex < rows.length(); countIndex++) {
+      if (rows[countIndex] == '\n') {
            resultRow = resultRow + '\n';
            column = 0;
            continue;
-      } else if (this->file.payload[countIndex] == ',') {
+      } else if (rows[countIndex] == ',') {
         column++;
         continue;
       }
       if (column == index-1) {
-        resultRow = resultRow + this->file.payload[countIndex];
+        resultRow = resultRow + rows[countIndex];
       }
   }
 
   return resultRow;
+}
+
+std::string CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {
+    std::string resultPayload = "";
+    for (int xIndex = xStart; xIndex <= xEnd; xIndex++) {
+        std::string currentRow = getRowByIndex(xIndex);
+
+        std::string resultRow = "";
+        for (int yIndex = yStart; yIndex <= yEnd; yIndex++) {
+            resultRow = resultRow + getColumnByIndex(yIndex, currentRow);
+            if (yIndex != yEnd) {
+              resultRow = resultRow + ',';
+            }
+        }
+        
+        resultPayload = resultPayload + resultRow + '\n';
+    }
+    return resultPayload;
 }
