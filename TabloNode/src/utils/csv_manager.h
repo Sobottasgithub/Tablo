@@ -12,10 +12,10 @@ class CsvManager {
     int getRowCount();
     int getColumnCount();
     std::string getRowByIndex(int index);
+    std::string getColumnByIndex(int index);
 
   private:
     ttp2::ServerSessionController::File file;
-
 };
 
 #endif
