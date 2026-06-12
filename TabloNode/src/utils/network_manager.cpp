@@ -45,7 +45,7 @@ NetworkManager::NetworkManager(std::string interface) {
   }
   // Set epoll action for server
   struct epoll_event serverEvents;
-  serverEvents.events = EPOLLIN | EPOLLOUT;
+  serverEvents.events = EPOLLIN;
   serverEvents.data.fd = serverSocket;
   if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverSocket, &serverEvents) == -1) {
       std::wcout << "Failed to set epoll_ctl!" << std::endl;

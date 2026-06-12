@@ -61,7 +61,7 @@ Cli::Cli(struct Argv argv) {
             if (responseViewport.payload.length() > 0) {
               std::wcout << responseViewport.payload.c_str() << std::endl;
             } else {
-              std::wcout << "Empty Viewpor" << std::endl;
+              std::wcout << "Empty Viewport" << std::endl;
             }
           }
         }

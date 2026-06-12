@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <thread>
 #include <memory>
+#include <cerrno>
 #include <type_traits>
 
 NetworkManager::NetworkManager() {}
