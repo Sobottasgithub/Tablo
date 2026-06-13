@@ -68,6 +68,10 @@ NetworkManager::NetworkManager(std::string interface) {
             }
         }
     }
+
+    if (serverDiscoveryThread.joinable()) {
+        serverDiscoveryThread.join();
+    }
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
@@ -159,7 +163,5 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     }
     
     std::wcout << "Terminated!" << std::endl;
-    networkingSession.detach();
-    
-    serverDiscoveryThread.join();
+    networkingSession.detach();    
 }
