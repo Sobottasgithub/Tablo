@@ -105,5 +105,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
       serverSessionController->pushResponse(worker.getResponse());
     }
   }
+  if (workerThread.joinable()) {
+    workerThread.join();
+  }
 }
 
