@@ -46,6 +46,6 @@ The flake in this repository allowes you to build minimal docker images that avo
 To use this feature, you NEED to use nix. Download available at: https://nixos.org/
 
 # Take a look at Tablos networking libs:
-<b>Tablo Transfer Protocol:</b><a href="https://github.com/Sobottasgithub/TTP2">TTP2</a>
+**Tablo Transfer Protocol:** [TTP2](https://github.com/Sobottasgithub/TTP2)
 
-<b>Tablo UDP Discovery:</b> <a href="https://github.com/Sobottasgithub/TUD">TUD</a>
+**Tablo UDP Discovery:** [TUD](https://github.com/Sobottasgithub/TUD)
