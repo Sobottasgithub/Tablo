@@ -93,6 +93,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             for (int index = 0; index < nodeConnections.size(); index++) {
                 if (nodeConnections[index].ip == discoveredNodes[index]) {
                     isNew = false;
+                    break;
                 }
             }
 
