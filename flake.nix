@@ -139,8 +139,6 @@
             pname = "tablo-master";
 
             enableMaster = true;
-            enableLibtabcrypt = true;
-            enableLibtabnet = true;
 
             extraInputs = [
               libtabcrypt
