@@ -8,7 +8,7 @@
 class Cli
 {
   public:
-    Cli(struct Argv argv);
+    Cli(Argv* argv);
 
   private:
     void sendFile(std::string filePath, NetworkManager* networkManager);

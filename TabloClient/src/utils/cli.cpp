@@ -9,9 +9,9 @@
 
 #include "network_manager.h"
 
-Cli::Cli(struct Argv argv) {
-  std::string tabloMaster = argv.tabloMaster;
-  std::string filePath = argv.filePath;
+Cli::Cli(Argv* argv) {
+  std::string tabloMaster = argv->tabloMaster;
+  std::string filePath = argv->filePath;
   
   std::wcout << "Client! Tablo master at: " << tabloMaster.c_str() << std::endl;
   

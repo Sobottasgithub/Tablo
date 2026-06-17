@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     if (argc > 0) {
-        struct Argv commandLineArguments;
+        Argv commandLineArguments;
         
         for(int index = 0; index < argc; index++) {
             if (std::string(argv[index]).rfind("--master", 0) == 0) {
@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
         }
 
         if (commandLineArguments.tabloMaster.length() != 0) {
-            Cli cli(commandLineArguments);
+            Cli cli(&commandLineArguments);
         }
     } else {
         // Use config file (TODO)
