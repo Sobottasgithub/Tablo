@@ -126,8 +126,6 @@
             pname = "tablo-client";
 
             enableClient = true;
-            enableLibtabcrypt = true;
-            enableLibtabnet = true;
 
             extraInputs = [
               libtabcrypt
