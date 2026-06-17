@@ -10,7 +10,7 @@
 class NetworkManager
 {
   public:
-    NetworkManager();
+    NetworkManager() = default;
 
     int createSocket(std::string tabloMaster);
 

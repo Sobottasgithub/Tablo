@@ -10,8 +10,6 @@
 #include <cerrno>
 #include <type_traits>
 
-NetworkManager::NetworkManager() {}
-
 int NetworkManager::createSocket(std::string tabloMaster) {
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
