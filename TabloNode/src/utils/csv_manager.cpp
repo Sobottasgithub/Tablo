@@ -16,10 +16,22 @@ std::string CsvManager::getFilePath() {
 }
 
 int CsvManager::getRowCount() {
+  if (this->file.payload.empty()) {
+    return 0;
+  }
+
   int count = 0;
-  for (int index = 0; index < this->file.payload.length(); index++)
-      if (this->file.payload[index] == '\n')
-           count++;
+  for (char c : this->file.payload) {
+    if (c == '\n') {
+      count++;
+    }
+  }
+
+  // Count the last row if the payload doesn't end with a newline.
+  if (this->file.payload.back() != '\n') {
+    count++;
+  }
+
   return count;
 }
 
