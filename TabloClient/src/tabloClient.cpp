@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
             if (std::string(argv[index]).rfind("--master", 0) == 0) {
                 std::string masterIp = argv[index+1];
                 if (ttp2::Networking::isValidIpV4(masterIp)) {
-                    commandLineArguments.tabloMaster = masterIp;
+                    commandLineArguments.tabloMasterIp = masterIp;
                 } else {
                     std::wcout << "Please provide a correct IPv4!" << std::endl;
                 }
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (commandLineArguments.tabloMaster.length() != 0) {
+        if (commandLineArguments.tabloMasterIp.length() != 0) {
             Cli cli(&commandLineArguments);
         }
     } else {

@@ -4,7 +4,7 @@
 #include <string>
 
 typedef struct CommandlineArguments {
-    std::string tabloMaster;
+    std::string tabloMasterIp;
     std::string filePath;
 } Argv;
 

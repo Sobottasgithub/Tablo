@@ -10,14 +10,14 @@
 #include "network_manager.h"
 
 Cli::Cli(Argv* argv) {
-  std::string tabloMaster = argv->tabloMaster;
+  std::string tabloMasterIp = argv->tabloMasterIp;
   std::string filePath = argv->filePath;
   
-  std::wcout << "Client! Tablo master at: " << tabloMaster.c_str() << std::endl;
+  std::wcout << "Client! Tablo master at: " << tabloMasterIp.c_str() << std::endl;
   
   NetworkManager networkManager;
 
-  if (networkManager.createSocket(tabloMaster) < 0) {
+  if (networkManager.createSocket(tabloMasterIp) < 0) {
     std::wcout << "Create network manager failed!" << std::endl;
     return;
   }
