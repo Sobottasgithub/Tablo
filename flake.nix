@@ -50,7 +50,6 @@
               buildTarget ? pname,
 
               enableLibtabcrypt ? false,
-              enableLibtabnet ? false,
 
               enableNode ? false,
               enableClient ? false,
@@ -74,7 +73,6 @@
                 cmake -B build -S $src \
                   -DCMAKE_BUILD_TYPE=Release \
                   -DDEF_LIBTABCRYPT=${if enableLibtabcrypt then "ON" else "OFF"} \
-                  -DDEF_LIBTABNET=${if enableLibtabnet then "ON" else "OFF"} \
                   -DDEF_NODE=${if enableNode then "ON" else "OFF"} \
                   -DDEF_CLIENT=${if enableClient then "ON" else "OFF"} \
                   -DDEF_MASTER=${if enableMaster then "ON" else "OFF"}
@@ -99,18 +97,6 @@
             enableLibtabcrypt = true;
           };
 
-          libtabnet = mkTabloPackage {
-            pname = "libtabnet";
-            buildTarget = "tabnet";
-
-            enableLibtabnet = true;
-
-            extraInputs = [
-              libtabcrypt
-              # include libttp2 just here for later setup!
-            ];
-          };
-
           tablo-node = mkTabloPackage {
             pname = "tablo-node";
 
@@ -118,7 +104,6 @@
 
             extraInputs = [
               libtabcrypt
-              libtabnet
             ];
           };
 
@@ -129,7 +114,6 @@
 
             extraInputs = [
               libtabcrypt
-              libtabnet
             ];
           };
 
@@ -140,7 +124,6 @@
 
             extraInputs = [
               libtabcrypt
-              libtabnet
             ];
           };
 
@@ -149,7 +132,6 @@
             buildTarget = "all";
 
             enableLibtabcrypt = true;
-            enableLibtabnet = true;
 
             enableNode = true;
             enableClient = true;
@@ -157,7 +139,6 @@
 
             extraInputs = [
               libtabcrypt
-              libtabnet
             ];
           };
 
@@ -166,7 +147,6 @@
 
             paths = [
               libtabcrypt
-              libtabnet
               tablo-node
               tablo-client
               tablo-master
@@ -192,7 +172,6 @@
             tablo-master
             tablo-full
             libtabcrypt
-            libtabnet
             libttp2
             libtud
             ;

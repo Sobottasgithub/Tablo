@@ -10,7 +10,6 @@ add_executable(tablo-master ${SOURCES})
 
 # Link against libs
 target_link_libraries(tablo-master PRIVATE tabcrypt)
-target_link_libraries(tablo-master PRIVATE tabnet)
 target_link_libraries(tablo-master PRIVATE ttp2)
 target_link_libraries(tablo-master PRIVATE tud)
 
