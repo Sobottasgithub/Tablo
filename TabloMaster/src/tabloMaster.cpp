@@ -1,4 +1,3 @@
-#include <csignal>
 #include <iostream>
 
 #include <networking.h>
