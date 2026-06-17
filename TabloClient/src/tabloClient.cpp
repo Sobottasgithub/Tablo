@@ -10,7 +10,7 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc > 0) {
+    if (argc >= 2) {
         Argv commandLineArguments;
         
         for(int index = 0; index < argc; index++) {

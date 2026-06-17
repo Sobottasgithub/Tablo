@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     std::wcout << "Tablo Master" << std::endl;
 
-    if (argc > 0) {
+    if (argc >= 2) {
         for(int index = 0; index < argc; index++) {
             if (std::string(argv[index]).rfind("--interface", 0) == 0) {
                 std::string interface = argv[index+1];
@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
                 }
             }
         }
+    } else {
+        std::wcout << "failed" << std::endl;
     }
 
     return 0;
