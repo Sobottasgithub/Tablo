@@ -159,8 +159,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     }
 
     // Disconnect node conns if client disconnects
-    for (int index = 0; index < nodeConnections.size(); index++) {
-        nodeConnections[index].node->disconnect();
+    while (nodeConnections.size() > 0) {
+        nodeConnections[0].node->disconnect();
+        nodeConnections.erase(nodeConnections.begin());
     }
     
     std::wcout << "Terminated!" << std::endl;
