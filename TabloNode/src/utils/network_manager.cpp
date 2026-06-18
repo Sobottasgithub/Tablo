@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 
-NetworkManager::NetworkManager(std::string interface) {
+NetworkManager::NetworkManager(std::string interface, int maxConnections) {
   std::wcout << "Start Socket...." << std::endl;
   ttp2::ServerSessionController serverSessionController;
   
@@ -52,7 +52,7 @@ NetworkManager::NetworkManager(std::string interface) {
       return;
   }
 
-  listen(serverSocket, 5);
+  listen(serverSocket, maxConnections);
   std::vector<std::thread> clientConnections;
   while (true) {
       const int MAX_EVENTS = 10;

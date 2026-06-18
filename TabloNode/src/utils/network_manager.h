@@ -8,7 +8,7 @@
 class NetworkManager
 {
     public:
-        NetworkManager(std::string interface);
+        NetworkManager(std::string interface, int maxConnections);
         void handleUdpDiscovery(std::string interface);
         void handleClientConnection(int serverSocket, int clientSocket);
 
