@@ -1,10 +1,7 @@
 #ifndef NETWORK_MANAGER_H
 #define NETWORK_MANAGER_H
 
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <thread>
-#include <bits/stdc++.h>
 #include <vector>
 #include <string>
 
