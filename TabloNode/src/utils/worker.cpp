@@ -12,21 +12,19 @@
 void Worker::solveRequestCycle() {
     while (true) {
         int requestSize = getRequestCollectionSize();
-        if (requestSize > 0) {
-            for (int count = 0; count < requestSize; count++) {
-                ttp2::ServerSessionController::Packet request = getRequest();
+        for (int count = 0; count < requestSize; count++) {
+            ttp2::ServerSessionController::Packet request = getRequest();
 
-                if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
-                    pushResponse(Worker::test(request));
-                } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
-                    ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
-                    Worker::setFile(file);
-                } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
-                    ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
-                    pushResponse(Worker::getViewport(viewportRequest));
-                } else {
-                    std::wcout << "Unknown payload type!" << std::endl;                    
-                }
+            if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
+                pushResponse(Worker::test(request));
+            } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
+                ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
+                Worker::setFile(file);
+            } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
+                ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
+                pushResponse(Worker::getViewport(viewportRequest));
+            } else {
+                std::wcout << "Unknown payload type!" << std::endl;                    
             }
         }
     }
