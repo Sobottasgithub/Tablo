@@ -7,6 +7,7 @@
 #include <vector>
 #include <mutex>
 #include <variant>
+#include <thread>
 
 // Cycle
 void Worker::solveRequestCycle() {
@@ -32,6 +33,7 @@ void Worker::solveRequestCycle() {
                 std::wcout << "Unknown payload type!" << std::endl;                    
             }
         }
+        std::this_thread::yield();
     }
 }
 
