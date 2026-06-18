@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <cstring>
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
@@ -110,19 +111,27 @@ std::string CsvManager::getColumnByIndex(int index, std::string rows) {
 }
 
 std::string CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {
-    std::string resultPayload = "";
+    const size_t bufferSize = this->file.payload.size();
+    char* resultPayload = new char[bufferSize];
+    size_t currentPos = 0;
+
     for (int xIndex = xStart; xIndex <= xEnd; xIndex++) {
         std::string currentRow = getRowByIndex(xIndex);
 
-        std::string resultRow = "";
         for (int yIndex = yStart; yIndex <= yEnd; yIndex++) {
-            resultRow = resultRow + getColumnByIndex(yIndex, currentRow);
+            std::string cell = getColumnByIndex(yIndex, currentRow);
+        
+            if (currentPos + cell.length() + 1 >= bufferSize) break; 
+
+            memcpy(&resultPayload[currentPos], cell.c_str(), cell.length());
+            currentPos += cell.length();
+
             if (yIndex != yEnd) {
-              resultRow = resultRow + ',';
+                resultPayload[currentPos++] = ',';
             }
         }
-        
-        resultPayload = resultPayload + resultRow + '\n';
+        resultPayload[currentPos++] = '\n';
     }
+    resultPayload[currentPos] = '\0';
     return resultPayload;
 }
