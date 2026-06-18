@@ -10,6 +10,11 @@
 
 // Cycle
 void Worker::solveRequestCycle() {
+    if (this->isCalled == true) {
+        std::wcout << "SolveRequestCycle is already called!" << std::endl;
+        return;
+    }
+    this->isCalled = true;
     while (true) {
         int requestSize = getRequestCollectionSize();
         for (int count = 0; count < requestSize; count++) {

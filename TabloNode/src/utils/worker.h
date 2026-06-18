@@ -24,6 +24,8 @@ class Worker
         int getRequestCollectionSize();
         
     private:
+        bool isCalled = false;
+        
         std::mutex mtx;
         std::vector<ttp2::ServerSessionController::Packet> responses;
         std::vector<ttp2::ServerSessionController::Packet> requests;
