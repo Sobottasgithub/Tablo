@@ -1,95 +1,107 @@
-
 #include "worker.h"
-#include <iostream>
 
+#include <server_session_controller.h>
+#include "csv_manager.h"
+
+#include <iostream>
 #include <vector>
 #include <mutex>
-
-#include "tabnet.h"
-#include "methods.h"
+#include <variant>
+#include <thread>
 
 // Cycle
-void Worker::solveOrderCycle() {
+void Worker::solveRequestCycle() {
+    if (this->isCalled == true) {
+        std::wcout << "SolveRequestCycle is already called!" << std::endl;
+        return;
+    }
+    this->isCalled = true;
     while (true) {
-        int orderSize = getOrderCollectionSize();
-        if (orderSize > 0) {
-            for (int count; count < orderSize; count++) {
-                tabnet::Packet order = getOrder();
+        int requestSize = getRequestCollectionSize();
+        for (int count = 0; count < requestSize; count++) {
+            ttp2::ServerSessionController::Packet request = getRequest();
 
-                switch (order.method) {
-                    case Methods::test:
-                        std::wcout << "TEST!" << std::endl;
-                        pushSolution(Worker::test(order));
-                        break;
-
-                    case Methods::setFile:
-                        pushSolution(Worker::setFile(order));
-                        break;
-
-                    case Methods::empty:
-                        break;
-                    
-                    default:
-                        std::wcout << "Unknown action: " << order.method << " -> Expected a method between " << Methods::START << " and " << Methods::END << std::endl;
-                        break;
-                }
+            if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
+                pushResponse(Worker::test(request));
+            } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
+                ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
+                Worker::setFile(file);
+            } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
+                ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
+                pushResponse(Worker::getViewport(viewportRequest));
+            } else {
+                std::wcout << "Unknown payload type!" << std::endl;                    
             }
         }
+        std::this_thread::yield();
     }
 }
 
 // Logic functions
-tabnet::Packet Worker::test(tabnet::Packet packet) {
-    tabnet::Packet solution;
-    solution.method = Methods::response;
-    solution.payload = packet.payload;
-    return solution;
+ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController::Packet packet) {
+    return packet;
 }
 
-tabnet::Packet Worker::setFile(tabnet::Packet packet) {
+void Worker::setFile(ttp2::ServerSessionController::File newFile) {
+    CsvManager newCsvManager;
+    newCsvManager.setFile(newFile);
+    this->csvManager = newCsvManager;
+}
+
+ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
+    ttp2::ServerSessionController::Packet packet;
+
+    if (viewportRequest.xEnd < viewportRequest.xStart || viewportRequest.yEnd < viewportRequest.yStart) {
+        ttp2::ServerSessionController::Viewport emptyViewport;
+        packet.payload = emptyViewport;
+        return packet;
+    }
+
+    viewportRequest.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
+                                                           viewportRequest.yStart, viewportRequest.yEnd);
+    packet.payload = viewportRequest;
     return packet;
 }
 
 // Service logic
-tabnet::Packet Worker::getOrder() {
+ttp2::ServerSessionController::Packet Worker::getRequest() {
     std::lock_guard<std::mutex> lock(mtx);
-    if (!orders.empty()) {
-        tabnet::Packet firstOrder = orders[0];
-        orders.erase(orders.begin());
-        return firstOrder;
+    if (!requests.empty()) {
+        ttp2::ServerSessionController::Packet firstRequest = requests[0];
+        requests.erase(requests.begin());
+        return firstRequest;
     }
-    tabnet::Packet emptyPacket;
-    emptyPacket.method = Methods::empty;
+    ttp2::ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushOrder(tabnet::Packet packet) {
+void Worker::pushRequest(ttp2::ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
-    orders.push_back(packet);
+    requests.push_back(packet);
 }
 
-tabnet::Packet Worker::getSolution() {
+ttp2::ServerSessionController::Packet Worker::getResponse() {
     std::lock_guard<std::mutex> lock(mtx);
-    if (!solutions.empty()) {
-        tabnet::Packet firstSolution = solutions[0];
-        solutions.erase(solutions.begin());
-        return firstSolution;
+    if (!responses.empty()) {
+        ttp2::ServerSessionController::Packet firstResponse = responses[0];
+        responses.erase(responses.begin());
+        return firstResponse;
     }
-    tabnet::Packet emptyPacket;
+    ttp2::ServerSessionController::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushSolution(tabnet::Packet packet) {
+void Worker::pushResponse(ttp2::ServerSessionController::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
-    solutions.push_back(packet);
+    responses.push_back(packet);
 }
 
-int Worker::getSolutionCollectionSize() {
+int Worker::getResponseCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
-    return solutions.size();
+    return responses.size();
 }
 
-int Worker::getOrderCollectionSize() {
+int Worker::getRequestCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
-    return orders.size();
+    return requests.size();
 }

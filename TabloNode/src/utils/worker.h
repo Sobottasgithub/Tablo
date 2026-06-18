@@ -1,35 +1,41 @@
 #ifndef WORKER_H
 #define WORKER_H
 
+#include <server_session_controller.h>
+#include "csv_manager.h"
+
 #include <vector>
 #include <mutex>
-
-#include "tabnet.h"
 
 class Worker
 {
     public:
         // Cycle
-        void solveOrderCycle();
-
-        // Logic functions
-        tabnet::Packet test(tabnet::Packet packet);
-        tabnet::Packet setFile(tabnet::Packet packet);
+        void solveRequestCycle();
 
         // Service logic
-        tabnet::Packet getOrder();
-        void pushOrder(tabnet::Packet packet);
+        ttp2::ServerSessionController::Packet getRequest();
+        void pushRequest(ttp2::ServerSessionController::Packet packet);
         
-        tabnet::Packet getSolution();
-        void pushSolution(tabnet::Packet packet);
+        ttp2::ServerSessionController::Packet getResponse();
+        void pushResponse(ttp2::ServerSessionController::Packet packet);
 
-        int getSolutionCollectionSize();
-        int getOrderCollectionSize();
+        int getResponseCollectionSize();
+        int getRequestCollectionSize();
         
     private:
+        bool isCalled = false;
+        
         std::mutex mtx;
-        std::vector<tabnet::Packet> solutions;
-        std::vector<tabnet::Packet> orders;
+        std::vector<ttp2::ServerSessionController::Packet> responses;
+        std::vector<ttp2::ServerSessionController::Packet> requests;
+
+        CsvManager csvManager;
+
+        // Logic functions
+        ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
+        void setFile(ttp2::ServerSessionController::File newFile);
+        ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::Viewport viewportRequest);
 };
 
 #endif

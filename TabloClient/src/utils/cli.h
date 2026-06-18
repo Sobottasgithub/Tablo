@@ -1,12 +1,17 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include <string>
+#include "network_manager.h"
+
+#include "argv_struct.h"
 
 class Cli
 {
   public:
-    Cli(std::string tabloMaster);
+    Cli(Argv* argv);
+
+  private:
+    void sendFile(std::string filePath, NetworkManager* networkManager);
 };
 
 #endif

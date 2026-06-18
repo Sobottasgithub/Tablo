@@ -1,17 +1,14 @@
-#ifndef NETWORKING_H
-#define NETWORKING_H
+#ifndef NETWORK_MANAGER_H
+#define NETWORK_MANAGER_H
 
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <thread>
-#include <bits/stdc++.h>
 #include <vector>
 #include <string>
 
-class Networking
+class NetworkManager
 {
     public:
-        Networking(std::string interface);
+        NetworkManager(std::string interface, int maxConnections);
         void handleUdpDiscovery(std::string interface);
         void handleClientConnection(int serverSocket, int clientSocket);
 

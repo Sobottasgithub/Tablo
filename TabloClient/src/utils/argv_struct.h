@@ -1,0 +1,11 @@
+#ifndef ARGV_STRUCT_H
+#define ARGV_STRUCT_H
+
+#include <string>
+
+typedef struct CommandlineArguments {
+    std::string tabloMasterIp;
+    std::string filePath;
+} Argv;
+
+#endif
