@@ -36,9 +36,7 @@
         cmake
         gcc
         gnumake
-        protobuf
         libttp2
-        libtud
       ];
     in
     {
@@ -104,6 +102,7 @@
 
             extraInputs = [
               libtabcrypt
+              libtud
             ];
           };
 
@@ -124,6 +123,7 @@
 
             extraInputs = [
               libtabcrypt
+              libtud
             ];
           };
 
@@ -190,7 +190,6 @@
           devPackages = packages ++ [
             pkgs.bridge-utils
             pkgs.clang-tools
-            pkgs.protobuf
           ];
         in
         pkgs.mkShell {
