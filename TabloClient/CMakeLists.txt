@@ -11,5 +11,7 @@ add_executable(tablo-client ${SOURCES})
 # Link against libs
 target_link_libraries(tablo-client PRIVATE tabcrypt)
 target_link_libraries(tablo-client PRIVATE ttp2)
+find_package(Arrow REQUIRED)
+target_link_libraries(tablo-client PRIVATE Arrow::arrow_shared)
 
 install(TARGETS tablo-client DESTINATION bin)

@@ -37,6 +37,7 @@
         gcc
         gnumake
         libttp2
+        arrow-cpp
       ];
     in
     {

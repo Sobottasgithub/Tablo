@@ -12,5 +12,7 @@ add_executable(tablo-node ${SOURCES})
 target_link_libraries(tablo-node PRIVATE tabcrypt)
 target_link_libraries(tablo-node PRIVATE ttp2)
 target_link_libraries(tablo-node PRIVATE tud)
+find_package(Arrow REQUIRED)
+target_link_libraries(tablo-node PRIVATE Arrow::arrow_shared)
 
 install(TARGETS tablo-node DESTINATION bin)
