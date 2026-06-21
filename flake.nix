@@ -190,6 +190,7 @@
           devPackages = packages ++ [
             pkgs.bridge-utils
             pkgs.clang-tools
+            libtud
           ];
         in
         pkgs.mkShell {
