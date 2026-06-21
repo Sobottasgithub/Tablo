@@ -87,19 +87,18 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     while(serverSessionController->isConnected()) {
         // Establish new node connections
         std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
-
         for (int newNodeIndex = 0; newNodeIndex < discoveredNodes.size(); newNodeIndex++) {
             bool isNew = true;
             for (int index = 0; index < nodeConnections.size(); index++) {
-                if (nodeConnections[index].ip == discoveredNodes[index]) {
+                if (nodeConnections[index].ip == discoveredNodes[newNodeIndex]) {
                     isNew = false;
                     break;
                 }
             }
 
             if (isNew) {
-                std::wcout << "Create new conn!" << std::endl;
                 std::string nodeIpv4 = discoveredNodes[newNodeIndex];
+                std::wcout << "Create new node connection at " << nodeIpv4.c_str() << std::endl;
                 
                 int nodeSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
