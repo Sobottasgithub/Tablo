@@ -27,14 +27,6 @@ int CsvManager::getColumnCount() {
   return this->file.payload->num_columns();
 }
 
-std::string CsvManager::getRowByIndex(int index) {
-  // TODO
-  // std::shared_ptr<arrow::Scalar> scalar;
-  // chunked_array->GetScalar(4).Value(&scalar).ok() && scalar->is_valid
-  // std::static_pointer_cast<arrow::Int32Array>
-  return "";
-}
-
 std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
   return this->file.payload->column(index);
 }
