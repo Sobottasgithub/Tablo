@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Build options
 
 option(DEF_LIBTABCRYPT "Build libtabcrypt" ON)
+option(DEF_LIBTABLOG "Build libtablog" ON)
 
 option(DEF_CLIENT "Build TabloClient" ON)
 option(DEF_MASTER "Build TabloMaster" ON)
@@ -16,6 +17,10 @@ option(DEF_NODE "Build TabloNode" ON)
 
 if(DEF_LIBTABCRYPT)
     add_subdirectory(lib/libtabcrypt)
+endif()
+
+if(DEF_LIBTABLOG)
+    add_subdirectory(lib/libtablog)
 endif()
 
 # Executables

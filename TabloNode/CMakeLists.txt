@@ -10,6 +10,7 @@ add_executable(tablo-node ${SOURCES})
 
 # Link against libs
 target_link_libraries(tablo-node PRIVATE tabcrypt)
+target_link_libraries(tablo-node PRIVATE tablog)
 target_link_libraries(tablo-node PRIVATE ttp2)
 target_link_libraries(tablo-node PRIVATE tud)
 find_package(Arrow REQUIRED)

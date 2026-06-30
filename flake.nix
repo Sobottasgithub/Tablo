@@ -49,6 +49,7 @@
               buildTarget ? pname,
 
               enableLibtabcrypt ? false,
+              enableLibtablog ? false,
 
               enableNode ? false,
               enableClient ? false,
@@ -72,6 +73,7 @@
                 cmake -B build -S $src \
                   -DCMAKE_BUILD_TYPE=Release \
                   -DDEF_LIBTABCRYPT=${if enableLibtabcrypt then "ON" else "OFF"} \
+                  -DDEF_LIBTABLOG=${if enableLibtablog then "ON" else "OFF"} \
                   -DDEF_NODE=${if enableNode then "ON" else "OFF"} \
                   -DDEF_CLIENT=${if enableClient then "ON" else "OFF"} \
                   -DDEF_MASTER=${if enableMaster then "ON" else "OFF"}
@@ -96,12 +98,20 @@
             enableLibtabcrypt = true;
           };
 
+          libtablog = mkTabloPackage {
+            pname = "libtablog";
+            buildTarget = "tablog";
+
+            enableLibtablog = true;
+          };
+
           tablo-node = mkTabloPackage {
             pname = "tablo-node";
 
             enableNode = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
               libtud
             ];
@@ -113,6 +123,7 @@
             enableClient = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
             ];
           };
@@ -123,6 +134,7 @@
             enableMaster = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
               libtud
             ];
@@ -133,12 +145,14 @@
             buildTarget = "all";
 
             enableLibtabcrypt = true;
+            enableLibtablog = true;
 
             enableNode = true;
             enableClient = true;
             enableMaster = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
             ];
           };
@@ -147,6 +161,7 @@
             name = "tablo-${version}";
 
             paths = [
+              libtablog
               libtabcrypt
               tablo-node
               tablo-client
@@ -173,6 +188,7 @@
             tablo-master
             tablo-full
             libtabcrypt
+            libtablog
             libttp2
             libtud
             ;
