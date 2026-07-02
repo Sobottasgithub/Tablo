@@ -1,6 +1,7 @@
 #include "../include/tablog.h"
 
 #include <iostream>
+#include <ctime>
 
 namespace tablog {
   Tablog::Tablog() {}
@@ -14,7 +15,16 @@ namespace tablog {
   }
    
   void Tablog::log(LogLevel loglevel, const std::string& message) {
-     std::cout << "TABLOG::: " << message.c_str() << std::endl;
+     std::cout << "<" << name << "> " << "[" << logLevelToString(loglevel) << "] ";
+     if (displayTimestamp) {
+       time_t now = time(0);
+        tm* timeinfo = localtime(&now);
+        char timestamp[20];
+        strftime(timestamp, sizeof(timestamp),
+                 "%H:%M:%S", timeinfo);
+        std::cout << timestamp << " ";
+     }
+     std::cout << message.c_str() << std::endl;
   }
 
   std::string Tablog::logLevelToString(LogLevel level) {
