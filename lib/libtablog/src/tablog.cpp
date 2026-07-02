@@ -2,13 +2,21 @@
 
 #include <iostream>
 #include <ctime>
+#include <mutex>
 
-namespace tablog {
+namespace tablog {  
   Tablog::Tablog() {}
-  Tablog::Tablog(std::string name, bool displayTimestamp) {
-    configure(name, displayTimestamp);
+
+  Tablog* Tablog::getInstance() {
+      if (instance == nullptr) {
+          std::lock_guard<std::mutex> lock(mtx);
+          if (instance == nullptr) {
+              instance = new Tablog();
+          }
+      }
+      return instance;
   }
-   
+
   void Tablog::configure(std::string name, bool displayTimestamp) {
      this->name = name;
      this->displayTimestamp = displayTimestamp;
@@ -17,7 +25,7 @@ namespace tablog {
   void Tablog::log(LogLevel loglevel, const std::string& message) {
      std::cout << "<" << name << "> " << "[" << logLevelToString(loglevel) << "] ";
      if (displayTimestamp) {
-       time_t now = time(0);
+        time_t now = time(0);
         tm* timeinfo = localtime(&now);
         char timestamp[20];
         strftime(timestamp, sizeof(timestamp),
