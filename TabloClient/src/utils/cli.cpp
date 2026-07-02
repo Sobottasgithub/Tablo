@@ -12,17 +12,19 @@
 #include <arrow/io/api.h>
 
 #include "network_manager.h"
+#include "tablog.h"
 
 Cli::Cli(Argv* argv) {
+  tablog::Tablog* logger = tablog::Tablog::getInstance();
+
   std::string tabloMasterIp = argv->tabloMasterIp;
   std::string filePath = argv->filePath;
-  
-  std::wcout << "Client! Tablo master at: " << tabloMasterIp.c_str() << std::endl;
+  logger->log(tablog::INFO, "Tablo master at: " + tabloMasterIp);
   
   NetworkManager networkManager;
 
   if (networkManager.createSocket(tabloMasterIp) < 0) {
-    std::wcout << "Create network manager failed!" << std::endl;
+    logger->log(tablog::ERROR, "Create socket failed!");
     return;
   }
 

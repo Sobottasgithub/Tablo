@@ -10,7 +10,11 @@
 #include <cerrno>
 #include <type_traits>
 
+#include "tablog.h"
+
 int NetworkManager::createSocket(std::string tabloMaster) {
+    tablog::Tablog* logger = tablog::Tablog::getInstance();
+
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     sockaddr_in serverAddress;
@@ -22,7 +26,7 @@ int NetworkManager::createSocket(std::string tabloMaster) {
 
     // Wait for server to accept
     if (connectionResult < 0 && errno != EINPROGRESS) {
-        std::wcout << "Connection failed!" << std::endl;
+        logger->log(tablog::ERROR, "Connection failed!");
         return -1;
     }
 
