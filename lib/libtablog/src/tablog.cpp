@@ -23,7 +23,7 @@ namespace tablog {
   }
    
   void Tablog::log(LogLevel loglevel, const std::string& message) {
-     std::cout << "<" << name << "> " << "[" << logLevelToString(loglevel) << "] ";
+     std::cout << "<\033[1;34m" << name << "\033[0m> " << "[" << logLevelToString(loglevel) << "] ";
      if (displayTimestamp) {
         time_t now = time(0);
         tm* timeinfo = localtime(&now);
@@ -37,16 +37,17 @@ namespace tablog {
 
   std::string Tablog::logLevelToString(LogLevel level) {
     switch (level) {
+      // https://en.wikipedia.org/wiki/ANSI_escape_code
       case DEBUG:
-        return "DEBUG";
+        return "\033[32mDEBUG\033[0m";
       case INFO:
-          return "INFO";
+          return "\033[36mINFO\033[0m";
       case WARNING:
-          return "WARNING";
+          return "\033[93mWARNING\033[0m";
       case ERROR:
-          return "ERROR";
+          return "\033[41;30mERROR\033[0m";
       case CRITICAL:
-          return "CRITICAL";
+          return "\033[95mCRITICAL\033[0m";
       default:
           return "UNKNOWN";
       }
