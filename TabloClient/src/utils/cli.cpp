@@ -15,7 +15,7 @@
 #include "tablog.h"
 
 Cli::Cli(Argv* argv) {
-  tablog::Tablog* logger = tablog::Tablog::getInstance();
+  tablog::Tablog* logger = &tablog::Tablog::getInstance();
 
   std::string tabloMasterIp = argv->tabloMasterIp;
   std::string filePath = argv->filePath;
@@ -65,6 +65,7 @@ Cli::Cli(Argv* argv) {
           } else if (std::holds_alternative<ttp2::ClientSessionController::Viewport>(response.payload)) {
             ttp2::ClientSessionController::Viewport responseViewport = std::get<ttp2::ClientSessionController::Viewport>(response.payload);
             if (responseViewport.payload->num_columns() > 0 && responseViewport.payload->num_rows() > 0) {
+              std::wcout << "id: " << response.id << std::endl;
               std::wcout << responseViewport.payload->ToString().c_str() << std::endl;
             } else {
               std::wcout << "Empty Viewport" << std::endl;

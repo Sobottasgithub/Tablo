@@ -11,12 +11,10 @@
 #include "utils/cli.h"
 #include "utils/argv_struct.h"
 
-tablog::Tablog* tablog::Tablog::instance = nullptr;
-std::mutex tablog::Tablog::mtx;
-
 int main(int argc, char *argv[])
 {
-    tablog::Tablog* logger = tablog::Tablog::getInstance();
+
+    tablog::Tablog* logger = &tablog::Tablog::getInstance();
     logger->configure("Client", true);
 
     if (argc >= 2) {

@@ -13,7 +13,7 @@
 #include "tablog.h"
 
 int NetworkManager::createSocket(std::string tabloMaster) {
-    tablog::Tablog* logger = tablog::Tablog::getInstance();
+    tablog::Tablog* logger = &tablog::Tablog::getInstance();
 
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
