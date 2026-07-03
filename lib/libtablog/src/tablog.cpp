@@ -5,15 +5,8 @@
 #include <mutex>
 
 namespace tablog {  
-  Tablog::Tablog() {}
-
-  Tablog* Tablog::getInstance() {
-      if (instance == nullptr) {
-          std::lock_guard<std::mutex> lock(mtx);
-          if (instance == nullptr) {
-              instance = new Tablog();
-          }
-      }
+  Tablog& Tablog::getInstance() {
+      static Tablog instance; 
       return instance;
   }
 
