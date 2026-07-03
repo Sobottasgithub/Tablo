@@ -4,6 +4,8 @@
 #include <memory>
 #include <server_session_controller.h>
 
+#include "tablog.h"
+
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -12,7 +14,7 @@
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
-  std::wcout << "FILE: " << this->file.payload->ToString().c_str() << std::endl;
+  logger->log(tablog::DEBUG, "File" + this->file.payload->ToString());
 }
 
 std::string CsvManager::getFilePath() {

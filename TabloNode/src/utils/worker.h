@@ -4,6 +4,8 @@
 #include <server_session_controller.h>
 #include "csv_manager.h"
 
+#include "tablog.h"
+
 #include <vector>
 #include <mutex>
 
@@ -24,6 +26,8 @@ class Worker
         int getRequestCollectionSize();
         
     private:
+        tablog::Tablog* logger = &tablog::Tablog::getInstance();
+
         bool isCalled = false;
         
         std::mutex mtx;

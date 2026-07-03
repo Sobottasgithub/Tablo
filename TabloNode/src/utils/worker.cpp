@@ -3,6 +3,8 @@
 #include <server_session_controller.h>
 #include "csv_manager.h"
 
+#include "tablog.h"
+
 #include <iostream>
 #include <vector>
 #include <mutex>
@@ -12,7 +14,7 @@
 // Cycle
 void Worker::solveRequestCycle() {
     if (this->isCalled == true) {
-        std::wcout << "SolveRequestCycle is already called!" << std::endl;
+        logger->log(tablog::ERROR, "SolveRequestCycle is already called!");
         return;
     }
     this->isCalled = true;
@@ -24,13 +26,14 @@ void Worker::solveRequestCycle() {
             if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
                 pushResponse(Worker::test(request));
             } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
+                logger->log(tablog::DEBUG, "id: " + std::to_string(request.id));
                 ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
                 Worker::setFile(file);
             } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
                 ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
                 pushResponse(Worker::getViewport(viewportRequest));
             } else {
-                std::wcout << "Unknown payload type!" << std::endl;                    
+                logger->log(tablog::CRITICAL, "Unknown payload type!");
             }
         }
         std::this_thread::yield();

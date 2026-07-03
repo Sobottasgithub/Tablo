@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+#include "tablog.h"
+
 class NetworkManager
 {
     public:
@@ -13,6 +15,8 @@ class NetworkManager
         void handleClientConnection(int serverSocket, int clientSocket);
 
     private:
+        tablog::Tablog* logger = &tablog::Tablog::getInstance();
+
         int serverSocket;
         std::vector<std::thread> threadCollection;
         std::thread udpThread;
