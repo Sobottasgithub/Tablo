@@ -15,7 +15,7 @@
 #include <cerrno>
 
 NetworkManager::NetworkManager(std::string interface) {
-    std::wcout << "Start socket..." << std::endl;
+    logger->log(tablog::INFO, "Start socket...");
     auto serverDiscovery = std::make_shared<tud::ServerDiscovery>(interface, 4000, 4001, "Tablo");
     std::thread serverDiscoveryThread([serverDiscovery]() {
       serverDiscovery->discoveryCycle();
@@ -32,21 +32,21 @@ NetworkManager::NetworkManager(std::string interface) {
 
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if(bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-       std::wcout << "Bind failed!" << std::endl;
+       logger->log(tablog::ERROR, "Bind failed");
        return;
     }
 
     // Create epoll
     int epollFd = epoll_create1(0);
     if (epollFd == -1) {
-        std::wcout << "Failed to create epoll!" << std::endl;
+        logger->log(tablog::ERROR, "Failed to create epoll");
     }
     // Set epoll action for server
     struct epoll_event serverEvents;
     serverEvents.events = EPOLLIN;
     serverEvents.data.fd = serverSocket;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverSocket, &serverEvents) == -1) {
-        std::wcout << "Failed to set epoll_ctl!" << std::endl;
+        logger->log(tablog::ERROR, "Failed to set epoll_ctl");
         return;
     }
 
@@ -60,7 +60,7 @@ NetworkManager::NetworkManager(std::string interface) {
         for (int index = 0; index < epollRequestCount; ++index) {
             if (events[index].data.fd == serverSocket) {
                 int clientSocket = accept4(serverSocket, nullptr, nullptr, SOCK_NONBLOCK);
-                std::wcout << "New clientSocket: " << clientSocket << std::endl;
+                logger->log(tablog::INFO, "New Client Socket: " + std::to_string(clientSocket));
 
                 clientConnections.push_back(std::thread([this, serverSocket, clientSocket]() {
                       this->handleClientConnection(serverSocket, clientSocket);
@@ -75,7 +75,7 @@ NetworkManager::NetworkManager(std::string interface) {
 }
 
 void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) {
-    std::wcout << "Handle client conn" << std::endl;
+    logger->log(tablog::INFO, "Handle client conn");
     std::vector<Nodes> nodeConnections;
     
     auto serverSessionController = std::make_shared<ttp2::ServerSessionController>(serverSocket, clientSocket);
@@ -98,7 +98,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
             if (isNew) {
                 std::string nodeIpv4 = discoveredNodes[newNodeIndex];
-                std::wcout << "Create new node connection at " << nodeIpv4.c_str() << std::endl;
+                logger->log(tablog::INFO, "Create new node connection at " + nodeIpv4);
                 
                 int nodeSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
@@ -111,7 +111,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                 // Wait for server to accept
                 if (connectionResult < 0 && errno != EINPROGRESS) {
-                    std::wcout << "Connection failed!" << std::endl;
+                    logger->log(tablog::ERROR, "Connection failed!");
                     continue;
                 }
 
@@ -124,14 +124,14 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                 Nodes newNode = {nodeIpv4, clientSessionController};
                 nodeConnections.push_back(newNode);
-                std::wcout << "Done!" << std::endl;
+                logger->log(tablog::INFO, "Done!");
             }
         }
 
         // Remove disconnected nodes
         for (int index = 0; index < nodeConnections.size(); index++) {
             if(!nodeConnections[index].node->isConnected()) {
-                std::wcout << "node with ip: " << nodeConnections[index].ip.c_str() << " disconnected!" << std::endl;
+                logger->log(tablog::INFO, "Node with ip: " + nodeConnections[index].ip + "disconnected");
                 nodeConnections.erase(nodeConnections.begin() + index);
             }
         }
@@ -142,7 +142,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         // Send request
         if (serverSessionController->hasRequest()) {
             ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
-            std::wcout << "Received packet id: " << packet.id << std::endl;
+            logger->log(tablog::DEBUG, "Received packet id: " + std::to_string(packet.id));
 
             for (int index = 0; index < nodeConnections.size(); index++) {
                 nodeConnections[index].node->pushRequest(packet);
@@ -163,6 +163,6 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         nodeConnections.erase(nodeConnections.begin());
     }
     
-    std::wcout << "Terminated!" << std::endl;
+    logger->log(tablog::INFO, "Terminated");
     networkingSession.detach();    
 }

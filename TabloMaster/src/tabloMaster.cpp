@@ -4,9 +4,12 @@
 
 #include "utils/network_manager.h"
 
+#include "tablog.h"
+
 int main(int argc, char *argv[])
 {
-    std::wcout << "Tablo Master" << std::endl;
+    tablog::Tablog* logger = &tablog::Tablog::getInstance();
+    logger->configure("Master", true);
 
     if (argc >= 2) {
         for(int index = 0; index < argc; index++) {
@@ -15,7 +18,7 @@ int main(int argc, char *argv[])
                 if (ttp2::Networking::isValidInterface(interface)) {
                     NetworkManager networkManager(interface);
                 } else {
-                    std::wcout << "Please provide a correct Interface!" << std::endl;
+                    logger->log(tablog::ERROR, "Please provide a correct network Interface");
                 }
             }
         }
