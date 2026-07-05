@@ -1,4 +1,5 @@
 #include "network_manager.h"
+#include "tablog.h"
 
 #include <server_session_controller.h>
 #include <client_session_controller.h>
@@ -84,6 +85,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         serverSessionController->networkingSession();
     });
 
+    int filePartitionCount = 0;
+    int lastDelimiter = 0;
     while(serverSessionController->isConnected()) {
         // Establish new node connections
         std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
@@ -149,8 +152,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
                 // INFO: Column based distribution
                 ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
-                int filePartitionCount = file.payload->num_columns() / nodeConnections.size();
-                int filePartitionRemainderCount = file.payload->num_columns() / nodeConnections.size();
+                filePartitionCount = file.payload->num_columns() / nodeConnections.size();
+                lastDelimiter = file.payload->num_columns();
 
                 for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
                     std::vector<std::shared_ptr<arrow::Field>> fields;
@@ -159,11 +162,11 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     int delimiter = 0;
                     if (nodeIndex == nodeConnections.size()-1) {
                         // If the last batch is reached the remainder should be added
-                        delimiter = filePartitionCount*(nodeIndex)+filePartitionRemainderCount;   
+                        delimiter = lastDelimiter;   
                     } else {
                         delimiter = filePartitionCount*(nodeIndex+1);
                     }
-
+                    logger->log(tablog::DEBUG, "start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter));
                     for (int index = filePartitionCount*nodeIndex; index < delimiter; index++) {
                         fields.push_back(file.payload->field(index));
                         columns.push_back(file.payload->column(index));
