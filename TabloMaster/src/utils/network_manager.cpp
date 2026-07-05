@@ -202,10 +202,6 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     // Check if node is in range
                     int nodeStartIndex = filePartitionCount*nodeIndex;
                     if (nodeStartIndex > viewport.yEnd || delimiter < viewport.yStart) {
-                        
-                        logger->log(tablog::DEBUG, "Viewport: continue");
-                        logger->log(tablog::DEBUG, std::to_string(nodeStartIndex) + " > " + std::to_string(viewport.yEnd) + " | " + std::to_string(delimiter) + " < " + std::to_string(viewport.yStart));
-
                         continue;
                     }
 
