@@ -197,7 +197,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                             // If the last batch is reached the remainder should be added
                             delimiter = lastDelimiter;   
                         } else {
-                            delimiter = filePartitionCount*(nodeIndex+1);
+                            delimiter = filePartitionCount*(nodeIndex+1) - 1;
                         }
 
                         // Check if node is in range
@@ -234,8 +234,6 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         }
 
         // Receive response
-        
-        // 
         for (int index = 0; index < nodeConnections.size(); index++) {
             while(nodeConnections[index].node->hasResponse()) {
                 serverSessionController->pushResponse(nodeConnections[index].node->popResponse());
