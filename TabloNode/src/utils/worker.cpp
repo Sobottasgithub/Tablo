@@ -31,7 +31,9 @@ void Worker::solveRequestCycle() {
                 Worker::setFile(file);
             } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
                 ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
-                pushResponse(Worker::getViewport(viewportRequest));
+                ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
+                responsePacket.id = request.id;
+                pushResponse(responsePacket);
             } else {
                 logger->log(tablog::CRITICAL, "Unknown payload type!");
             }

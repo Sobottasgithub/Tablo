@@ -142,96 +142,100 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         // Handle common business        
         // Send request
         if (serverSessionController->hasRequest()) {
-            ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
-            logger->log(tablog::DEBUG, "Received packet id: " + std::to_string(packet.id));
+            while (serverSessionController->hasRequest()) {
+                ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
+                logger->log(tablog::DEBUG, "Received packet id: " + std::to_string(packet.id));
 
-            if (std::holds_alternative<ttp2::ServerSessionController::Standard>(packet.payload)) {
-                for (int index = 0; index < nodeConnections.size(); index++) {
-                    nodeConnections[index].node->pushRequest(packet);
-                }
-            } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
-                // INFO: Column based distribution
-                ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
-                filePartitionCount = file.payload->num_columns() / nodeConnections.size();
-                lastDelimiter = file.payload->num_columns();
-
-                for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
-                    std::vector<std::shared_ptr<arrow::Field>> fields;
-                    std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
-
-                    int delimiter = 0;
-                    if (nodeIndex == nodeConnections.size()-1) {
-                        // If the last batch is reached the remainder should be added
-                        delimiter = lastDelimiter;   
-                    } else {
-                        delimiter = filePartitionCount*(nodeIndex+1);
+                if (std::holds_alternative<ttp2::ServerSessionController::Standard>(packet.payload)) {
+                    for (int index = 0; index < nodeConnections.size(); index++) {
+                        nodeConnections[index].node->pushRequest(packet);
                     }
-                    logger->log(tablog::DEBUG, "File: start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter));
-                    for (int index = filePartitionCount*nodeIndex; index < delimiter; index++) {
-                        fields.push_back(file.payload->field(index));
-                        columns.push_back(file.payload->column(index));
-                    }
-                    std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
-                    std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
+                } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
+                    // INFO: Column based distribution
+                    ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
+                    filePartitionCount = file.payload->num_columns() / nodeConnections.size();
+                    lastDelimiter = file.payload->num_columns();
 
-                    ttp2::ServerSessionController::Packet nodePacket;
-                    nodePacket.id = packet.id;
-                    ttp2::ServerSessionController::File nodeFilePacket;
-                    nodeFilePacket.filePath = file.filePath;
-                    nodeFilePacket.start = filePartitionCount*nodeIndex;
-                    nodeFilePacket.end = delimiter;
-                    nodeFilePacket.payload = table;
-                    nodePacket.payload = nodeFilePacket;
+                    for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
+                        std::vector<std::shared_ptr<arrow::Field>> fields;
+                        std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
+
+                        int delimiter = 0;
+                        if (nodeIndex == nodeConnections.size()-1) {
+                            // If the last batch is reached the remainder should be added
+                            delimiter = lastDelimiter;   
+                        } else {
+                            delimiter = filePartitionCount*(nodeIndex+1);
+                        }
+                        logger->log(tablog::DEBUG, "File: start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter - 1));
+                        for (int index = filePartitionCount*nodeIndex; index < delimiter; index++) {
+                            fields.push_back(file.payload->field(index));
+                            columns.push_back(file.payload->column(index));
+                        }
+                        std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
+                        std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
+
+                        ttp2::ServerSessionController::Packet nodePacket;
+                        nodePacket.id = packet.id;
+                        ttp2::ServerSessionController::File nodeFilePacket;
+                        nodeFilePacket.filePath = file.filePath;
+                        nodeFilePacket.start = filePartitionCount*nodeIndex;
+                        nodeFilePacket.end = delimiter - 1;
+                        nodeFilePacket.payload = table;
+                        nodePacket.payload = nodeFilePacket;
                     
-                    nodeConnections[nodeIndex].node->pushRequest(nodePacket);
+                        nodeConnections[nodeIndex].node->pushRequest(nodePacket);
+                    }
+                } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
+                    // TODO: Split requests into multiple each for the nodes part
+                    //       -> if a column is not required to calc the viewport request it shouldnt get the request at all
+                    ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
+
+                    for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
+                        int delimiter = 0;
+                        if (nodeIndex == nodeConnections.size()-1) {
+                            // If the last batch is reached the remainder should be added
+                            delimiter = lastDelimiter;   
+                        } else {
+                            delimiter = filePartitionCount*(nodeIndex+1);
+                        }
+
+                        // Check if node is in range
+                        int nodeStartIndex = filePartitionCount*nodeIndex;
+                        if (nodeStartIndex > viewport.yEnd || delimiter < viewport.yStart) {
+                            continue;
+                        }
+
+                        if (viewport.yStart > nodeStartIndex) {
+                            nodeStartIndex = viewport.yStart;
+                        }
+
+                        if (viewport.yEnd < delimiter) {
+                            delimiter = viewport.yEnd;
+                        }
+
+                        ttp2::ServerSessionController::Packet nodePacket;
+                        nodePacket.id = packet.id;
+                        ttp2::ServerSessionController::Viewport nodeViewportPacket;
+                        nodeViewportPacket.yStart = nodeStartIndex;
+                        nodeViewportPacket.yEnd = delimiter;
+                        nodeViewportPacket.xStart = viewport.xStart;
+                        nodeViewportPacket.xEnd = viewport.xEnd;
+                        nodePacket.payload = nodeViewportPacket;
+
+                        logger->log(tablog::DEBUG, "Viewport " + nodeConnections[nodeIndex].ip + ": start: " + std::to_string(nodeStartIndex) + " end: " + std::to_string(delimiter));
+
+                        nodeConnections[nodeIndex].node->pushRequest(nodePacket);
+                    }
+                } else {
+                    logger->log(tablog::CRITICAL, "Unknown payload type!");
                 }
-            } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
-                // TODO: Split requests into multiple each for the nodes part
-                //       -> if a column is not required to calc the viewport request it shouldnt get the request at all
-                ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
-
-                for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
-                    int delimiter = 0;
-                    if (nodeIndex == nodeConnections.size()-1) {
-                        // If the last batch is reached the remainder should be added
-                        delimiter = lastDelimiter;   
-                    } else {
-                        delimiter = filePartitionCount*(nodeIndex+1);
-                    }
-
-                    // Check if node is in range
-                    int nodeStartIndex = filePartitionCount*nodeIndex;
-                    if (nodeStartIndex > viewport.yEnd || delimiter < viewport.yStart) {
-                        continue;
-                    }
-
-                    if (viewport.yStart > nodeStartIndex) {
-                        nodeStartIndex = viewport.yStart;
-                    }
-
-                    if (viewport.yEnd < delimiter) {
-                        delimiter = viewport.yEnd;
-                    }
-
-                    ttp2::ServerSessionController::Packet nodePacket;
-                    nodePacket.id = packet.id;
-                    ttp2::ServerSessionController::Viewport nodeViewportPacket;
-                    nodeViewportPacket.yStart = nodeStartIndex;
-                    nodeViewportPacket.yEnd = delimiter;
-                    nodeViewportPacket.xStart = viewport.xStart;
-                    nodeViewportPacket.xEnd = viewport.xEnd;
-                    nodePacket.payload = nodeViewportPacket;
-
-                    logger->log(tablog::DEBUG, "Viewport: start: " + std::to_string(nodeStartIndex) + " end: " + std::to_string(delimiter));
-
-                    nodeConnections[nodeIndex].node->pushRequest(nodePacket);
-                }
-            } else {
-                logger->log(tablog::CRITICAL, "Unknown payload type!");
             }
         }
 
         // Receive response
+        
+        // 
         for (int index = 0; index < nodeConnections.size(); index++) {
             while(nodeConnections[index].node->hasResponse()) {
                 serverSessionController->pushResponse(nodeConnections[index].node->popResponse());
