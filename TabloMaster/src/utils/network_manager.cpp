@@ -136,16 +136,57 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             }
         }
 
-        // Handle common business
-        // WARNING: This is only temporary. The distribution logic has to be rewritten later
-        
+        // Handle common business        
         // Send request
         if (serverSessionController->hasRequest()) {
             ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
             logger->log(tablog::DEBUG, "Received packet id: " + std::to_string(packet.id));
 
-            for (int index = 0; index < nodeConnections.size(); index++) {
-                nodeConnections[index].node->pushRequest(packet);
+            if (std::holds_alternative<ttp2::ServerSessionController::Standard>(packet.payload)) {
+                for (int index = 0; index < nodeConnections.size(); index++) {
+                    nodeConnections[index].node->pushRequest(packet);
+                }
+            } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
+                // INFO: Column based distribution
+                ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
+                int filePartitionCount = file.payload->num_columns() / nodeConnections.size();
+                int filePartitionRemainderCount = file.payload->num_columns() / nodeConnections.size();
+
+                for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
+                    std::vector<std::shared_ptr<arrow::Field>> fields;
+                    std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
+
+                    int delimiter = 0;
+                    if (nodeIndex == nodeConnections.size()-1) {
+                        // If the last batch is reached the remainder should be added
+                        delimiter = filePartitionCount*(nodeIndex)+filePartitionRemainderCount;   
+                    } else {
+                        delimiter = filePartitionCount*(nodeIndex+1);
+                    }
+
+                    for (int index = filePartitionCount*nodeIndex; index < delimiter; index++) {
+                        fields.push_back(file.payload->field(index));
+                        columns.push_back(file.payload->column(index));
+                    }
+                    std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
+                    std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
+
+                    ttp2::ServerSessionController::Packet nodePacket;
+                    nodePacket.id = packet.id;
+                    ttp2::ServerSessionController::File nodeFilePacket;
+                    nodeFilePacket.filePath = file.filePath;
+                    nodeFilePacket.start = filePartitionCount*nodeIndex;
+                    nodeFilePacket.end = delimiter;
+                    nodeFilePacket.payload = table;
+                    nodePacket.payload = nodeFilePacket;
+                    
+                    nodeConnections[nodeIndex].node->pushRequest(nodePacket);
+                }
+            } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
+                // TODO: Split requests into multiple each for the nodes part
+                //       -> if a column is not required to calc the viewport request it shouldnt get the request at all
+            } else {
+                logger->log(tablog::CRITICAL, "Unknown payload type!");
             }
         }
 
