@@ -60,11 +60,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1783082537,
-        "narHash": "sha256-6yc3vudNyXO3zlrhZg8inOyyQmBdvm8sfZDHKLOpbA8=",
+        "lastModified": 1783268403,
+        "narHash": "sha256-8pIW43TvuiM/dTPzVZc+85/yxJWzeUTQv4mQpgKDCpc=",
         "owner": "Sobottasgithub",
         "repo": "ttp2",
-        "rev": "fe62ec7250eacdd177cdbc3b4a1c4238f08d3c71",
+        "rev": "291d3e16a31449c37460cf5fd63fa909f78dd110",
         "type": "github"
       },
       "original": {

@@ -35,6 +35,9 @@ std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
 }
 
 std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {
+  yStart = yStart - this->file.start;
+  yEnd = yEnd - this->file.end;
+  
   int columnCount = this->file.payload->num_columns();
   if (yEnd > columnCount) {
     yEnd = columnCount;

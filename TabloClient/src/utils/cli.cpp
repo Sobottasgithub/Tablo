@@ -82,10 +82,10 @@ Cli::Cli(Argv* argv) {
       
       sendFile(filePath, &networkManager);
     } else if (option == "4") {
-      int xStart;
-      int xEnd;
-      int yStart;
-      int yEnd;
+      int xStart = 0;
+      int xEnd = 0;
+      int yStart = 0;
+      int yEnd = 0;
 
       std::wcout << "xStart:";
       std::cin >> xStart;
