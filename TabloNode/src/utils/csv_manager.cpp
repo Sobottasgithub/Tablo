@@ -35,9 +35,6 @@ std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
 }
 
 std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {
-  yStart = yStart - this->file.start;
-  yEnd = yEnd - this->file.start;
-
   logger->log(tablog::DEBUG, "yStart " + std::to_string(yStart) + " yEnd " + std::to_string(yEnd));
   
   int columnCount = this->file.payload->num_columns()-1;
@@ -78,8 +75,9 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   std::vector<std::shared_ptr<arrow::Field>> fields;
   std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
  
-  for (int index = yStart; index < yEnd; index++) {
+  for (int index = yStart; index <= yEnd; index++) {
     fields.push_back(this->file.payload->field(index));
+    logger->log(tablog::DEBUG, "Index: " + std::to_string(index));
 
     arrow::Datum filterResult = arrow::compute::Filter(this->file.payload->column(index), filterChunkedArray).ValueOrDie();
     std::shared_ptr<arrow::ChunkedArray> column = filterResult.chunked_array();

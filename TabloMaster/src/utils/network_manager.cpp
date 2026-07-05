@@ -154,7 +154,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     // INFO: Column based distribution
                     ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
                     filePartitionCount = file.payload->num_columns() / nodeConnections.size();
-                    lastDelimiter = file.payload->num_columns();
+                    lastDelimiter = file.payload->num_columns() - 1;
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
                         std::vector<std::shared_ptr<arrow::Field>> fields;
@@ -165,10 +165,10 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                             // If the last batch is reached the remainder should be added
                             delimiter = lastDelimiter;   
                         } else {
-                            delimiter = filePartitionCount*(nodeIndex+1);
+                            delimiter = filePartitionCount*(nodeIndex+1) - 1;
                         }
-                        logger->log(tablog::DEBUG, "File: start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter - 1));
-                        for (int index = filePartitionCount*nodeIndex; index < delimiter; index++) {
+                        logger->log(tablog::DEBUG, "File " + nodeConnections[nodeIndex].ip + ": start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter));
+                        for (int index = filePartitionCount*nodeIndex; index <= delimiter; index++) {
                             fields.push_back(file.payload->field(index));
                             columns.push_back(file.payload->column(index));
                         }
@@ -180,7 +180,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         ttp2::ServerSessionController::File nodeFilePacket;
                         nodeFilePacket.filePath = file.filePath;
                         nodeFilePacket.start = filePartitionCount*nodeIndex;
-                        nodeFilePacket.end = delimiter - 1;
+                        nodeFilePacket.end = delimiter;
                         nodeFilePacket.payload = table;
                         nodePacket.payload = nodeFilePacket;
                     
@@ -217,8 +217,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         ttp2::ServerSessionController::Packet nodePacket;
                         nodePacket.id = packet.id;
                         ttp2::ServerSessionController::Viewport nodeViewportPacket;
-                        nodeViewportPacket.yStart = nodeStartIndex;
-                        nodeViewportPacket.yEnd = delimiter;
+                        nodeViewportPacket.yStart = nodeStartIndex - filePartitionCount*nodeIndex;
+                        nodeViewportPacket.yEnd = delimiter - filePartitionCount*nodeIndex;
                         nodeViewportPacket.xStart = viewport.xStart;
                         nodeViewportPacket.xEnd = viewport.xEnd;
                         nodePacket.payload = nodeViewportPacket;
