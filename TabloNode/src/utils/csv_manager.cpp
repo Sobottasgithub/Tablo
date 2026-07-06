@@ -84,5 +84,7 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
   std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
 
+  logger->log(tablog::DEBUG, "Viewport content:\n" + table->ToString());
+  
   return table;
 }
