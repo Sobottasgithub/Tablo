@@ -41,6 +41,7 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   }
 
   logger->log(tablog::DEBUG, "yStart " + std::to_string(yStart) + " yEnd " + std::to_string(yEnd));
+  logger->log(tablog::DEBUG, "File content before filter:\n" + this->file.payload->ToString());
 
   int rowCount = this->file.payload->num_rows();
   if (xEnd > rowCount) {
@@ -72,11 +73,14 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   // Calc Viewport
   std::vector<std::shared_ptr<arrow::Field>> fields;
   std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
- 
+
+  // Filter options because of working with ChunkedArrays
+  arrow::compute::FilterOptions filterOptions = arrow::compute::FilterOptions::Defaults();
+  
   for (int index = yStart; index <= yEnd; index++) {
     fields.push_back(this->file.payload->field(index));
 
-    arrow::Datum filterResult = arrow::compute::Filter(this->file.payload->column(index), filterChunkedArray).ValueOrDie();
+    arrow::Datum filterResult = arrow::compute::Filter(this->file.payload->column(index), filterChunkedArray, filterOptions).ValueOrDie();
     std::shared_ptr<arrow::ChunkedArray> column = filterResult.chunked_array();
     columns.push_back(column);
   }
