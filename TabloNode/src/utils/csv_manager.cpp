@@ -59,36 +59,22 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
     }
   }
 
-  arrow::BooleanBuilder builder;
-  arrow::Status status = builder.AppendValues(filterVector);
-  std::shared_ptr<arrow::Array> filterArray;
-  status = builder.Finish(&filterArray);
-  if (!status.ok()) {
-    logger->log(tablog::ERROR, "");
-  }
-
-  std::vector<std::shared_ptr<arrow::Array>> filterChunks = {filterArray};
-  std::shared_ptr<arrow::ChunkedArray> filterChunkedArray = std::make_shared<arrow::ChunkedArray>(filterChunks);
-
-  // Calc Viewport
+  // Slice columns
   std::vector<std::shared_ptr<arrow::Field>> fields;
   std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
-
-  // Filter options because of working with ChunkedArrays
-  arrow::compute::FilterOptions filterOptions = arrow::compute::FilterOptions::Defaults();
   
   for (int index = yStart; index <= yEnd; index++) {
     fields.push_back(this->file.payload->field(index));
-
-    arrow::Datum filterResult = arrow::compute::Filter(this->file.payload->column(index), filterChunkedArray, filterOptions).ValueOrDie();
-    std::shared_ptr<arrow::ChunkedArray> column = filterResult.chunked_array();
-    columns.push_back(column);
+    columns.push_back(this->file.payload->column(index));
   }
    
   std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
-  std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
+  std::shared_ptr<arrow::Table> columnSliceTable = arrow::Table::Make(schema, columns, columns[0]->length());
 
-  logger->log(tablog::DEBUG, "Viewport content:\n" + table->ToString());
+  // Slice rows
+  std::shared_ptr<arrow::Table> slicedRowTable = columnSliceTable->Slice(xStart, xEnd);
+
+  logger->log(tablog::DEBUG, "Viewport content:\n" + slicedRowTable->ToString());
   
-  return table;
+  return slicedRowTable;
 }

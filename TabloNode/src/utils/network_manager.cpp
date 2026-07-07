@@ -12,6 +12,7 @@
 #include <ctime>
 #include <iostream>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <system_error>
 #include <thread>
@@ -107,11 +108,10 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
       serverSessionController->pushResponse(worker.getResponse());
     }
   }
-  if (workerThread.joinable()) {
-    workerThread.join();
-  }
-  if (networkingSession.joinable()) {
-    networkingSession.join();
-  }
+  
+  workerThread.join();
+  networkingSession.join();
+
+  logger->log(tablog::INFO, "Connection " + std::to_string(clientSocket) + " terminated");
 }
 
