@@ -110,5 +110,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
   if (workerThread.joinable()) {
     workerThread.join();
   }
+  if (networkingSession.joinable()) {
+    networkingSession.join();
+  }
 }
 

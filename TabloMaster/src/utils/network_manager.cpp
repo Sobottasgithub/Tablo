@@ -134,7 +134,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         // Remove disconnected nodes
         for (int index = 0; index < nodeConnections.size(); index++) {
             if(!nodeConnections[index].node->isConnected()) {
-                logger->log(tablog::INFO, "Node with ip: " + nodeConnections[index].ip + "disconnected");
+                logger->log(tablog::INFO, "Node with ip: " + nodeConnections[index].ip + " disconnected");
+                udpDiscovery->removeDiscoveredAddress(nodeConnections[index].ip);
                 nodeConnections.erase(nodeConnections.begin() + index);
             }
         }
@@ -247,6 +248,6 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         nodeConnections.erase(nodeConnections.begin());
     }
     
+    networkingSession.join();
     logger->log(tablog::INFO, "Terminated");
-    networkingSession.detach();    
 }
