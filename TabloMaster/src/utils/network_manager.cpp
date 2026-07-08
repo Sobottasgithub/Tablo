@@ -14,6 +14,7 @@
 #include <thread>
 #include <memory>
 #include <cerrno>
+#include <poll.h>
 
 NetworkManager::NetworkManager(std::string interface) {
     logger->log(tablog::INFO, "Start socket...");
@@ -112,10 +113,33 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                 int connectionResult = connect(nodeSocket, (struct sockaddr*) &nodeAddress, sizeof(nodeAddress));
 
-                // Wait for server to accept
-                if (connectionResult < 0 && errno != EINPROGRESS) {
-                    logger->log(tablog::ERROR, "Connection failed!");
-                    continue;
+                // Wait for node to connect
+                if (connectionResult < 0) {
+                    if (errno == EINPROGRESS) {
+                        struct pollfd pfd;
+                        pfd.fd = nodeSocket;
+                        pfd.events = POLLOUT;
+
+                        // Wait max 10 Seconds for connection
+                        int pollResult = poll(&pfd, 1, 10000);
+
+                        if (pollResult > 0) {
+                            int socketError = 0;
+                            socklen_t len = sizeof(socketError);
+                            getsockopt(nodeSocket, SOL_SOCKET, SO_ERROR, &socketError, &len);
+
+                            if (socketError != 0) {
+                                logger->log(tablog::ERROR, "Node connection " + nodeIpv4 + " failed!");
+                                continue;
+                            }
+                        } else {
+                          logger->log(tablog::ERROR, "Node connection " + nodeIpv4 + " failed!");
+                          continue;
+                        }
+                    } else {
+                      logger->log(tablog::ERROR, "Node connection " + nodeIpv4 + " failed!");
+                      continue;
+                    }
                 }
 
                 std::shared_ptr<ttp2::ClientSessionController> clientSessionController = std::make_shared<ttp2::ClientSessionController>(nodeSocket);
