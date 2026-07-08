@@ -18,6 +18,9 @@ class NetworkManager
     ttp2::ClientSessionController::Packet popResponse();
     void pushRequest(ttp2::ClientSessionController::Packet packet);
 
+    bool isConnected();
+    void disconnect();
+
   private:
     std::shared_ptr<ttp2::ClientSessionController> clientSessionController;
 };

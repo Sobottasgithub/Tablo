@@ -30,7 +30,7 @@ Cli::Cli(Argv* argv) {
 
   sendFile(filePath, &networkManager);
   
-  while (true) {
+  while (networkManager.isConnected()) {
     std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\noption:";
     std::string option = "";
     std::cin >> option;
@@ -110,6 +110,8 @@ Cli::Cli(Argv* argv) {
       std::wcout << "invalid" << std::endl;
     }
   }
+
+  logger->log(tablog::INFO, "Terminated");
 }
 
 void Cli::sendFile(std::string filePath, NetworkManager* networkManager) {

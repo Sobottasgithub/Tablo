@@ -76,3 +76,11 @@ ttp2::ClientSessionController::Packet NetworkManager::popResponse() {
 void NetworkManager::pushRequest(ttp2::Networking::Packet packet) {
   clientSessionController->pushRequest(packet);
 }
+
+bool NetworkManager::isConnected() {
+  return clientSessionController->isConnected();
+}
+
+void NetworkManager::disconnect() {
+  clientSessionController->disconnect();
+}
