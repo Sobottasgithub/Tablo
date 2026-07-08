@@ -36,29 +36,22 @@ std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
 
 std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {  
   int columnCount = this->file.payload->num_columns()-1;
-  if (yEnd > columnCount) {
+  if (yEnd > columnCount)
     yEnd = columnCount;
-  }
+
+  if (yStart < 0)
+    yStart = 0;
 
   logger->log(tablog::DEBUG, "yStart " + std::to_string(yStart) + " yEnd " + std::to_string(yEnd));
-  logger->log(tablog::DEBUG, "File content before filter:\n" + this->file.payload->ToString());
 
-  int rowCount = this->file.payload->num_rows();
-  if (xEnd > rowCount) {
-    xEnd = rowCount;
-  }
-
-  // Create row filter map
-  std::vector<bool> filterVector = {};
-
-  for (int index = 0; index < rowCount; index++) {
-    if (index >= xStart && index <= xEnd) {
-      filterVector.push_back(true);
-    } else {
-      filterVector.push_back(false);
-    }
-  }
-
+  int rowStartIndex = this->file.start;
+  xStart = xStart - rowStartIndex;
+  if (xStart < 0)
+    xStart = 0;
+  xEnd = xEnd - rowStartIndex;
+  if (xEnd > this->file.end)
+    xEnd = this->file.end;
+  
   // Slice columns
   std::vector<std::shared_ptr<arrow::Field>> fields;
   std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
