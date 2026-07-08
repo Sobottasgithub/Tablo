@@ -178,8 +178,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                 } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
                     // INFO: Column based distribution
                     ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
-                    filePartitionCount = file.payload->num_columns() / nodeConnections.size();
-                    lastDelimiter = file.payload->num_columns() - 1;
+                    filePartitionCount = file.payload->num_rows() / nodeConnections.size();
+                    lastDelimiter = file.payload->num_rows() - 1;
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
                         std::vector<std::shared_ptr<arrow::Field>> fields;
@@ -192,13 +192,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         } else {
                             delimiter = filePartitionCount*(nodeIndex+1) - 1;
                         }
-                        logger->log(tablog::DEBUG, "File " + nodeConnections[nodeIndex].ip + ": start: " + std::to_string(filePartitionCount*nodeIndex) + " end: " + std::to_string(delimiter));
-                        for (int index = filePartitionCount*nodeIndex; index <= delimiter; index++) {
-                            fields.push_back(file.payload->field(index));
-                            columns.push_back(file.payload->column(index));
-                        }
-                        std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
-                        std::shared_ptr<arrow::Table> table = arrow::Table::Make(schema, columns, columns[0]->length());
+                        logger->log(tablog::DEBUG, "File " + nodeConnections[nodeIndex].ip + ": start row: " + std::to_string(filePartitionCount*nodeIndex) + " >> end row: " + std::to_string(delimiter));
+                        std::shared_ptr<arrow::Table> slicedRowTable = file.payload->Slice(filePartitionCount*nodeIndex, delimiter);
 
                         ttp2::ServerSessionController::Packet nodePacket;
                         nodePacket.id = packet.id;
@@ -206,7 +201,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         nodeFilePacket.filePath = file.filePath;
                         nodeFilePacket.start = filePartitionCount*nodeIndex;
                         nodeFilePacket.end = delimiter;
-                        nodeFilePacket.payload = table;
+                        nodeFilePacket.payload = slicedRowTable;
                         nodePacket.payload = nodeFilePacket;
                     
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
