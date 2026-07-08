@@ -6,6 +6,7 @@
 #include "tablog.h"
 
 #include <iostream>
+#include <type_traits>
 #include <vector>
 #include <mutex>
 #include <variant>
@@ -13,12 +14,14 @@
 
 // Cycle
 void Worker::solveRequestCycle() {
+    connected = true;
     if (this->isCalled == true) {
         logger->log(tablog::ERROR, "SolveRequestCycle is already called!");
         return;
     }
     this->isCalled = true;
-    while (true) {
+    
+    while (isConnected()) {
         int requestSize = getRequestCollectionSize();
         for (int count = 0; count < requestSize; count++) {
             ttp2::ServerSessionController::Packet request = getRequest();
@@ -109,4 +112,15 @@ int Worker::getResponseCollectionSize() {
 int Worker::getRequestCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
     return requests.size();
+}
+
+bool Worker::isConnected() {
+    std::lock_guard<std::mutex> lock(mtx);
+    return connected;
+}
+
+void Worker::disconnect() {
+    std::lock_guard<std::mutex> lock(mtx);
+    connected = false;
+    isCalled = false;
 }

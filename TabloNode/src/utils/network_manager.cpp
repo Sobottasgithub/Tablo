@@ -97,7 +97,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
   Worker worker;
   std::thread workerThread = std::thread(&Worker::solveRequestCycle, &worker);
 
-  while (serverSessionController->isConnected()) {
+  while (serverSessionController->isConnected()) {    
     if (serverSessionController->hasRequest()) {
      logger->log(tablog::INFO, "Received Request");
      worker.pushRequest(serverSessionController->popRequest());
@@ -108,10 +108,12 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
       serverSessionController->pushResponse(worker.getResponse());
     }
   }
-  
+
+  logger->log(tablog::INFO, "Shutdown connection...");
+  worker.disconnect();
   workerThread.join();
   networkingSession.join();
 
-  logger->log(tablog::INFO, "Connection " + std::to_string(clientSocket) + " terminated");
+  logger->log(tablog::INFO, "Connection " + std::to_string(clientSocket) + " shutdown");
 }
 

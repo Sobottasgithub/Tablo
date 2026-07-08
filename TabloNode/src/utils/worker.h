@@ -24,10 +24,14 @@ class Worker
 
         int getResponseCollectionSize();
         int getRequestCollectionSize();
+
+        bool isConnected();
+        void disconnect();
         
     private:
         tablog::Tablog* logger = &tablog::Tablog::getInstance();
 
+        bool connected = false;
         bool isCalled = false;
         
         std::mutex mtx;
