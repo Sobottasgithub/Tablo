@@ -48,21 +48,15 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   xStart = xStart - rowStartIndex;
   if (xStart < 0)
     xStart = 0;
+  
   xEnd = xEnd - rowStartIndex;
   if (xEnd > this->file.end)
     xEnd = this->file.end;
   
   // Slice columns
-  std::vector<std::shared_ptr<arrow::Field>> fields;
-  std::vector<std::shared_ptr<arrow::ChunkedArray>> columns;
-  
-  for (int index = yStart; index <= yEnd; index++) {
-    fields.push_back(this->file.payload->field(index));
-    columns.push_back(this->file.payload->column(index));
-  }
-   
-  std::shared_ptr<arrow::Schema> schema = arrow::schema(std::move(fields));
-  std::shared_ptr<arrow::Table> columnSliceTable = arrow::Table::Make(schema, columns, columns[0]->length());
+  std::vector<int> selectColumnIndices(yEnd - yStart + 1);
+  std::iota(selectColumnIndices.begin(), selectColumnIndices.end(), yStart);
+  std::shared_ptr<arrow::Table> columnSliceTable = *this->file.payload->SelectColumns(selectColumnIndices);
 
   // Slice rows
   std::shared_ptr<arrow::Table> slicedRowTable = columnSliceTable->Slice(xStart, xEnd);

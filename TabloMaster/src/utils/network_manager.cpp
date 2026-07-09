@@ -184,6 +184,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     filePartitionCount = file.payload->num_rows() / nodeConnections.size();
                     lastDelimiter = file.payload->num_rows() - 1;
                     columnCount = file.payload->num_columns() -1;
+                    logger->log(tablog::DEBUG, "File dimensions: x0-" + std::to_string(lastDelimiter) + " y0-" + std::to_string(columnCount));
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {                    
                         std::vector<std::shared_ptr<arrow::Field>> fields;
