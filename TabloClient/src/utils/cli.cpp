@@ -66,6 +66,7 @@ Cli::Cli(Argv* argv) {
             ttp2::ClientSessionController::Viewport responseViewport = std::get<ttp2::ClientSessionController::Viewport>(response.payload);
             if (responseViewport.payload->num_columns() > 0 && responseViewport.payload->num_rows() > 0) {
               std::wcout << "id: " << response.id << std::endl;
+              std::wcout << "xStart: " << responseViewport.xStart << "\nxEnd: " << responseViewport.xStart << std::endl;
               std::wcout << responseViewport.payload->ToString().c_str() << std::endl;
             } else {
               std::wcout << "Empty Viewport" << std::endl;

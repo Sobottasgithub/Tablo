@@ -3,7 +3,7 @@
 
 #include <arrow/compute/api_scalar.h>
 #include <arrow/table.h>
-#include <ctime>
+#include <networking.h>
 #include <server_session_controller.h>
 #include <client_session_controller.h>
 #include <server_discovery.h>
@@ -19,6 +19,8 @@
 #include <cerrno>
 #include <poll.h>
 #include <variant>
+#include <unordered_map>
+#include <iterator>
 
 NetworkManager::NetworkManager(std::string interface) {
     logger->log(tablog::INFO, "Start socket...");
@@ -96,7 +98,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     int columnCount = 0;
 
     // merge logic
-    std::vector<std::shared_ptr<arrow::Table>> viewports = {};
+    std::unordered_map<int, std::vector<ttp2::ServerSessionController::Viewport>> viewports = {};
     while(serverSessionController->isConnected()) {
         // Establish new node connections
         std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
@@ -279,30 +281,51 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                     if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
                         ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
-        
-                        viewports.push_back(viewport.payload);
+                        if(viewports.find(packet.id) != viewports.end()) {
+                            viewports[packet.id].push_back(viewport);
+                        } else {
+                            viewports[packet.id] = {viewport};
+                        }
                     } else {
                         serverSessionController->pushResponse(packet);
                     }
                 }
             }
-        
-            if (viewports.size() >= nodeConnections.size()) {
-                std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewports);
-                logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
+
+            // merge viewports
+            std::unordered_map<int, std::vector<ttp2::Networking::Viewport>>::iterator viewportIterator = viewports.begin();
+            std::unordered_map<int, std::vector<ttp2::ServerSessionController::Viewport>> remainingViewports = {};
+            while (viewportIterator != viewports.end()) {
+                if (viewportIterator->second.size() >= nodeConnections.size()) {
+                    std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
+                    
+                    std::vector<std::shared_ptr<arrow::Table>> viewports = {};
+                    for (int index = 0; index < sortedViewports.size(); index++) {
+                        viewports.push_back(sortedViewports[index].payload);
+                    }
+                
+                    std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewports);
+                    logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
             
-                ttp2::ServerSessionController::Packet resultPacket;
-                resultPacket.id = 420;
-                ttp2::ServerSessionController::Viewport resultViewportPacket;
-                resultViewportPacket.yStart = 1;
-                resultViewportPacket.yEnd = 5;
-                resultViewportPacket.xStart = 1;
-                resultViewportPacket.xEnd = 99;
-                resultViewportPacket.payload = resultViewport;
-                resultPacket.payload = resultViewportPacket;
-                serverSessionController->pushResponse(resultPacket);
-                viewports.clear();
+                    ttp2::ServerSessionController::Packet resultPacket;
+                    resultPacket.id = viewportIterator->first;
+                    ttp2::ServerSessionController::Viewport resultViewportPacket;
+                    resultViewportPacket.yStart = sortedViewports[0].yStart;
+                    resultViewportPacket.yEnd = sortedViewports[0].yEnd;
+                    resultViewportPacket.xStart = sortedViewports[0].xStart;
+                    resultViewportPacket.xEnd = sortedViewports[-1].xEnd;
+                    resultViewportPacket.payload = resultViewport;
+                    resultPacket.payload = resultViewportPacket;
+                    serverSessionController->pushResponse(resultPacket);
+
+                    // TODO: REMOVE ENTRY
+                } else {
+                    remainingViewports[viewportIterator->first] = viewportIterator->second;
+                }
+                viewportIterator++;
             }
+            viewports.clear();
+            viewports = remainingViewports;
         } else {
             while (nodeConnections[0].node->hasResponse()) {
                 serverSessionController->pushResponse(nodeConnections[0].node->popResponse());
@@ -318,4 +341,18 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     
     networkingSession.join();
     logger->log(tablog::INFO, "Terminated");
+}
+
+std::vector<ttp2::Networking::Viewport> NetworkManager::insertionSortViewportsByX(std::vector<ttp2::Networking::Viewport> viewports) {
+    for (int index = 1; index < viewports.size()-1; index++) {
+        ttp2::Networking::Viewport viewport = viewports[index];
+        int pointerIndex = index - 1;
+
+        while (pointerIndex >= 0 && viewports[pointerIndex].xStart > viewport.xStart) {
+            viewports[pointerIndex + 1] = viewports[pointerIndex];
+            pointerIndex--;
+        }
+        viewports[pointerIndex + 1] = viewport;
+    }
+    return viewports;
 }
