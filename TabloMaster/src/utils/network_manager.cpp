@@ -1,6 +1,7 @@
 #include "network_manager.h"
 #include "tablog.h"
 
+#include <arrow/array/builder_base.h>
 #include <arrow/compute/api_scalar.h>
 #include <arrow/table.h>
 #include <networking.h>
@@ -281,6 +282,17 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                     if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
                         ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
+
+                        arrow::Status status = viewport.payload->Validate();
+                        if (!status.ok()) {
+                            // TODO: request viewport packet here again
+                            logger->log(tablog::CRITICAL, "Corrupt viewport payload!");
+                            logger->log(tablog::CRITICAL, "xStart: " + std::to_string(viewport.xStart) + " xEnd: " + std::to_string(viewport.xEnd) +
+                                                          "\nyStart: " + std::to_string(viewport.yStart) + " yEnd: " + std::to_string(viewport.yEnd));
+                            
+                            continue;
+                        }
+                        
                         if(viewports.find(packet.id) != viewports.end()) {
                             viewports[packet.id].push_back(viewport);
                         } else {
@@ -301,6 +313,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     
                     std::vector<std::shared_ptr<arrow::Table>> viewports = {};
                     for (int index = 0; index < sortedViewports.size(); index++) {
+                        logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
+
                         viewports.push_back(sortedViewports[index].payload);
                     }
                 
