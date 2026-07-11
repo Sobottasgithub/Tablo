@@ -2,6 +2,8 @@
 #include "tablog.h"
 
 #include <arrow/compute/api_scalar.h>
+#include <arrow/table.h>
+#include <ctime>
 #include <server_session_controller.h>
 #include <client_session_controller.h>
 #include <server_discovery.h>
@@ -16,6 +18,7 @@
 #include <memory>
 #include <cerrno>
 #include <poll.h>
+#include <variant>
 
 NetworkManager::NetworkManager(std::string interface) {
     logger->log(tablog::INFO, "Start socket...");
@@ -91,6 +94,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     int filePartitionCount = 0;
     int lastDelimiter = 0;
     int columnCount = 0;
+
+    // merge logic
+    std::vector<std::shared_ptr<arrow::Table>> viewports = {};
     while(serverSessionController->isConnected()) {
         // Establish new node connections
         std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
@@ -265,9 +271,41 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         }
 
         // Receive response
-        for (int index = 0; index < nodeConnections.size(); index++) {
-            while(nodeConnections[index].node->hasResponse()) {
-                serverSessionController->pushResponse(nodeConnections[index].node->popResponse());
+        // TODO: Rewrite merge logic later!
+        if (nodeConnections.size() > 1) {
+            for (int index = 0; index < nodeConnections.size(); index++) {
+                if(nodeConnections[index].node->hasResponse()) {
+                    ttp2::ServerSessionController::Packet packet = nodeConnections[index].node->popResponse();
+
+                    if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
+                        ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
+        
+                        viewports.push_back(viewport.payload);
+                    } else {
+                        serverSessionController->pushResponse(packet);
+                    }
+                }
+            }
+        
+            if (viewports.size() >= nodeConnections.size()) {
+                std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewports);
+                logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
+            
+                ttp2::ServerSessionController::Packet resultPacket;
+                resultPacket.id = 420;
+                ttp2::ServerSessionController::Viewport resultViewportPacket;
+                resultViewportPacket.yStart = 1;
+                resultViewportPacket.yEnd = 5;
+                resultViewportPacket.xStart = 1;
+                resultViewportPacket.xEnd = 99;
+                resultViewportPacket.payload = resultViewport;
+                resultPacket.payload = resultViewportPacket;
+                serverSessionController->pushResponse(resultPacket);
+                viewports.clear();
+            }
+        } else {
+            while (nodeConnections[0].node->hasResponse()) {
+                serverSessionController->pushResponse(nodeConnections[0].node->popResponse());
             }
         }
     }

@@ -62,7 +62,7 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   // Slice rows
   std::shared_ptr<arrow::Table> slicedRowTable = columnSliceTable->Slice(xStart, xEnd);
 
-  logger->log(tablog::DEBUG, "Viewport content:\n" + slicedRowTable->ToString());
+  // logger->log(tablog::DEBUG, "Viewport content:\n" + slicedRowTable->ToString());
   
   return slicedRowTable;
 }

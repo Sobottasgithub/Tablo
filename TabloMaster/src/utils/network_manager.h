@@ -17,7 +17,7 @@ class NetworkManager
 
     private:
         struct Nodes {
-          std::string ip;
+          std::string ip = 0;
           std::shared_ptr<ttp2::ClientSessionController> node;  
         };
 
