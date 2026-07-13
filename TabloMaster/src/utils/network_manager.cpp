@@ -306,19 +306,18 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
             // merge viewports
             std::unordered_map<int, std::vector<ttp2::Networking::Viewport>>::iterator viewportIterator = viewports.begin();
-            std::unordered_map<int, std::vector<ttp2::ServerSessionController::Viewport>> remainingViewports = {};
             while (viewportIterator != viewports.end()) {
                 if (viewportIterator->second.size() >= nodeConnections.size()) {
                     std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
                     
-                    std::vector<std::shared_ptr<arrow::Table>> viewports = {};
+                    std::vector<std::shared_ptr<arrow::Table>> viewportPackets = {};
                     for (int index = 0; index < sortedViewports.size(); index++) {
                         logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
 
-                        viewports.push_back(sortedViewports[index].payload);
+                        viewportPackets.push_back(sortedViewports[index].payload);
                     }
                 
-                    std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewports);
+                    std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewportPackets);
                     logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
             
                     ttp2::ServerSessionController::Packet resultPacket;
@@ -332,14 +331,11 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     resultPacket.payload = resultViewportPacket;
                     serverSessionController->pushResponse(resultPacket);
 
-                    // TODO: REMOVE ENTRY
+                    viewportIterator = viewports.erase(viewportIterator);
                 } else {
-                    remainingViewports[viewportIterator->first] = viewportIterator->second;
+                    viewportIterator++;
                 }
-                viewportIterator++;
             }
-            viewports.clear();
-            viewports = remainingViewports;
         } else {
             while (nodeConnections[0].node->hasResponse()) {
                 serverSessionController->pushResponse(nodeConnections[0].node->popResponse());
