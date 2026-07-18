@@ -312,8 +312,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     if (viewportReqests[viewportRequestIndex].id == viewportIterator->first) {
                         ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
                         std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
-
-                        if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == sortedViewports.back().xEnd) {
+                        int xEnd = sortedViewports.back().xEnd;
+                        
+                        if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == xEnd) {
                             std::vector<std::shared_ptr<arrow::Table>> viewportPackets = {};
                             for (int index = 0; index < sortedViewports.size(); index++) {
                                 logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
@@ -327,10 +328,10 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                             ttp2::ServerSessionController::Packet resultPacket;
                             resultPacket.id = viewportIterator->first;
                             ttp2::ServerSessionController::Viewport resultViewportPacket;
-                            resultViewportPacket.yStart = sortedViewports[0].yStart;
-                            resultViewportPacket.yEnd = sortedViewports[0].yEnd;
-                            resultViewportPacket.xStart = sortedViewports[0].xStart;
-                            resultViewportPacket.xEnd = sortedViewports[-1].xEnd;
+                            resultViewportPacket.yStart = sortedViewports.begin()->yStart;
+                            resultViewportPacket.yEnd = sortedViewports.begin()->yEnd;
+                            resultViewportPacket.xStart = sortedViewports.begin()->xStart;
+                            resultViewportPacket.xEnd = xEnd;
                             resultViewportPacket.payload = resultViewport;
                             resultPacket.payload = resultViewportPacket;
                             serverSessionController->pushResponse(resultPacket);
