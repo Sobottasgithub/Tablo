@@ -276,7 +276,6 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         }
 
         // Receive response
-        // TODO: Rewrite merge logic later!
         if (nodeConnections.size() > 1) {
             for (int index = 0; index < nodeConnections.size(); index++) {
                 if(nodeConnections[index].node->hasResponse()) {
@@ -310,19 +309,20 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             std::unordered_map<int, std::vector<ttp2::Networking::Viewport>>::iterator viewportIterator = viewports.begin();
             for (int viewportRequestIndex = 0; viewportRequestIndex < viewportReqests.size(); viewportRequestIndex++) {
                 while (viewportIterator != viewports.end()) {
-                    if (viewportReqests[viewportRequestIndex].id == viewportIterator->first) {                        
-                        if (viewportIterator->second.size() >= nodeConnections.size()) {
-                            std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
-                    
+                    if (viewportReqests[viewportRequestIndex].id == viewportIterator->first) {
+                        ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
+                        std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
+
+                        if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == sortedViewports.back().xEnd) {
                             std::vector<std::shared_ptr<arrow::Table>> viewportPackets = {};
                             for (int index = 0; index < sortedViewports.size(); index++) {
                                 logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
 
                                 viewportPackets.push_back(sortedViewports[index].payload);
                             }
-                
+
                             std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewportPackets);
-                            logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
+                            // logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
             
                             ttp2::ServerSessionController::Packet resultPacket;
                             resultPacket.id = viewportIterator->first;
