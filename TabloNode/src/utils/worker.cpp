@@ -33,7 +33,9 @@ void Worker::solveRequestCycle() {
                 ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
                 Worker::setFile(file);
             } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
-                ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
+                logger->log(tablog::CRITICAL, "Undefined behavior for the viewport");
+            } else if (std::holds_alternative<ttp2::ServerSessionController::ViewportRequest>(request.payload)) {
+                ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(request.payload);
                 ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
                 responsePacket.id = request.id;
                 pushResponse(responsePacket);
@@ -56,8 +58,9 @@ void Worker::setFile(ttp2::ServerSessionController::File newFile) {
     this->csvManager = newCsvManager;
 }
 
-ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
+ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest) {
     ttp2::ServerSessionController::Packet packet;
+    ttp2::ServerSessionController::Viewport viewport;
 
     if (viewportRequest.xEnd < viewportRequest.xStart || viewportRequest.yEnd < viewportRequest.yStart) {
         ttp2::ServerSessionController::Viewport emptyViewport;
@@ -65,9 +68,14 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
         return packet;
     }
 
-    viewportRequest.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
+
+    viewport.xStart = viewportRequest.xStart;
+    viewport.xEnd = viewport.xEnd;
+    viewport.yStart = viewport.yStart;
+    viewport.yEnd = viewport.yEnd;
+    viewport.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
                                                            viewportRequest.yStart, viewportRequest.yEnd);
-    packet.payload = viewportRequest;
+    packet.payload = viewport;
     return packet;
 }
 

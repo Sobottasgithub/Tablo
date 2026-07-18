@@ -43,7 +43,7 @@ class Worker
         // Logic functions
         ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
         void setFile(ttp2::ServerSessionController::File newFile);
-        ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::Viewport viewportRequest);
+        ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest);
 };
 
 #endif

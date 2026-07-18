@@ -220,8 +220,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }
-                } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
-                    ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
+                } else if (std::holds_alternative<ttp2::ServerSessionController::ViewportRequest>(packet.payload)) {
+                    ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(packet.payload);
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
                         int delimiter = 0;
@@ -234,36 +234,36 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                         // Check if node is in range
                         int nodeStartIndex = filePartitionCount*nodeIndex;
-                        if(nodeStartIndex > viewport.xEnd || delimiter < viewport.xStart) {
+                        if(nodeStartIndex > viewportRequest.xEnd || delimiter < viewportRequest.xStart) {
                             continue;
                         }
 
                         // Correct viewport
                         // x
-                        if (viewport.xStart > nodeStartIndex)
-                            nodeStartIndex = viewport.xStart;
+                        if (viewportRequest.xStart > nodeStartIndex)
+                            nodeStartIndex = viewportRequest.xStart;
 
-                        if (viewport.xEnd < delimiter)
-                            delimiter = viewport.xEnd;
+                        if (viewportRequest.xEnd < delimiter)
+                            delimiter = viewportRequest.xEnd;
 
                         // y
-                        if (viewport.yStart < 0)
-                            viewport.yStart = 0;
+                        if (viewportRequest.yStart < 0)
+                            viewportRequest.yStart = 0;
 
-                        if (viewport.yEnd > columnCount)
-                            viewport.yEnd = columnCount;
+                        if (viewportRequest.yEnd > columnCount)
+                            viewportRequest.yEnd = columnCount;
                         
                         ttp2::ServerSessionController::Packet nodePacket;
                         nodePacket.id = packet.id;
-                        ttp2::ServerSessionController::Viewport nodeViewportPacket;
-                        nodeViewportPacket.yStart = viewport.yStart;
-                        nodeViewportPacket.yEnd = viewport.yEnd;
+                        ttp2::ServerSessionController::ViewportRequest nodeViewportPacket;
+                        nodeViewportPacket.yStart = viewportRequest.yStart;
+                        nodeViewportPacket.yEnd = viewportRequest.yEnd;
                         // Real slice e.x. node 2 gets 55 to 99
                         nodeViewportPacket.xStart = nodeStartIndex;
                         nodeViewportPacket.xEnd = delimiter;
                         nodePacket.payload = nodeViewportPacket;
 
-                        logger->log(tablog::DEBUG, "Viewport " + nodeConnections[nodeIndex].ip + ": start: " + std::to_string(nodeStartIndex) + " end: " + std::to_string(delimiter));
+                        logger->log(tablog::DEBUG, "ViewportRequest " + nodeConnections[nodeIndex].ip + ": start: " + std::to_string(nodeStartIndex) + " end: " + std::to_string(delimiter));
 
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }

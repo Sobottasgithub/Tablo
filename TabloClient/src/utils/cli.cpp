@@ -98,7 +98,7 @@ Cli::Cli(Argv* argv) {
       std::cin >> yEnd;
       
       ttp2::Networking::Packet packet;
-      ttp2::Networking::Viewport payload;
+      ttp2::Networking::ViewportRequest payload;
       payload.xStart = xStart;
       payload.xEnd = xEnd;
       payload.yStart = yStart;
