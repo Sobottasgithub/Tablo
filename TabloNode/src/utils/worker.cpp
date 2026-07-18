@@ -68,11 +68,10 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
         return packet;
     }
 
-
     viewport.xStart = viewportRequest.xStart;
-    viewport.xEnd = viewport.xEnd;
-    viewport.yStart = viewport.yStart;
-    viewport.yEnd = viewport.yEnd;
+    viewport.xEnd = viewportRequest.xEnd;
+    viewport.yStart = viewportRequest.yStart;
+    viewport.yEnd = viewportRequest.yEnd;
     viewport.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
                                                            viewportRequest.yStart, viewportRequest.yEnd);
     packet.payload = viewport;
