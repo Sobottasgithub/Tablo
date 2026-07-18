@@ -11,6 +11,10 @@
     tud = {
       url = "github:Sobottasgithub/tud";
     };
+
+    tablog = {
+      url = "github:Sobottasgithub/tablog";
+    };
   };
 
   outputs =
@@ -19,6 +23,7 @@
       nixpkgs,
       ttp2,
       tud,
+      tablog,
     }:
     let
       system = "x86_64-linux";
@@ -31,12 +36,14 @@
 
       libttp2 = ttp2.packages.${system}.lib;
       libtud = tud.packages.${system}.lib;
+      libtablog = tablog.packages.${system}.lib;
 
       packages = with pkgs; [
         cmake
         gcc
         gnumake
         libttp2
+        libtablog
         arrow-cpp
       ];
     in
@@ -49,7 +56,6 @@
               buildTarget ? pname,
 
               enableLibtabcrypt ? false,
-              enableLibtablog ? false,
 
               enableNode ? false,
               enableClient ? false,
@@ -73,7 +79,6 @@
                 cmake -B build -S $src \
                   -DCMAKE_BUILD_TYPE=Release \
                   -DDEF_LIBTABCRYPT=${if enableLibtabcrypt then "ON" else "OFF"} \
-                  -DDEF_LIBTABLOG=${if enableLibtablog then "ON" else "OFF"} \
                   -DDEF_NODE=${if enableNode then "ON" else "OFF"} \
                   -DDEF_CLIENT=${if enableClient then "ON" else "OFF"} \
                   -DDEF_MASTER=${if enableMaster then "ON" else "OFF"}
@@ -96,13 +101,6 @@
             buildTarget = "tabcrypt";
 
             enableLibtabcrypt = true;
-          };
-
-          libtablog = mkTabloPackage {
-            pname = "libtablog";
-            buildTarget = "tablog";
-
-            enableLibtablog = true;
           };
 
           tablo-node = mkTabloPackage {
@@ -145,7 +143,6 @@
             buildTarget = "all";
 
             enableLibtabcrypt = true;
-            enableLibtablog = true;
 
             enableNode = true;
             enableClient = true;
@@ -161,7 +158,6 @@
             name = "tablo-${version}";
 
             paths = [
-              libtablog
               libtabcrypt
               tablo-node
               tablo-client
@@ -208,6 +204,8 @@
             pkgs.bridge-utils
             pkgs.clang-tools
             libtud
+            libttp2
+            libtablog
           ];
         in
         pkgs.mkShell {
