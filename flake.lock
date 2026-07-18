@@ -64,6 +64,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_5": {
+      "locked": {
+        "lastModified": 1784356753,
+        "narHash": "sha256-12KrbMiWLcf8m7pCvAtZh1ZrgF85ZXDXvfR/fWTKy84=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "61b7c44c4073f0b827768aff0049561b5110ea5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
@@ -75,6 +91,24 @@
     "tablog": {
       "inputs": {
         "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1784384014,
+        "narHash": "sha256-7m2OFL08r7MAeJvwUVXpCoBRq2iVHVcCDwxW+GoUNbk=",
+        "owner": "Sobottasgithub",
+        "repo": "tablog",
+        "rev": "dea2163cd34d978a97ee09b90d832f75d1890950",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Sobottasgithub",
+        "repo": "tablog",
+        "type": "github"
+      }
+    },
+    "tablog_2": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_5"
       },
       "locked": {
         "lastModified": 1784384014,
@@ -110,14 +144,15 @@
     },
     "tud": {
       "inputs": {
-        "nixpkgs": "nixpkgs_4"
+        "nixpkgs": "nixpkgs_4",
+        "tablog": "tablog_2"
       },
       "locked": {
-        "lastModified": 1780684021,
-        "narHash": "sha256-XucbF/32EUSvk8Of0ZIRc5cj/zDgoVwW57MK1z8ibmQ=",
+        "lastModified": 1784395255,
+        "narHash": "sha256-72JgdDethdU8EtG+100vxkr5vjQ2yhcVh0iu73qs7tw=",
         "owner": "Sobottasgithub",
         "repo": "tud",
-        "rev": "640a87ee87f1c761b6be7451094e64c274c6900c",
+        "rev": "de499dd749b4ac5afbefc10dd09d7128737c8254",
         "type": "github"
       },
       "original": {
