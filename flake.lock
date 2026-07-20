@@ -148,11 +148,11 @@
         "tablog": "tablog_2"
       },
       "locked": {
-        "lastModified": 1784396763,
+        "lastModified": 1784549754,
         "narHash": "sha256-JXKnd4xWtIoPMVPTcU0PED4+1YgcOV6sDA3mNwMMZGE=",
         "owner": "Sobottasgithub",
         "repo": "tud",
-        "rev": "dc84b65bd7fcf541754088ec6ab892fe86b2f8e2",
+        "rev": "5c4c09b8f6a3474cd1e67d17278e90355b4d26c2",
         "type": "github"
       },
       "original": {
