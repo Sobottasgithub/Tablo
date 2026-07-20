@@ -12,10 +12,11 @@
 #include <type_traits>
 #include <poll.h>
 
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 int NetworkManager::createSocket(std::string tabloMaster) {
-    tablog::Tablog* logger = &tablog::Tablog::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Client");
 
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 

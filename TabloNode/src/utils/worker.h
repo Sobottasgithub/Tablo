@@ -4,7 +4,8 @@
 #include <server_session_controller.h>
 #include "csv_manager.h"
 
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 #include <vector>
 #include <mutex>
@@ -29,7 +30,7 @@ class Worker
         void disconnect();
         
     private:
-        tablog::Tablog* logger = &tablog::Tablog::getInstance();
+        std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Node");
 
         bool connected = false;
         bool isCalled = false;

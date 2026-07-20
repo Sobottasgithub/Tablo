@@ -1,5 +1,5 @@
 #include "network_manager.h"
-#include "tablog.h"
+#include <tablog.h>
 
 #include <arrow/array/builder_base.h>
 #include <arrow/compute/api_scalar.h>

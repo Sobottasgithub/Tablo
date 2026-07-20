@@ -6,16 +6,18 @@
 
 #include <networking.h>
 
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 #include "utils/cli.h"
 #include "utils/argv_struct.h"
 
 int main(int argc, char *argv[])
 {
-
-    tablog::Tablog* logger = &tablog::Tablog::getInstance();
-    logger->configure("Client", true);
+    tablog::TablogRegistry* registry = &tablog::TablogRegistry::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = std::make_shared<tablog::Tablog>();
+    logger->configure("Tablo-Client", true);
+    registry->registerLogger("Tablo-Client", logger);
 
     if (argc >= 2) {
         Argv commandLineArguments;

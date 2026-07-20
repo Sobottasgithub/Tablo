@@ -7,15 +7,18 @@
 #include <thread>
 #include <variant>
 #include <filesystem>
+#include <memory>
 
 #include <arrow/csv/api.h>
 #include <arrow/io/api.h>
 
 #include "network_manager.h"
-#include "tablog.h"
+
+#include <tablog_registry.h>
+#include <tablog.h>
 
 Cli::Cli(Argv* argv) {
-  tablog::Tablog* logger = &tablog::Tablog::getInstance();
+  std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Client");
 
   std::string tabloMasterIp = argv->tabloMasterIp;
   std::string filePath = argv->filePath;

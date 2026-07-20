@@ -4,14 +4,17 @@
 #include <cctype>
 #include <bits/stdc++.h>
 
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 #include "utils/network_manager.h"
 
 int main(int argc, char *argv[])
 {
-    tablog::Tablog* logger = &tablog::Tablog::getInstance();
-    logger->configure("Node", true);
+    tablog::TablogRegistry* registry = &tablog::TablogRegistry::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = std::make_shared<tablog::Tablog>();
+    logger->configure("Tablo-Node", true);
+    registry->registerLogger("Tablo-Node", logger);
 
     int maxConnections = 1000;
     if (argc >= 2) {

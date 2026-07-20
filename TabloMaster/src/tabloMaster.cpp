@@ -1,15 +1,19 @@
+#include "utils/network_manager.h"
+
 #include <iostream>
 
 #include <networking.h>
+#include <memory>
 
-#include "utils/network_manager.h"
-
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 int main(int argc, char *argv[])
 {
-    tablog::Tablog* logger = &tablog::Tablog::getInstance();
-    logger->configure("Master", true);
+    tablog::TablogRegistry* registry = &tablog::TablogRegistry::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = std::make_shared<tablog::Tablog>();
+    logger->configure("Tablo-Master", true);
+    registry->registerLogger("Tablo-Master", logger);
 
     if (argc >= 2) {
         for(int index = 0; index < argc; index++) {

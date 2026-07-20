@@ -7,7 +7,8 @@
 #include <thread>
 #include <server_discovery.h>
 
-#include "tablog.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 class NetworkManager
 {
@@ -21,7 +22,7 @@ class NetworkManager
           std::shared_ptr<ttp2::ClientSessionController> node;  
         };
 
-        tablog::Tablog* logger = &tablog::Tablog::getInstance();
+        std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Master");
             
         std::shared_ptr<tud::ServerDiscovery> udpDiscovery;
         std::thread serverDiscoveryThread;
