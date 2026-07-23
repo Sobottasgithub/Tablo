@@ -109,11 +109,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1784558310,
-        "narHash": "sha256-4d0QJZu5j5vDgJ/bp2kkMiBcivD9CDZSOrkCFcNKZXQ=",
+        "lastModified": 1784813121,
+        "narHash": "sha256-ixwsmElsnlQE0MHPjS6m5+XmS47bFPHBYtZIxCTwLB8=",
         "owner": "Sobottasgithub",
         "repo": "tablog",
-        "rev": "ded1d9094b5a76c323be795b674ee3fa7514c950",
+        "rev": "e47b0796e6a0820315a846fb02a9c9c89b5bda33",
         "type": "github"
       },
       "original": {
@@ -127,11 +127,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1784558310,
-        "narHash": "sha256-4d0QJZu5j5vDgJ/bp2kkMiBcivD9CDZSOrkCFcNKZXQ=",
+        "lastModified": 1784813121,
+        "narHash": "sha256-ixwsmElsnlQE0MHPjS6m5+XmS47bFPHBYtZIxCTwLB8=",
         "owner": "Sobottasgithub",
         "repo": "tablog",
-        "rev": "ded1d9094b5a76c323be795b674ee3fa7514c950",
+        "rev": "e47b0796e6a0820315a846fb02a9c9c89b5bda33",
         "type": "github"
       },
       "original": {
@@ -145,11 +145,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1784558310,
-        "narHash": "sha256-4d0QJZu5j5vDgJ/bp2kkMiBcivD9CDZSOrkCFcNKZXQ=",
+        "lastModified": 1784813121,
+        "narHash": "sha256-ixwsmElsnlQE0MHPjS6m5+XmS47bFPHBYtZIxCTwLB8=",
         "owner": "Sobottasgithub",
         "repo": "tablog",
-        "rev": "ded1d9094b5a76c323be795b674ee3fa7514c950",
+        "rev": "e47b0796e6a0820315a846fb02a9c9c89b5bda33",
         "type": "github"
       },
       "original": {
@@ -164,11 +164,11 @@
         "tablog": "tablog_2"
       },
       "locked": {
-        "lastModified": 1784561768,
-        "narHash": "sha256-AWAlT2u/5fs32fnMHHEWhKFl43pf6KuolEYvSVkCkLY=",
+        "lastModified": 1784813401,
+        "narHash": "sha256-Ifp7exrNA9dqwu8LqRp8CN1xSJJ7MMArnn91DchoHeE=",
         "owner": "Sobottasgithub",
         "repo": "ttp2",
-        "rev": "b46c8ebe97268e07fce0e47a37c79046bf505eb5",
+        "rev": "87e214c4b664e7a20232016ab86d31fc29759529",
         "type": "github"
       },
       "original": {
@@ -183,11 +183,11 @@
         "tablog": "tablog_3"
       },
       "locked": {
-        "lastModified": 1784560894,
-        "narHash": "sha256-xc8oVy6vTxQm5T5Ypil46Fi0BlTyfkKI+ebXDvqpclY=",
+        "lastModified": 1784813247,
+        "narHash": "sha256-PEK+WKyQMJCJQ9NZX5wmMsZLw8VF0SGWArYJZrkWoLA=",
         "owner": "Sobottasgithub",
         "repo": "tud",
-        "rev": "046eec9778a48235215626c976cdaf831e5e531d",
+        "rev": "962baa6fe7015c5723f996ab89f74aac54e7c6cc",
         "type": "github"
       },
       "original": {
