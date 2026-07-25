@@ -39,6 +39,11 @@ void Worker::solveRequestCycle() {
                 ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
                 responsePacket.id = request.id;
                 pushResponse(responsePacket);
+            } else if (std::holds_alternative<ttp2::ServerSessionController::Filter>(request.payload)) {
+                ttp2::ServerSessionController::Filter filterRequest = std::get<ttp2::ServerSessionController::Filter>(request.payload);
+                ttp2::ServerSessionController::Packet responsePacket = Worker::filter(filterRequest);
+                responsePacket.id = request.id;
+                pushResponse(responsePacket);
             } else {
                 logger->log(tablog::CRITICAL, "Unknown payload type!");
             }
@@ -74,6 +79,16 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
     viewport.yEnd = viewportRequest.yEnd;
     viewport.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
                                                            viewportRequest.yStart, viewportRequest.yEnd);
+    packet.payload = viewport;
+    return packet;
+}
+
+ttp2::ServerSessionController::Packet Worker::filter(ttp2::ServerSessionController::Filter filterRequest) {
+    ttp2::ServerSessionController::Packet packet;
+    ttp2::ServerSessionController::Viewport viewport;
+
+    viewport.payload = this->csvManager.filter(filterRequest.columnName, filterRequest.regex);
+
     packet.payload = viewport;
     return packet;
 }

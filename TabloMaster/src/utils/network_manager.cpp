@@ -269,6 +269,12 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }
+                } else if (std::holds_alternative<ttp2::ServerSessionController::Filter>(packet.payload)) {
+                    viewportReqests.push_back(packet);
+
+                    for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
+                        nodeConnections[nodeIndex].node->pushRequest(packet);
+                    }
                 } else {
                     logger->log(tablog::CRITICAL, "Unknown payload type!");
                 }
@@ -310,36 +316,38 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             for (int viewportRequestIndex = 0; viewportRequestIndex < viewportReqests.size(); viewportRequestIndex++) {
                 while (viewportIterator != viewports.end()) {
                     if (viewportReqests[viewportRequestIndex].id == viewportIterator->first) {
-                        ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
-                        std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
-                        int xEnd = sortedViewports.back().xEnd;
+                        if (std::holds_alternative<ttp2::ServerSessionController::Standard>(viewportReqests[viewportRequestIndex].payload)) {
+                            ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
+                            std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
+                            int xEnd = sortedViewports.back().xEnd;
                         
-                        if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == xEnd) {
-                            std::vector<std::shared_ptr<arrow::Table>> viewportPackets = {};
-                            for (int index = 0; index < sortedViewports.size(); index++) {
-                                logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
+                            if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == xEnd) {
+                                std::vector<std::shared_ptr<arrow::Table>> viewportPackets = {};
+                                for (int index = 0; index < sortedViewports.size(); index++) {
+                                    logger->log(tablog::DEBUG, "xStart: " +  std::to_string(sortedViewports[index].xStart) + " xEnd: " +  std::to_string(sortedViewports[index].xEnd));
 
-                                viewportPackets.push_back(sortedViewports[index].payload);
-                            }
+                                    viewportPackets.push_back(sortedViewports[index].payload);
+                                }
 
-                            std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewportPackets);
-                            // logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
+                                std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewportPackets);
+                                // logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
             
-                            ttp2::ServerSessionController::Packet resultPacket;
-                            resultPacket.id = viewportIterator->first;
-                            ttp2::ServerSessionController::Viewport resultViewportPacket;
-                            resultViewportPacket.yStart = sortedViewports.begin()->yStart;
-                            resultViewportPacket.yEnd = sortedViewports.begin()->yEnd;
-                            resultViewportPacket.xStart = sortedViewports.begin()->xStart;
-                            resultViewportPacket.xEnd = xEnd;
-                            resultViewportPacket.payload = resultViewport;
-                            resultPacket.payload = resultViewportPacket;
-                            serverSessionController->pushResponse(resultPacket);
+                                ttp2::ServerSessionController::Packet resultPacket;
+                                resultPacket.id = viewportIterator->first;
+                                ttp2::ServerSessionController::Viewport resultViewportPacket;
+                                resultViewportPacket.yStart = sortedViewports.begin()->yStart;
+                                resultViewportPacket.yEnd = sortedViewports.begin()->yEnd;
+                                resultViewportPacket.xStart = sortedViewports.begin()->xStart;
+                                resultViewportPacket.xEnd = xEnd;
+                                resultViewportPacket.payload = resultViewport;
+                                resultPacket.payload = resultViewportPacket;
+                                serverSessionController->pushResponse(resultPacket);
 
-                            viewportIterator = viewports.erase(viewportIterator);
-                            viewportReqests.erase(viewportReqests.begin() + viewportRequestIndex);
-                        } else {
-                            viewportIterator++;
+                                viewportIterator = viewports.erase(viewportIterator);
+                                viewportReqests.erase(viewportReqests.begin() + viewportRequestIndex);
+                            } else {
+                                viewportIterator++;
+                            }
                         }
                     }
                 }

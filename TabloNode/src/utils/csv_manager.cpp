@@ -66,3 +66,10 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   
   return slicedRowTable;
 }
+
+std::shared_ptr<arrow::Table> CsvManager::filter(std::string columnName, std::string regex) {
+
+  logger->log(tablog::CRITICAL, "TTP2 Works!: " + columnName + " and " + regex);
+  
+  return nullptr;
+}

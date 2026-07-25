@@ -1,6 +1,7 @@
 #include "cli.h"
 
 #include <client_session_controller.h>
+#include <networking.h>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -34,7 +35,7 @@ Cli::Cli(Argv* argv) {
   sendFile(filePath, &networkManager);
   
   while (networkManager.isConnected()) {
-    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\noption:";
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\n(5) filter\noption:";
     std::string option = "";
     std::cin >> option;
     if (option == "1") {
@@ -110,6 +111,22 @@ Cli::Cli(Argv* argv) {
     
       networkManager.pushRequest(packet);
       std::wcout << "Send Viewport request!" << std::endl;
+    } else if (option == "5") {
+      std::string columnName = "";
+      std::string regex = "";
+
+      std::wcout << "columName: ";
+      std::cin >> columnName;
+      std::wcout << "regex: ";
+      std::cin >> regex;
+
+      ttp2::Networking::Packet packet;
+      ttp2::Networking::Filter filter;
+      filter.columnName = columnName;
+      filter.regex = regex;
+      packet.payload = filter;
+
+      networkManager.pushRequest(packet);
     } else {
       std::wcout << "invalid" << std::endl;
     }
