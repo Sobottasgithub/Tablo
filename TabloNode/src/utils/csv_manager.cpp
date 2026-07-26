@@ -1,11 +1,14 @@
 #include "csv_manager.h"
 
+#include <arrow/scalar.h>
 #include <arrow/table.h>
 #include <arrow/compute/api.h>
 #include <arrow/type.h>
-#include <memory>
-#include <server_session_controller.h>
+#include <arrow/type_fwd.h>
 
+#include <memory>
+
+#include <server_session_controller.h>
 #include <tablog.h>
 
 #include <iostream>
@@ -13,6 +16,7 @@
 #include <functional>
 #include <string>
 #include <cstring>
+#include <regex>
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
@@ -105,5 +109,9 @@ std::shared_ptr<arrow::Table> CsvManager::filter(std::string columnName, std::st
 }
 
 bool CsvManager::applyRegexOnScalar(const std::shared_ptr<arrow::Scalar>& scalar, const std::string regex) {
-  return true;
+  std::string stringValue = scalar->ToString();
+  if (std::regex_match(stringValue, std::regex(regex))) 
+    return true;
+  else
+    return false;
 }
