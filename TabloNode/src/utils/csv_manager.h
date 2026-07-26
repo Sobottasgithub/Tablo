@@ -22,6 +22,8 @@ class CsvManager {
     std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Node");
         
     ttp2::ServerSessionController::File file;
+
+    bool applyRegexOnScalar(const std::shared_ptr<arrow::Scalar>& scalar, const std::string regex);
 };
 
 #endif
