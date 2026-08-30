@@ -3,14 +3,21 @@
 #include <client_session_controller.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <thread>
 #include <memory>
 #include <cerrno>
 #include <type_traits>
+#include <poll.h>
+
+#include <tablog_registry.h>
+#include <tablog.h>
 
 int NetworkManager::createSocket(std::string tabloMaster) {
+    std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Client");
+
     int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 
     sockaddr_in serverAddress;
@@ -21,9 +28,32 @@ int NetworkManager::createSocket(std::string tabloMaster) {
     int connectionResult = connect(serverSocket, (struct sockaddr*) &serverAddress, sizeof(serverAddress));
 
     // Wait for server to accept
-    if (connectionResult < 0 && errno != EINPROGRESS) {
-        std::wcout << "Connection failed!" << std::endl;
-        return -1;
+    if (connectionResult < 0) {
+        if (errno == EINPROGRESS) {
+            struct pollfd pfd;
+            pfd.fd = serverSocket;
+            pfd.events = POLLOUT;
+
+            // Wait max 10 Seconds for connection
+            int pollResult = poll(&pfd, 1, 10000);
+
+            if (pollResult > 0) {
+                int socketError = 0;
+                socklen_t len = sizeof(socketError);
+                getsockopt(serverSocket, SOL_SOCKET, SO_ERROR, &socketError, &len);
+
+                if (socketError != 0) {
+                    logger->log(tablog::ERROR, "Connection failed!");
+                    return -1; 
+                }
+            } else {
+              logger->log(tablog::ERROR, "Connection failed!");
+              return -1;
+            }
+        } else {
+          logger->log(tablog::ERROR, "Connection failed!");
+          return -1;
+        }
     }
 
     clientSessionController = std::make_shared<ttp2::ClientSessionController>(serverSocket);
@@ -46,4 +76,12 @@ ttp2::ClientSessionController::Packet NetworkManager::popResponse() {
 
 void NetworkManager::pushRequest(ttp2::Networking::Packet packet) {
   clientSessionController->pushRequest(packet);
+}
+
+bool NetworkManager::isConnected() {
+  return clientSessionController->isConnected();
+}
+
+void NetworkManager::disconnect() {
+  clientSessionController->disconnect();
 }

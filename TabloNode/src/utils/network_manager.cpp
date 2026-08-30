@@ -3,6 +3,8 @@
 #include <server_session_controller.h>
 #include <client_discovery.h>
 
+#include <tablog.h>
+
 #include "worker.h"
 
 #include <arpa/inet.h>
@@ -10,6 +12,7 @@
 #include <ctime>
 #include <iostream>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <system_error>
 #include <thread>
@@ -17,7 +20,7 @@
 #include <memory>
 
 NetworkManager::NetworkManager(std::string interface, int maxConnections) {
-  std::wcout << "Start Socket...." << std::endl;
+  logger->log(tablog::INFO, "Start Socket");
   ttp2::ServerSessionController serverSessionController;
   
   std::string containerIP = serverSessionController.getLocalIpAddress(interface);
@@ -34,21 +37,21 @@ NetworkManager::NetworkManager(std::string interface, int maxConnections) {
 
   int serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if(bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) {
-     std::wcout << "Bind failed!" << std::endl;
+     logger->log(tablog::ERROR, "Bind failed!");
      return;
   }
 
   // Create epoll
   int epollFd = epoll_create1(0);
   if (epollFd == -1) {
-      std::wcout << "Failed to create epoll!" << std::endl;
+      logger->log(tablog::ERROR, "Failed to create epoll!");
   }
   // Set epoll action for server
   struct epoll_event serverEvents;
   serverEvents.events = EPOLLIN;
   serverEvents.data.fd = serverSocket;
   if (epoll_ctl(epollFd, EPOLL_CTL_ADD, serverSocket, &serverEvents) == -1) {
-      std::wcout << "Failed to set epoll_ctl!" << std::endl;
+      logger->log(tablog::ERROR, "Failed to set epoll_ctl!");
       return;
   }
 
@@ -62,7 +65,7 @@ NetworkManager::NetworkManager(std::string interface, int maxConnections) {
       for (int index = 0; index < epollRequestCount; ++index) {
           if (events[index].data.fd == serverSocket) {
               int clientSocket = accept4(serverSocket, nullptr, nullptr, SOCK_NONBLOCK);
-              std::wcout << "New clientSocket: " << clientSocket << std::endl;
+              logger->log(tablog::INFO, "New connection: " + std::to_string(clientSocket));
 
               clientConnections.push_back(std::thread([this, serverSocket, clientSocket]() {
                     this->handleClientConnection(serverSocket, clientSocket);
@@ -71,7 +74,7 @@ NetworkManager::NetworkManager(std::string interface, int maxConnections) {
       }
   }
 
-  std::wcout << "Terminated!" << std::endl;
+  logger->log(tablog::INFO, "Terminated");
 
   for (auto &socketThread : clientConnections) {
     if (socketThread.joinable()) {
@@ -94,19 +97,23 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
   Worker worker;
   std::thread workerThread = std::thread(&Worker::solveRequestCycle, &worker);
 
-  while (serverSessionController->isConnected()) {
+  while (serverSessionController->isConnected()) {    
     if (serverSessionController->hasRequest()) {
-     std::wcout << "Received Request!" << std::endl;
+     logger->log(tablog::INFO, "Received Request");
      worker.pushRequest(serverSessionController->popRequest());
     }
 
     while (worker.getResponseCollectionSize() > 0) {
-      std::wcout << "Hand back Response" << std::endl;
+      logger->log(tablog::INFO, "Hand back Response");
       serverSessionController->pushResponse(worker.getResponse());
     }
   }
-  if (workerThread.joinable()) {
-    workerThread.join();
-  }
+
+  logger->log(tablog::INFO, "Shutdown connection...");
+  worker.disconnect();
+  workerThread.join();
+  networkingSession.join();
+
+  logger->log(tablog::INFO, "Connection " + std::to_string(clientSocket) + " shutdown");
 }
 

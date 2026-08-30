@@ -1,15 +1,26 @@
 #include "csv_manager.h"
 
+#include <arrow/scalar.h>
+#include <arrow/table.h>
+#include <arrow/compute/api.h>
+#include <arrow/type.h>
+#include <arrow/type_fwd.h>
+
+#include <memory>
+
 #include <server_session_controller.h>
+#include <tablog.h>
 
 #include <iostream>
 #include <algorithm>
 #include <functional>
 #include <string>
 #include <cstring>
+#include <regex>
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
+  logger->log(tablog::DEBUG, "File" + this->file.payload->ToString());
 }
 
 std::string CsvManager::getFilePath() {
@@ -17,121 +28,90 @@ std::string CsvManager::getFilePath() {
 }
 
 int CsvManager::getRowCount() {
-  if (this->file.payload.empty()) {
-    return 0;
-  }
-
-  int count = 0;
-  for (char c : this->file.payload) {
-    if (c == '\n') {
-      count++;
-    }
-  }
-
-  // Count the last row if the payload doesn't end with a newline.
-  if (this->file.payload.back() != '\n') {
-    count++;
-  }
-
-  return count;
+  return this->file.payload->num_rows();
 }
 
 int CsvManager::getColumnCount() {
-  // get position of first linebreak
-  std::string delimiter = "\n";
-  const std::boyer_moore_searcher searcher(delimiter.begin(), delimiter.end());
-  const auto distanceToDelimiter = std::search(this->file.payload.begin(), this->file.payload.end(), searcher);
-  if (distanceToDelimiter != this->file.payload.end()) {
-    // substring first row
-    std::string firstRow = this->file.payload.substr(0, std::distance(this->file.payload.begin(), distanceToDelimiter));
-
-    int count = 1;
-    for (int index = 0; index < firstRow.length(); index++)
-        if (firstRow[index] == ',')
-            count++;
-    return count;
-  } else
-    return 0;
+  return this->file.payload->num_columns();
 }
 
-std::string CsvManager::getRowByIndex(int index) {
-  std::string resultRow = "";
+std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
+  return this->file.payload->column(index);
+}
 
-  if (index < 1) {
-    return resultRow;
-  } else if (index <= getRowCount()) {
-    int count = 0;
-    if (index == 1) {
-      for (int countIndex = 0; countIndex < this->file.payload.length(); countIndex++) {
-          if (this->file.payload[countIndex] == '\n')
-               return resultRow;
-          resultRow = resultRow + this->file.payload[countIndex];
-      } 
-    }
-    
-    for (int countIndex = 0; countIndex < this->file.payload.length(); countIndex++) {
-        if (this->file.payload[countIndex] == '\n') {
-             if (count < index)
-               count++;
-             if (count == index)
-               break;
-        } else if (count == index-1) {
-          resultRow = resultRow + this->file.payload[countIndex];
+std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {  
+  int columnCount = this->file.payload->num_columns()-1;
+  if (yEnd > columnCount)
+    yEnd = columnCount;
+
+  if (yStart < 0)
+    yStart = 0;
+
+  logger->log(tablog::DEBUG, "yStart " + std::to_string(yStart) + " yEnd " + std::to_string(yEnd));
+
+  int rowStartIndex = this->file.start;
+  xStart = xStart - rowStartIndex;
+  if (xStart < 0)
+    xStart = 0;
+  
+  xEnd = xEnd - rowStartIndex;
+  if (xEnd > this->file.end)
+    xEnd = this->file.end;
+  logger->log(tablog::DEBUG, "xStart " + std::to_string(xStart) + " xEnd " + std::to_string(xEnd));
+  
+  // Slice columns
+  std::vector<int> selectColumnIndices(yEnd - yStart + 1);
+  std::iota(selectColumnIndices.begin(), selectColumnIndices.end(), yStart);
+  std::shared_ptr<arrow::Table> columnSliceTable = *this->file.payload->SelectColumns(selectColumnIndices);
+
+  // Slice rows
+  std::shared_ptr<arrow::Table> slicedRowTable = columnSliceTable->Slice(xStart, xEnd);
+
+  // logger->log(tablog::DEBUG, "Viewport content:\n" + slicedRowTable->ToString());
+  
+  return slicedRowTable;
+}
+
+std::shared_ptr<arrow::Table> CsvManager::filter(std::string columnName, std::string regex) {
+  std::vector<std::shared_ptr<arrow::Field>> fieldNames = this->file.payload->schema()->fields();
+  for (int fieldIndex = 0; fieldIndex < fieldNames.size(); fieldIndex++) {
+    if (fieldNames[fieldIndex]->name() == columnName) {
+      std::shared_ptr<arrow::ChunkedArray> selectedColumn = this->file.payload->GetColumnByName(columnName);
+
+      arrow::BooleanBuilder builder;
+      for (int rowIndex = 0; rowIndex < selectedColumn->length(); rowIndex++) {
+        arrow::Status status = builder.Append(applyRegexOnScalar(*selectedColumn->GetScalar(rowIndex), regex));
+        if(!status.ok()) {
+          logger->log(tablog::CRITICAL, "Unable to append regexResult to booleanBuilder in filter");
         }
-    }
-    return resultRow;
-  } else {
-    return resultRow;
-  }
-}
-
-std::string CsvManager::getColumnByIndex(int index) {
-  return getColumnByIndex(index, this->file.payload);
-}
-
-std::string CsvManager::getColumnByIndex(int index, std::string rows) {
-  std::string resultRow;
-
-  int column = 0;
-  for (int countIndex = 0; countIndex < rows.length(); countIndex++) {
-      if (rows[countIndex] == '\n') {
-           resultRow = resultRow + '\n';
-           column = 0;
-           continue;
-      } else if (rows[countIndex] == ',') {
-        column++;
-        continue;
       }
-      if (column == index-1) {
-        resultRow = resultRow + rows[countIndex];
-      }
-  }
 
-  return resultRow;
+      arrow::Result<std::shared_ptr<arrow::Array>> maskResult = builder.Finish();
+      if (!maskResult.ok()) {
+        logger->log(tablog::CRITICAL, "Unable to convert booleanBuilder to std::shared_ptr<arrow::Array>");
+      }
+      std::shared_ptr<arrow::Array> maskArray = maskResult.ValueUnsafe();
+
+      arrow::Result<arrow::Datum> filterResult = arrow::compute::Filter(this->file.payload, maskArray);
+      if (!filterResult.ok()) {
+        logger->log(tablog::CRITICAL, "Unable to apply filter mask on table!");
+      }
+      arrow::Datum filteredDatum = filterResult.ValueUnsafe();
+
+      logger->log(tablog::DEBUG, "TTP2 Works!: " + columnName + " and " + regex);
+      std::shared_ptr<arrow::Table> resultTable = filteredDatum.table();
+  
+      return std::move(resultTable);
+    }
+  }
+  logger->log(tablog::CRITICAL, "Column name does not exist!: " + columnName);
+  return nullptr;
 }
 
-std::string CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {
-    const size_t bufferSize = this->file.payload.size();
-    char* resultPayload = new char[bufferSize];
-    size_t currentPos = 0;
-
-    for (int xIndex = xStart; xIndex <= xEnd; xIndex++) {
-        std::string currentRow = getRowByIndex(xIndex);
-
-        for (int yIndex = yStart; yIndex <= yEnd; yIndex++) {
-            std::string cell = getColumnByIndex(yIndex, currentRow);
-        
-            if (currentPos + cell.length() + 1 >= bufferSize) break; 
-
-            memcpy(&resultPayload[currentPos], cell.c_str(), cell.length());
-            currentPos += cell.length();
-
-            if (yIndex != yEnd) {
-                resultPayload[currentPos++] = ',';
-            }
-        }
-        resultPayload[currentPos++] = '\n';
-    }
-    resultPayload[currentPos] = '\0';
-    return resultPayload;
+bool CsvManager::applyRegexOnScalar(const std::shared_ptr<arrow::Scalar>& scalar, const std::string regex) {
+  std::string stringValue = scalar->ToString();
+  if (std::regex_match(stringValue, std::regex(regex))) 
+    return true;
+  else
+    return false;
 }

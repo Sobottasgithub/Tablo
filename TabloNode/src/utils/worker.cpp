@@ -3,7 +3,10 @@
 #include <server_session_controller.h>
 #include "csv_manager.h"
 
+#include <tablog.h>
+
 #include <iostream>
+#include <type_traits>
 #include <vector>
 #include <mutex>
 #include <variant>
@@ -11,12 +14,14 @@
 
 // Cycle
 void Worker::solveRequestCycle() {
+    connected = true;
     if (this->isCalled == true) {
-        std::wcout << "SolveRequestCycle is already called!" << std::endl;
+        logger->log(tablog::ERROR, "SolveRequestCycle is already called!");
         return;
     }
     this->isCalled = true;
-    while (true) {
+    
+    while (isConnected()) {
         int requestSize = getRequestCollectionSize();
         for (int count = 0; count < requestSize; count++) {
             ttp2::ServerSessionController::Packet request = getRequest();
@@ -24,13 +29,23 @@ void Worker::solveRequestCycle() {
             if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
                 pushResponse(Worker::test(request));
             } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
+                logger->log(tablog::DEBUG, "id: " + std::to_string(request.id));
                 ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
                 Worker::setFile(file);
             } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
-                ttp2::ServerSessionController::Viewport viewportRequest = std::get<ttp2::ServerSessionController::Viewport>(request.payload);
-                pushResponse(Worker::getViewport(viewportRequest));
+                logger->log(tablog::CRITICAL, "Undefined behavior for the viewport");
+            } else if (std::holds_alternative<ttp2::ServerSessionController::ViewportRequest>(request.payload)) {
+                ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(request.payload);
+                ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
+                responsePacket.id = request.id;
+                pushResponse(responsePacket);
+            } else if (std::holds_alternative<ttp2::ServerSessionController::Filter>(request.payload)) {
+                ttp2::ServerSessionController::Filter filterRequest = std::get<ttp2::ServerSessionController::Filter>(request.payload);
+                ttp2::ServerSessionController::Packet responsePacket = filter(filterRequest);
+                responsePacket.id = request.id;
+                pushResponse(responsePacket);
             } else {
-                std::wcout << "Unknown payload type!" << std::endl;                    
+                logger->log(tablog::CRITICAL, "Unknown payload type!");
             }
         }
         std::this_thread::yield();
@@ -48,8 +63,9 @@ void Worker::setFile(ttp2::ServerSessionController::File newFile) {
     this->csvManager = newCsvManager;
 }
 
-ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::Viewport viewportRequest) {
+ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest) {
     ttp2::ServerSessionController::Packet packet;
+    ttp2::ServerSessionController::Viewport viewport;
 
     if (viewportRequest.xEnd < viewportRequest.xStart || viewportRequest.yEnd < viewportRequest.yStart) {
         ttp2::ServerSessionController::Viewport emptyViewport;
@@ -57,9 +73,27 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
         return packet;
     }
 
-    viewportRequest.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
+    viewport.xStart = viewportRequest.xStart;
+    viewport.xEnd = viewportRequest.xEnd;
+    viewport.yStart = viewportRequest.yStart;
+    viewport.yEnd = viewportRequest.yEnd;
+    viewport.payload = this->csvManager.getViewport(viewportRequest.xStart, viewportRequest.xEnd,
                                                            viewportRequest.yStart, viewportRequest.yEnd);
-    packet.payload = viewportRequest;
+    packet.payload = viewport;
+    return packet;
+}
+
+ttp2::ServerSessionController::Packet Worker::filter(ttp2::ServerSessionController::Filter filterRequest) {
+    ttp2::ServerSessionController::Packet packet;
+    ttp2::ServerSessionController::Viewport viewport;
+
+    viewport.xStart = 0;
+    viewport.xEnd = 0;
+    viewport.yStart = 0;
+    viewport.yEnd = 0;
+    viewport.payload = this->csvManager.filter(filterRequest.columnName, filterRequest.regex);
+
+    packet.payload = viewport;
     return packet;
 }
 
@@ -104,4 +138,15 @@ int Worker::getResponseCollectionSize() {
 int Worker::getRequestCollectionSize() {
     std::lock_guard<std::mutex> lock(mtx);
     return requests.size();
+}
+
+bool Worker::isConnected() {
+    std::lock_guard<std::mutex> lock(mtx);
+    return connected;
+}
+
+void Worker::disconnect() {
+    std::lock_guard<std::mutex> lock(mtx);
+    connected = false;
+    isCalled = false;
 }

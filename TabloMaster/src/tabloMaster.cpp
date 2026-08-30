@@ -1,12 +1,19 @@
+#include "utils/network_manager.h"
+
 #include <iostream>
 
 #include <networking.h>
+#include <memory>
 
-#include "utils/network_manager.h"
+#include <tablog_registry.h>
+#include <tablog.h>
 
 int main(int argc, char *argv[])
 {
-    std::wcout << "Tablo Master" << std::endl;
+    tablog::TablogRegistry* registry = &tablog::TablogRegistry::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = std::make_shared<tablog::Tablog>();
+    logger->configure("Tablo-Master", true);
+    registry->registerLogger("Tablo-Master", logger);
 
     if (argc >= 2) {
         for(int index = 0; index < argc; index++) {
@@ -15,7 +22,7 @@ int main(int argc, char *argv[])
                 if (ttp2::Networking::isValidInterface(interface)) {
                     NetworkManager networkManager(interface);
                 } else {
-                    std::wcout << "Please provide a correct Interface!" << std::endl;
+                    logger->log(tablog::ERROR, "Please provide a correct network Interface");
                 }
             }
         }

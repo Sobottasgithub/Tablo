@@ -2,14 +2,23 @@
 #include <string>
 #include <cstring>
 #include <filesystem>
+#include <mutex>
 
 #include <networking.h>
+
+#include <tablog_registry.h>
+#include <tablog.h>
 
 #include "utils/cli.h"
 #include "utils/argv_struct.h"
 
 int main(int argc, char *argv[])
 {
+    tablog::TablogRegistry* registry = &tablog::TablogRegistry::getInstance();
+    std::shared_ptr<tablog::Tablog> logger = std::make_shared<tablog::Tablog>();
+    logger->configure("Tablo-Client", true);
+    registry->registerLogger("Tablo-Client", logger);
+
     if (argc >= 2) {
         Argv commandLineArguments;
         
@@ -19,14 +28,14 @@ int main(int argc, char *argv[])
                 if (ttp2::Networking::isValidIpV4(masterIp)) {
                     commandLineArguments.tabloMasterIp = masterIp;
                 } else {
-                    std::wcout << "Please provide a correct IPv4!" << std::endl;
+                    logger->log(tablog::ERROR, "Please provide a correct IPv4 address");
                 }
             } else if (std::string(argv[index]).rfind("--file", 0) == 0) {
                 std::string filepath = argv[index+1];
                 if (std::filesystem::exists(filepath)) {
                     commandLineArguments.filePath = argv[index+1];
                 } else {
-                    std::wcout << "Please provide a correct Filepath" << std::endl;
+                    logger->log(tablog::ERROR, "Please provide a correct Filepath");
                 }
             }
         }
@@ -36,7 +45,7 @@ int main(int argc, char *argv[])
         }
     } else {
         // Use config file (TODO)
-        std::wcout << "failed" << std::endl;
+        logger->log(tablog::ERROR, "failed!");
     }
     
     return 0;

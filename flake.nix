@@ -11,6 +11,10 @@
     tud = {
       url = "github:Sobottasgithub/tud";
     };
+
+    tablog = {
+      url = "github:Sobottasgithub/tablog";
+    };
   };
 
   outputs =
@@ -19,6 +23,7 @@
       nixpkgs,
       ttp2,
       tud,
+      tablog,
     }:
     let
       system = "x86_64-linux";
@@ -31,14 +36,15 @@
 
       libttp2 = ttp2.packages.${system}.lib;
       libtud = tud.packages.${system}.lib;
+      libtablog = tablog.packages.${system}.lib;
 
       packages = with pkgs; [
         cmake
         gcc
         gnumake
-        protobuf
         libttp2
-        libtud
+        libtablog
+        arrow-cpp
       ];
     in
     {
@@ -103,7 +109,9 @@
             enableNode = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
+              libtud
             ];
           };
 
@@ -113,6 +121,7 @@
             enableClient = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
             ];
           };
@@ -123,7 +132,9 @@
             enableMaster = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
+              libtud
             ];
           };
 
@@ -138,6 +149,7 @@
             enableMaster = true;
 
             extraInputs = [
+              libtablog
               libtabcrypt
             ];
           };
@@ -172,6 +184,7 @@
             tablo-master
             tablo-full
             libtabcrypt
+            libtablog
             libttp2
             libtud
             ;
@@ -190,7 +203,9 @@
           devPackages = packages ++ [
             pkgs.bridge-utils
             pkgs.clang-tools
-            pkgs.protobuf
+            libtud
+            libttp2
+            libtablog
           ];
         in
         pkgs.mkShell {

@@ -7,6 +7,9 @@
 #include <thread>
 #include <server_discovery.h>
 
+#include <tablog_registry.h>
+#include <tablog.h>
+
 class NetworkManager
 {
     public:
@@ -15,12 +18,16 @@ class NetworkManager
 
     private:
         struct Nodes {
-          std::string ip;
+          std::string ip = 0;
           std::shared_ptr<ttp2::ClientSessionController> node;  
         };
 
+        std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Master");
+            
         std::shared_ptr<tud::ServerDiscovery> udpDiscovery;
         std::thread serverDiscoveryThread;
+
+        std::vector<ttp2::Networking::Viewport> insertionSortViewportsByX(std::vector<ttp2::Networking::Viewport> viewports);
 };
 
 #endif
