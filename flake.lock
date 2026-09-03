@@ -34,11 +34,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1774386573,
-        "narHash": "sha256-4hAV26quOxdC6iyG7kYaZcM3VOskcPUrdCQd/nx8obc=",
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "46db2e09e1d3f113a13c0d7b81e2f221c63b8ce9",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
         "type": "github"
       },
       "original": {
@@ -66,11 +66,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1780243769,
-        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
+        "lastModified": 1774386573,
+        "narHash": "sha256-4hAV26quOxdC6iyG7kYaZcM3VOskcPUrdCQd/nx8obc=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
+        "rev": "46db2e09e1d3f113a13c0d7b81e2f221c63b8ce9",
         "type": "github"
       },
       "original": {
@@ -96,10 +96,43 @@
         "type": "github"
       }
     },
+    "nixpkgs_7": {
+      "locked": {
+        "lastModified": 1780243769,
+        "narHash": "sha256-x5UQuRsH3MqI0U9afaXSNqzTPSeZlRLvFAav2Ux1pNw=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "331800de5053fcebacf6813adb5db9c9dca22a0c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_8": {
+      "locked": {
+        "lastModified": 1784356753,
+        "narHash": "sha256-12KrbMiWLcf8m7pCvAtZh1ZrgF85ZXDXvfR/fWTKy84=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "61b7c44c4073f0b827768aff0049561b5110ea5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
         "tablog": "tablog",
+        "tql": "tql",
         "ttp2": "ttp2",
         "tud": "tud"
       }
@@ -127,11 +160,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1784813121,
-        "narHash": "sha256-ixwsmElsnlQE0MHPjS6m5+XmS47bFPHBYtZIxCTwLB8=",
+        "lastModified": 1784558310,
+        "narHash": "sha256-4d0QJZu5j5vDgJ/bp2kkMiBcivD9CDZSOrkCFcNKZXQ=",
         "owner": "Sobottasgithub",
         "repo": "tablog",
-        "rev": "e47b0796e6a0820315a846fb02a9c9c89b5bda33",
+        "rev": "ded1d9094b5a76c323be795b674ee3fa7514c950",
         "type": "github"
       },
       "original": {
@@ -158,10 +191,47 @@
         "type": "github"
       }
     },
-    "ttp2": {
+    "tablog_4": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_8"
+      },
+      "locked": {
+        "lastModified": 1784813121,
+        "narHash": "sha256-ixwsmElsnlQE0MHPjS6m5+XmS47bFPHBYtZIxCTwLB8=",
+        "owner": "Sobottasgithub",
+        "repo": "tablog",
+        "rev": "e47b0796e6a0820315a846fb02a9c9c89b5bda33",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Sobottasgithub",
+        "repo": "tablog",
+        "type": "github"
+      }
+    },
+    "tql": {
       "inputs": {
         "nixpkgs": "nixpkgs_3",
         "tablog": "tablog_2"
+      },
+      "locked": {
+        "lastModified": 1788418460,
+        "narHash": "sha256-Z21NJJ/tDKC5ZrpELf4A6ZUrw6L064rEuTfgAa7p4gQ=",
+        "owner": "Sobottasgithub",
+        "repo": "tql",
+        "rev": "e03592d4149c26bea171184f4143bd2d4abc60da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Sobottasgithub",
+        "repo": "tql",
+        "type": "github"
+      }
+    },
+    "ttp2": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_5",
+        "tablog": "tablog_3"
       },
       "locked": {
         "lastModified": 1784903486,
@@ -179,8 +249,8 @@
     },
     "tud": {
       "inputs": {
-        "nixpkgs": "nixpkgs_5",
-        "tablog": "tablog_3"
+        "nixpkgs": "nixpkgs_7",
+        "tablog": "tablog_4"
       },
       "locked": {
         "lastModified": 1784813247,
