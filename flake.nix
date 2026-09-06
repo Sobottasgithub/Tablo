@@ -6,18 +6,25 @@
 
     tql = {
       url = "github:Sobottasgithub/tql";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     ttp2 = {
       url = "github:Sobottasgithub/ttp2";
+      inputs.nixpkgs.follows = "nixpkgs";
+
     };
 
     tud = {
       url = "github:Sobottasgithub/tud";
+      inputs.nixpkgs.follows = "nixpkgs";
+
     };
 
     tablog = {
       url = "github:Sobottasgithub/tablog";
+      inputs.nixpkgs.follows = "nixpkgs";
+
     };
   };
 
