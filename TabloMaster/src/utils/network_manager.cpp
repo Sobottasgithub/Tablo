@@ -269,7 +269,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }
-                } else if (std::holds_alternative<ttp2::ServerSessionController::Filter>(packet.payload)) {
+                } else if (std::holds_alternative<ttp2::ServerSessionController::TqlQuery>(packet.payload)) {
                     viewportReqests.push_back(packet);
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
