@@ -165,6 +165,7 @@
             extraInputs = [
               libtablog
               libtabcrypt
+              libtud
             ];
           };
 

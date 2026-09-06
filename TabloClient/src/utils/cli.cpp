@@ -35,7 +35,7 @@ Cli::Cli(Argv* argv) {
   sendFile(filePath, &networkManager);
   
   while (networkManager.isConnected()) {
-    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\n(5) filter\noption:";
+    std::wcout << "Choose option\n(1) send Packet\n(2) read Packets\n(3) send File\n(4) get Viewport\n(5) execute TQL query\noption:";
     std::string option = "";
     std::cin >> option;
     if (option == "1") {
@@ -112,19 +112,15 @@ Cli::Cli(Argv* argv) {
       networkManager.pushRequest(packet);
       std::wcout << "Send Viewport request!" << std::endl;
     } else if (option == "5") {
-      std::string columnName = "";
-      std::string regex = "";
+      std::string query;
 
-      std::wcout << "columName: ";
-      std::cin >> columnName;
-      std::wcout << "regex: ";
-      std::cin >> regex;
+      std::wcout << "TQL query: ";
+      std::getline(std::cin >> std::ws, query);
 
       ttp2::Networking::Packet packet;
-      ttp2::Networking::Filter filter;
-      filter.columnName = columnName;
-      filter.regex = regex;
-      packet.payload = filter;
+      ttp2::Networking::TqlQuery tqlQuery;
+      tqlQuery.query = query;
+      packet.payload = tqlQuery;
 
       networkManager.pushRequest(packet);
     } else {

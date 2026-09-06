@@ -13,6 +13,7 @@ target_link_libraries(tablo-node PRIVATE tabcrypt)
 target_link_libraries(tablo-node PRIVATE tablog)
 target_link_libraries(tablo-node PRIVATE ttp2)
 target_link_libraries(tablo-node PRIVATE tud)
+target_link_libraries(tablo-node PRIVATE tql)
 find_package(Arrow REQUIRED)
 target_link_libraries(tablo-node PRIVATE Arrow::arrow_shared)
 

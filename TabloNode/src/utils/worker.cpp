@@ -39,9 +39,9 @@ void Worker::solveRequestCycle() {
                 ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
                 responsePacket.id = request.id;
                 pushResponse(responsePacket);
-            } else if (std::holds_alternative<ttp2::ServerSessionController::Filter>(request.payload)) {
-                ttp2::ServerSessionController::Filter filterRequest = std::get<ttp2::ServerSessionController::Filter>(request.payload);
-                ttp2::ServerSessionController::Packet responsePacket = filter(filterRequest);
+            } else if (std::holds_alternative<ttp2::ServerSessionController::TqlQuery>(request.payload)) {
+                ttp2::ServerSessionController::TqlQuery queryRequest = std::get<ttp2::ServerSessionController::TqlQuery>(request.payload);
+                ttp2::ServerSessionController::Packet responsePacket = executeQuery(queryRequest);
                 responsePacket.id = request.id;
                 pushResponse(responsePacket);
             } else {
@@ -83,7 +83,7 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
     return packet;
 }
 
-ttp2::ServerSessionController::Packet Worker::filter(ttp2::ServerSessionController::Filter filterRequest) {
+ttp2::ServerSessionController::Packet Worker::executeQuery(ttp2::ServerSessionController::TqlQuery queryRequest) {
     ttp2::ServerSessionController::Packet packet;
     ttp2::ServerSessionController::Viewport viewport;
 
@@ -91,7 +91,7 @@ ttp2::ServerSessionController::Packet Worker::filter(ttp2::ServerSessionControll
     viewport.xEnd = 0;
     viewport.yStart = 0;
     viewport.yEnd = 0;
-    viewport.payload = this->csvManager.filter(filterRequest.columnName, filterRequest.regex);
+    viewport.payload = this->csvManager.executeQuery(queryRequest.query);
 
     packet.payload = viewport;
     return packet;

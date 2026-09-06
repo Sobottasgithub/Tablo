@@ -1,10 +1,11 @@
 #include "csv_manager.h"
 
-#include <arrow/scalar.h>
 #include <arrow/table.h>
-#include <arrow/compute/api.h>
-#include <arrow/type.h>
-#include <arrow/type_fwd.h>
+
+#include <execution_endpoint.h>
+#include <interpreter.h>
+#include <lexer.h>
+#include <parser.h>
 
 #include <memory>
 
@@ -12,11 +13,7 @@
 #include <tablog.h>
 
 #include <iostream>
-#include <algorithm>
-#include <functional>
 #include <string>
-#include <cstring>
-#include <regex>
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
   this->file = newFile;
@@ -72,46 +69,52 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   return slicedRowTable;
 }
 
-std::shared_ptr<arrow::Table> CsvManager::filter(std::string columnName, std::string regex) {
-  std::vector<std::shared_ptr<arrow::Field>> fieldNames = this->file.payload->schema()->fields();
-  for (int fieldIndex = 0; fieldIndex < fieldNames.size(); fieldIndex++) {
-    if (fieldNames[fieldIndex]->name() == columnName) {
-      std::shared_ptr<arrow::ChunkedArray> selectedColumn = this->file.payload->GetColumnByName(columnName);
+std::shared_ptr<arrow::Table> CsvManager::executeQuery(const std::string& query) {
+  tql::Lexer lexer;
+  lexer.tokenize(query);
 
-      arrow::BooleanBuilder builder;
-      for (int rowIndex = 0; rowIndex < selectedColumn->length(); rowIndex++) {
-        arrow::Status status = builder.Append(applyRegexOnScalar(*selectedColumn->GetScalar(rowIndex), regex));
-        if(!status.ok()) {
-          logger->log(tablog::CRITICAL, "Unable to append regexResult to booleanBuilder in filter");
-        }
-      }
+  tql::Parser parser;
+  tql::Parser::Expression expression = parser.parse(lexer);
 
-      arrow::Result<std::shared_ptr<arrow::Array>> maskResult = builder.Finish();
-      if (!maskResult.ok()) {
-        logger->log(tablog::CRITICAL, "Unable to convert booleanBuilder to std::shared_ptr<arrow::Array>");
-      }
-      std::shared_ptr<arrow::Array> maskArray = maskResult.ValueUnsafe();
+  tql::ExecutionEndpoint executionEndpoint;
+  tql::Interpreter interpreter;
 
-      arrow::Result<arrow::Datum> filterResult = arrow::compute::Filter(this->file.payload, maskArray);
-      if (!filterResult.ok()) {
-        logger->log(tablog::CRITICAL, "Unable to apply filter mask on table!");
-      }
-      arrow::Datum filteredDatum = filterResult.ValueUnsafe();
+  // The file was already transferred to this node. Ignore the path in the
+  // query and run all operations against this node's in-memory partition.
+  interpreter.setOpenFile([this](std::string) {
+    return this->file.payload;
+  });
+  interpreter.setGetWhere([&executionEndpoint](std::string operatorName, std::string columnName,
+                                               std::string compareValue, std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getWhere(operatorName, columnName, compareValue, table);
+  });
+  interpreter.setSelectColumns([&executionEndpoint](std::vector<std::string> columnNames,
+                                                     std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.selectColumns(columnNames, table);
+  });
+  interpreter.setGetDistinct([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getDistinct(table);
+  });
+  interpreter.setGetCount([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getCount(table);
+  });
+  interpreter.setGetMin([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getMin(table);
+  });
+  interpreter.setGetMax([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getMax(table);
+  });
+  interpreter.setGetSum([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getSum(table);
+  });
+  interpreter.setGetAvg([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getAvg(table);
+  });
+  interpreter.setGetRenamedTable([&executionEndpoint](std::string originalColumnName,
+                                                       std::string newColumnName,
+                                                       std::shared_ptr<arrow::Table> table) {
+    return executionEndpoint.getRenamedTable(originalColumnName, newColumnName, table);
+  });
 
-      logger->log(tablog::DEBUG, "TTP2 Works!: " + columnName + " and " + regex);
-      std::shared_ptr<arrow::Table> resultTable = filteredDatum.table();
-  
-      return std::move(resultTable);
-    }
-  }
-  logger->log(tablog::CRITICAL, "Column name does not exist!: " + columnName);
-  return nullptr;
-}
-
-bool CsvManager::applyRegexOnScalar(const std::shared_ptr<arrow::Scalar>& scalar, const std::string regex) {
-  std::string stringValue = scalar->ToString();
-  if (std::regex_match(stringValue, std::regex(regex))) 
-    return true;
-  else
-    return false;
+  return interpreter.interpret(expression);
 }
