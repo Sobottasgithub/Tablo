@@ -4,16 +4,18 @@ project(tablo)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(Arrow REQUIRED)
+
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
 add_executable(tablo-master ${SOURCES})
 
 # Link against libs
+target_link_libraries(tablo-master PRIVATE Arrow::arrow_shared)
 target_link_libraries(tablo-master PRIVATE tabcrypt)
 target_link_libraries(tablo-master PRIVATE tablog)
 target_link_libraries(tablo-master PRIVATE ttp2)
 target_link_libraries(tablo-master PRIVATE tud)
-find_package(Arrow REQUIRED)
-target_link_libraries(tablo-master PRIVATE Arrow::arrow_shared)
+target_link_libraries(tablo-master PRIVATE tql)
 
 install(TARGETS tablo-master DESTINATION bin)
