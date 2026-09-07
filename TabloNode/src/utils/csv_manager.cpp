@@ -2,7 +2,7 @@
 
 #include <arrow/table.h>
 
-#include <execution_endpoint.h>
+#include "node_execution_endpoint.h"
 #include <interpreter.h>
 #include <lexer.h>
 #include <parser.h>
@@ -12,7 +12,6 @@
 #include <server_session_controller.h>
 #include <tablog.h>
 
-#include <iostream>
 #include <string>
 
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
@@ -76,7 +75,7 @@ std::shared_ptr<arrow::Table> CsvManager::executeQuery(const std::string& query)
   tql::Parser parser;
   tql::Parser::Expression expression = parser.parse(lexer);
 
-  tql::ExecutionEndpoint executionEndpoint;
+  NodeExecutionEndpoint executionEndpoint;
   tql::Interpreter interpreter;
 
   // The file was already transferred to this node. Ignore the path in the
