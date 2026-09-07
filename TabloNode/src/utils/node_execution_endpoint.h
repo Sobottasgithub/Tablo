@@ -12,9 +12,9 @@ class NodeExecutionEndpoint: public tql::ExecutionEndpoint {
     std::shared_ptr<arrow::Table> openFile(std::string filePath) = delete;
     
     void registerFile(ttp2::ServerSessionController::File file);
-    void setSelectedFile(std::string filePath);
+    std::shared_ptr<arrow::Table> setSelectedFile(std::string filePath);
     std::shared_ptr<arrow::Table> getFile(std::string filePath);
-    std::shared_ptr<arrow::Table> getSelectedFile();
+    ttp2::ServerSessionController::File* getSelectedFile();
 
   private:
     ttp2::ServerSessionController::File* selectedFile = nullptr;

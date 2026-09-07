@@ -4,7 +4,7 @@ void NodeExecutionEndpoint::registerFile(ttp2::ServerSessionController::File fil
   
 }
 
-void NodeExecutionEndpoint::setSelectedFile(std::string filePath) {
+std::shared_ptr<arrow::Table> NodeExecutionEndpoint::setSelectedFile(std::string filePath) {
   
 }
 

@@ -2,10 +2,7 @@
 
 #include <arrow/table.h>
 
-#include "node_execution_endpoint.h"
-#include <interpreter.h>
 #include <lexer.h>
-#include <parser.h>
 
 #include <memory>
 
@@ -14,29 +11,75 @@
 
 #include <string>
 
+CsvManager::CsvManager() {
+  interpreter.setOpenFile([this](std::string filePath) {
+    return this->executionEndpoint.setSelectedFile(filePath);
+  });
+  
+  interpreter.setGetWhere([this](std::string operatorName, std::string columnName,
+                                               std::string compareValue, std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getWhere(operatorName, columnName, compareValue, table);
+  });
+  
+  interpreter.setSelectColumns([this](std::vector<std::string> columnNames,
+                                                     std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.selectColumns(columnNames, table);
+  });
+  
+  interpreter.setGetDistinct([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getDistinct(table);
+  });
+  
+  interpreter.setGetCount([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getCount(table);
+  });
+  
+  interpreter.setGetMin([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getMin(table);
+  });
+  
+  interpreter.setGetMax([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getMax(table);
+  });
+  
+  interpreter.setGetSum([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getSum(table);
+  });
+  
+  interpreter.setGetAvg([this](std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getAvg(table);
+  });
+  
+  interpreter.setGetRenamedTable([this](std::string originalColumnName,
+                                                       std::string newColumnName,
+                                                       std::shared_ptr<arrow::Table> table) {
+    return this->executionEndpoint.getRenamedTable(originalColumnName, newColumnName, table);
+  });
+}
+
 void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
-  this->file = newFile;
-  logger->log(tablog::DEBUG, "File" + this->file.payload->ToString());
+  this->executionEndpoint.registerFile(newFile);
+  logger->log(tablog::DEBUG, "File" + this->executionEndpoint.getSelectedFile()->payload->ToString());
 }
 
 std::string CsvManager::getFilePath() {
-  return this->file.filePath;
+  return this->executionEndpoint.getSelectedFile()->filePath;
 }
 
 int CsvManager::getRowCount() {
-  return this->file.payload->num_rows();
+  return this->executionEndpoint.getSelectedFile()->payload->num_rows();
 }
 
 int CsvManager::getColumnCount() {
-  return this->file.payload->num_columns();
+  return this->executionEndpoint.getSelectedFile()->payload->num_columns();
 }
 
 std::shared_ptr<arrow::ChunkedArray> CsvManager::getColumnByIndex(int index) {
-  return this->file.payload->column(index);
+  return this->executionEndpoint.getSelectedFile()->payload->column(index);
 }
 
 std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int yStart, int yEnd) {  
-  int columnCount = this->file.payload->num_columns()-1;
+  int columnCount = this->executionEndpoint.getSelectedFile()->payload->num_columns()-1;
   if (yEnd > columnCount)
     yEnd = columnCount;
 
@@ -45,20 +88,20 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
 
   logger->log(tablog::DEBUG, "yStart " + std::to_string(yStart) + " yEnd " + std::to_string(yEnd));
 
-  int rowStartIndex = this->file.start;
+  int rowStartIndex = this->executionEndpoint.getSelectedFile()->start;
   xStart = xStart - rowStartIndex;
   if (xStart < 0)
     xStart = 0;
   
   xEnd = xEnd - rowStartIndex;
-  if (xEnd > this->file.end)
-    xEnd = this->file.end;
+  if (xEnd > this->executionEndpoint.getSelectedFile()->end)
+    xEnd = this->executionEndpoint.getSelectedFile()->end;
   logger->log(tablog::DEBUG, "xStart " + std::to_string(xStart) + " xEnd " + std::to_string(xEnd));
   
   // Slice columns
   std::vector<int> selectColumnIndices(yEnd - yStart + 1);
   std::iota(selectColumnIndices.begin(), selectColumnIndices.end(), yStart);
-  std::shared_ptr<arrow::Table> columnSliceTable = *this->file.payload->SelectColumns(selectColumnIndices);
+  std::shared_ptr<arrow::Table> columnSliceTable = *this->executionEndpoint.getSelectedFile()->payload->SelectColumns(selectColumnIndices);
 
   // Slice rows
   std::shared_ptr<arrow::Table> slicedRowTable = columnSliceTable->Slice(xStart, xEnd);
@@ -72,48 +115,7 @@ std::shared_ptr<arrow::Table> CsvManager::executeQuery(const std::string& query)
   tql::Lexer lexer;
   lexer.tokenize(query);
 
-  tql::Parser parser;
-  tql::Parser::Expression expression = parser.parse(lexer);
-
-  NodeExecutionEndpoint executionEndpoint;
-  tql::Interpreter interpreter;
-
-  // The file was already transferred to this node. Ignore the path in the
-  // query and run all operations against this node's in-memory partition.
-  interpreter.setOpenFile([this](std::string) {
-    return this->file.payload;
-  });
-  interpreter.setGetWhere([&executionEndpoint](std::string operatorName, std::string columnName,
-                                               std::string compareValue, std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getWhere(operatorName, columnName, compareValue, table);
-  });
-  interpreter.setSelectColumns([&executionEndpoint](std::vector<std::string> columnNames,
-                                                     std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.selectColumns(columnNames, table);
-  });
-  interpreter.setGetDistinct([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getDistinct(table);
-  });
-  interpreter.setGetCount([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getCount(table);
-  });
-  interpreter.setGetMin([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getMin(table);
-  });
-  interpreter.setGetMax([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getMax(table);
-  });
-  interpreter.setGetSum([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getSum(table);
-  });
-  interpreter.setGetAvg([&executionEndpoint](std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getAvg(table);
-  });
-  interpreter.setGetRenamedTable([&executionEndpoint](std::string originalColumnName,
-                                                       std::string newColumnName,
-                                                       std::shared_ptr<arrow::Table> table) {
-    return executionEndpoint.getRenamedTable(originalColumnName, newColumnName, table);
-  });
-
-  return interpreter.interpret(expression);
+  tql::Parser::Expression expression = this->parser.parse(lexer);
+  
+  return this->interpreter.interpret(expression);
 }
