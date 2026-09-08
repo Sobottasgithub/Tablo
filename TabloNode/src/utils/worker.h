@@ -45,7 +45,7 @@ class Worker
         ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
         void setFile(ttp2::ServerSessionController::File newFile);
         ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest);
-        ttp2::ServerSessionController::Packet executeQuery(ttp2::ServerSessionController::TqlQuery queryRequest);
+        void executeQuery(ttp2::ServerSessionController::TqlQuery queryRequest);
 };
 
 #endif

@@ -111,11 +111,13 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   return slicedRowTable;
 }
 
-std::shared_ptr<arrow::Table> CsvManager::executeQuery(const std::string& query) {
+void CsvManager::executeQuery(const std::string& query) {
   tql::Lexer lexer;
   lexer.tokenize(query);
 
   tql::Parser::Expression expression = this->parser.parse(lexer);
   
-  return this->interpreter.interpret(expression);
+  std::shared_ptr<arrow::Table> queryResultTable = this->interpreter.interpret(expression);
+
+  logger->log(tablog::DEBUG, "Query result: " + queryResultTable->ToString());
 }
