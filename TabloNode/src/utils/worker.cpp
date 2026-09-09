@@ -54,9 +54,7 @@ ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController
 }
 
 void Worker::setFile(ttp2::ServerSessionController::File newFile) {
-    CsvManager newCsvManager;
-    newCsvManager.setFile(newFile);
-    this->csvManager = newCsvManager;
+    this->csvManager.setFile(newFile);
 }
 
 ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest) {
