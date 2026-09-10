@@ -116,8 +116,14 @@ void CsvManager::executeQuery(const std::string& query) {
   lexer.tokenize(query);
 
   tql::Parser::Expression expression = this->parser.parse(lexer);
-  
   std::shared_ptr<arrow::Table> queryResultTable = this->interpreter.interpret(expression);
 
   logger->log(tablog::DEBUG, "Query result: " + queryResultTable->ToString());
+
+  ttp2::ServerSessionController::File queryResultFile;
+  queryResultFile.filePath = "QueryResult";
+  queryResultFile.start = 0;
+  queryResultFile.end = queryResultTable->num_rows();
+  queryResultFile.payload = queryResultTable;
+  this->executionEndpoint.setQueryResult(queryResultFile);
 }

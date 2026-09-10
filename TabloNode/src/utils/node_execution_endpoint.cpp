@@ -27,3 +27,8 @@ std::shared_ptr<arrow::Table> NodeExecutionEndpoint::setSelectedFile(std::string
 ttp2::ServerSessionController::File* NodeExecutionEndpoint::getSelectedFile() {
   return selectedFile;  
 }
+
+void NodeExecutionEndpoint::setQueryResult(ttp2::ServerSessionController::File queryResultTable) {
+  this->queryResultTable = queryResultTable;
+  this->selectedFile = &this->queryResultTable;
+}
