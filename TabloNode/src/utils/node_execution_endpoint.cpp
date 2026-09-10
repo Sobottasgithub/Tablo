@@ -1,6 +1,5 @@
 #include "node_execution_endpoint.h"
 #include <stdexcept>
-#include <iostream>
 
 void NodeExecutionEndpoint::registerFile(ttp2::ServerSessionController::File file) {
   for (int index = 0; index < currentFiles.size(); index++) {
@@ -17,12 +16,8 @@ void NodeExecutionEndpoint::registerFile(ttp2::ServerSessionController::File fil
 
 std::shared_ptr<arrow::Table> NodeExecutionEndpoint::setSelectedFile(std::string filePath) {
   for (int index = 0; index < currentFiles.size(); index++) {
-    std::cout << "-------------------FILEPATH" << currentFiles.at(index).filePath << std::endl;
     if (currentFiles.at(index).filePath.compare(filePath) == 0) {
       selectedFile = &currentFiles.at(index);
-
-      std::cout << "-------------------FILE" << selectedFile->payload << std::endl; 
-      
       return selectedFile->payload;
     }
   }
