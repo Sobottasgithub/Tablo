@@ -9,8 +9,6 @@
 #include <client_session_controller.h>
 #include <server_discovery.h>
 
-#include <iostream>
-#include <cstring>
 #include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
@@ -21,10 +19,9 @@
 #include <poll.h>
 #include <variant>
 #include <unordered_map>
-#include <iterator>
 
 NetworkManager::NetworkManager(std::string interface) {
-    logger->log(tablog::INFO, "Start socket...");
+    logger->log(tablog::INFO, "Start Socket");
     auto serverDiscovery = std::make_shared<tud::ServerDiscovery>(interface, 4000, 4001, "Tablo");
     std::thread serverDiscoveryThread([serverDiscovery]() {
       serverDiscovery->discoveryCycle();
