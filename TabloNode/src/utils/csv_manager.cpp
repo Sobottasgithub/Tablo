@@ -112,18 +112,25 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
 }
 
 void CsvManager::executeQuery(const std::string& query) {
-  tql::Lexer lexer;
-  lexer.tokenize(query);
+  try {
+    tql::Lexer lexer;
+    lexer.tokenize(query);
 
-  tql::Parser::Expression expression = this->parser.parse(lexer);
-  std::shared_ptr<arrow::Table> queryResultTable = this->interpreter.interpret(expression);
+    tql::Parser::Expression expression = this->parser.parse(lexer);
+    std::shared_ptr<arrow::Table> queryResultTable = this->interpreter.interpret(expression);
 
-  logger->log(tablog::DEBUG, "Query result: " + queryResultTable->ToString());
+    logger->log(tablog::DEBUG, "Query result: " + queryResultTable->ToString());
 
-  ttp2::ServerSessionController::File queryResultFile;
-  queryResultFile.filePath = "QueryResult";
-  queryResultFile.start = 0;
-  queryResultFile.end = queryResultTable->num_rows();
-  queryResultFile.payload = queryResultTable;
-  this->executionEndpoint.setQueryResult(queryResultFile);
+    ttp2::ServerSessionController::File queryResultFile;
+    queryResultFile.filePath = "QueryResult";
+    queryResultFile.start = 0;
+    queryResultFile.end = queryResultTable->num_rows();
+    queryResultFile.payload = queryResultTable;
+    this->executionEndpoint.setQueryResult(queryResultFile);
+  } catch(const std::invalid_argument& invalidArgument) {
+    std::string errorString = invalidArgument.what();
+    logger->log(tablog::ERROR, "Invalid query: " + errorString);
+
+    // TODO: Send error message back to client
+  }
 }
