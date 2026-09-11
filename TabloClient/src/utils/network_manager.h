@@ -2,9 +2,8 @@
 #define NETWORK_MANAGER_H
 
 #include <client_session_controller.h>
+#include <packet_types.h>
 #include <string>
-#include <thread>
-#include <mutex>
 #include <memory>
 
 class NetworkManager
@@ -15,8 +14,8 @@ class NetworkManager
     int createSocket(std::string tabloMaster);
 
     bool hasResponse();
-    ttp2::ClientSessionController::Packet popResponse();
-    void pushRequest(ttp2::ClientSessionController::Packet packet);
+    ttp2::Packet::Packet popResponse();
+    void pushRequest(ttp2::Packet::Packet packet);
 
     bool isConnected();
     void disconnect();

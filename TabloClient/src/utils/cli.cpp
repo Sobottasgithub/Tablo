@@ -1,22 +1,20 @@
 #include "cli.h"
+#include "network_manager.h"
 
 #include <client_session_controller.h>
+#include <packet_types.h>
 #include <networking.h>
+
+#include <tablog_registry.h>
+#include <tablog.h>
+
 #include <string>
 #include <iostream>
-#include <fstream>
-#include <thread>
-#include <variant>
 #include <filesystem>
 #include <memory>
 
 #include <arrow/csv/api.h>
 #include <arrow/io/api.h>
-
-#include "network_manager.h"
-
-#include <tablog_registry.h>
-#include <tablog.h>
 
 Cli::Cli(Argv* argv) {
   std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Client");
@@ -43,9 +41,9 @@ Cli::Cli(Argv* argv) {
       std::wcout << "Content: ";
       std::cin >> content;
 
-      ttp2::Networking::Packet packet;
+      ttp2::Packet::Packet packet;
 
-      ttp2::Networking::Standard payload;
+      ttp2::Packet::Standard payload;
       payload.payload = content;
       packet.payload = payload;
 
@@ -53,21 +51,21 @@ Cli::Cli(Argv* argv) {
     } else if (option == "2") {
       if (networkManager.hasResponse()) {
         while (networkManager.hasResponse()) {
-          ttp2::ClientSessionController::Packet response = networkManager.popResponse();
+          ttp2::Packet::Packet response = networkManager.popResponse();
           
-          if (std::holds_alternative<ttp2::ClientSessionController::Standard>(response.payload)) {
-            ttp2::ClientSessionController::Standard responsePayload = std::get<ttp2::ClientSessionController::Standard>(response.payload);
+          if (std::holds_alternative<ttp2::Packet::Standard>(response.payload)) {
+            ttp2::Packet::Standard responsePayload = std::get<ttp2::Packet::Standard>(response.payload);
             std::wcout << "Response:\nID: " << response.id << "\nPayload: " << responsePayload.payload.c_str() << std::endl;
-          } else if (std::holds_alternative<ttp2::ClientSessionController::File>(response.payload)) {
-            ttp2::ClientSessionController::File responsePayload = std::get<ttp2::ClientSessionController::File>(response.payload);
+          } else if (std::holds_alternative<ttp2::Packet::File>(response.payload)) {
+            ttp2::Packet::File responsePayload = std::get<ttp2::Packet::File>(response.payload);
             std::wcout << "Response:\nID: " << response.id
                        << "\n----payload----\nFilePath: " << responsePayload.filePath.c_str()
                        << "\nStart: " << responsePayload.start
                        << "\nEnd: " << responsePayload.end
                        << "\nPayload: " << responsePayload.payload->ToString().c_str()
                        << "\n---------------" << std::endl; 
-          } else if (std::holds_alternative<ttp2::ClientSessionController::Viewport>(response.payload)) {
-            ttp2::ClientSessionController::Viewport responseViewport = std::get<ttp2::ClientSessionController::Viewport>(response.payload);
+          } else if (std::holds_alternative<ttp2::Packet::Viewport>(response.payload)) {
+            ttp2::Packet::Viewport responseViewport = std::get<ttp2::Packet::Viewport>(response.payload);
             if (responseViewport.payload->num_columns() > 0 && responseViewport.payload->num_rows() > 0) {
               std::wcout << "id: " << response.id << std::endl;
               std::wcout << "xStart: " << responseViewport.xStart << "\nxEnd: " << responseViewport.xEnd << std::endl;
@@ -101,8 +99,8 @@ Cli::Cli(Argv* argv) {
       std::wcout << "yEnd:";
       std::cin >> yEnd;
       
-      ttp2::Networking::Packet packet;
-      ttp2::Networking::ViewportRequest payload;
+      ttp2::Packet::Packet packet;
+      ttp2::Packet::ViewportRequest payload;
       payload.xStart = xStart;
       payload.xEnd = xEnd;
       payload.yStart = yStart;
@@ -117,8 +115,8 @@ Cli::Cli(Argv* argv) {
       std::wcout << "TQL query: ";
       std::getline(std::cin >> std::ws, query);
 
-      ttp2::Networking::Packet packet;
-      ttp2::Networking::TqlQuery tqlQuery;
+      ttp2::Packet::Packet packet;
+      ttp2::Packet::TqlQuery tqlQuery;
       tqlQuery.query = query;
       packet.payload = tqlQuery;
 
@@ -158,8 +156,8 @@ void Cli::sendFile(std::string filePath, NetworkManager* networkManager) {
     }
     std::shared_ptr<arrow::Table> table = *maybeTable;
 
-    ttp2::Networking::Packet packet;
-    ttp2::Networking::File payload;
+    ttp2::Packet::Packet packet;
+    ttp2::Packet::File payload;
     payload.filePath = filePath;
     payload.start = 0;
     payload.end = table->num_rows();

@@ -1,7 +1,6 @@
 #include "network_manager.h"
 
 #include <client_session_controller.h>
-#include <iostream>
 #include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
@@ -9,7 +8,6 @@
 #include <thread>
 #include <memory>
 #include <cerrno>
-#include <type_traits>
 #include <poll.h>
 
 #include <tablog_registry.h>
@@ -70,11 +68,11 @@ bool NetworkManager::hasResponse() {
   return clientSessionController->hasResponse();
 }
 
-ttp2::ClientSessionController::Packet NetworkManager::popResponse() {
+ttp2::Packet::Packet NetworkManager::popResponse() {
   return clientSessionController->popResponse();
 }
 
-void NetworkManager::pushRequest(ttp2::Networking::Packet packet) {
+void NetworkManager::pushRequest(ttp2::Packet::Packet packet) {
   clientSessionController->pushRequest(packet);
 }
 
