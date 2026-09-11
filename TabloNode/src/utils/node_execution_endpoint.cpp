@@ -1,7 +1,7 @@
 #include "node_execution_endpoint.h"
 #include <stdexcept>
 
-void NodeExecutionEndpoint::registerFile(ttp2::ServerSessionController::File file) {
+void NodeExecutionEndpoint::registerFile(ttp2::Packet::File file) {
   for (int index = 0; index < currentFiles.size(); index++) {
     // Update file if it already exists
     if (currentFiles.at(index).filePath == file.filePath) {
@@ -24,11 +24,11 @@ std::shared_ptr<arrow::Table> NodeExecutionEndpoint::setSelectedFile(std::string
   throw std::invalid_argument("Unknown File path!");
 }
 
-ttp2::ServerSessionController::File* NodeExecutionEndpoint::getSelectedFile() {
+ttp2::Packet::File* NodeExecutionEndpoint::getSelectedFile() {
   return selectedFile;  
 }
 
-void NodeExecutionEndpoint::setQueryResult(ttp2::ServerSessionController::File queryResultTable) {
+void NodeExecutionEndpoint::setQueryResult(ttp2::Packet::File queryResultTable) {
   this->queryResultTable = queryResultTable;
   this->selectedFile = &this->queryResultTable;
 }

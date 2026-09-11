@@ -4,6 +4,7 @@
 #include "node_execution_endpoint.h"
 
 #include <server_session_controller.h>
+#include <packet_types.h>
 #include <interpreter.h>
 #include <parser.h>
 
@@ -16,7 +17,7 @@ class CsvManager {
   public:
     CsvManager();
     
-    void setFile(ttp2::ServerSessionController::File newFile);
+    void setFile(ttp2::Packet::File newFile);
     std::string getFilePath();
     int getRowCount();
     int getColumnCount();

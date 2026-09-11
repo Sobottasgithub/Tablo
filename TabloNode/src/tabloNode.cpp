@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include <networking.h>
 #include <cctype>
 #include <bits/stdc++.h>

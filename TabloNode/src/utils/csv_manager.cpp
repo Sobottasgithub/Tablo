@@ -57,7 +57,7 @@ CsvManager::CsvManager() {
   });
 }
 
-void CsvManager::setFile(ttp2::ServerSessionController::File newFile) {
+void CsvManager::setFile(ttp2::Packet::File newFile) {
   this->executionEndpoint.registerFile(newFile);
   logger->log(tablog::DEBUG, "File" + this->executionEndpoint.getSelectedFile()->payload->ToString());
 }
@@ -121,7 +121,7 @@ void CsvManager::executeQuery(const std::string& query) {
 
     logger->log(tablog::DEBUG, "Query result: " + queryResultTable->ToString());
 
-    ttp2::ServerSessionController::File queryResultFile;
+    ttp2::Packet::File queryResultFile;
     queryResultFile.filePath = "QueryResult";
     queryResultFile.start = 0;
     queryResultFile.end = queryResultTable->num_rows();

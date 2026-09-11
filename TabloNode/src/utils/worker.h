@@ -2,13 +2,15 @@
 #define WORKER_H
 
 #include <server_session_controller.h>
+#include <packet_types.h>
+
 #include "csv_manager.h"
 
 #include <tablog_registry.h>
 #include <tablog.h>
 
-#include <vector>
 #include <mutex>
+#include <vector>
 
 class Worker
 {
@@ -17,11 +19,11 @@ class Worker
         void solveRequestCycle();
 
         // Service logic
-        ttp2::ServerSessionController::Packet getRequest();
-        void pushRequest(ttp2::ServerSessionController::Packet packet);
+        ttp2::Packet::Packet getRequest();
+        void pushRequest(ttp2::Packet::Packet packet);
         
-        ttp2::ServerSessionController::Packet getResponse();
-        void pushResponse(ttp2::ServerSessionController::Packet packet);
+        ttp2::Packet::Packet getResponse();
+        void pushResponse(ttp2::Packet::Packet packet);
 
         int getResponseCollectionSize();
         int getRequestCollectionSize();
@@ -36,16 +38,16 @@ class Worker
         bool isCalled = false;
         
         std::mutex mtx;
-        std::vector<ttp2::ServerSessionController::Packet> responses;
-        std::vector<ttp2::ServerSessionController::Packet> requests;
+        std::vector<ttp2::Packet::Packet> responses;
+        std::vector<ttp2::Packet::Packet> requests;
 
         CsvManager csvManager;
 
         // Logic functions
-        ttp2::ServerSessionController::Packet test(ttp2::ServerSessionController::Packet packet);
-        void setFile(ttp2::ServerSessionController::File newFile);
-        ttp2::ServerSessionController::Packet getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest);
-        void executeQuery(ttp2::ServerSessionController::TqlQuery queryRequest);
+        ttp2::Packet::Packet test(ttp2::Packet::Packet packet);
+        void setFile(ttp2::Packet::File newFile);
+        ttp2::Packet::Packet getViewport(ttp2::Packet::ViewportRequest viewportRequest);
+        void executeQuery(ttp2::Packet::TqlQuery queryRequest);
 };
 
 #endif

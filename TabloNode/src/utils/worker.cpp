@@ -1,6 +1,8 @@
 #include "worker.h"
 
 #include <server_session_controller.h>
+#include <packet_types.h>
+
 #include "csv_manager.h"
 
 #include <tablog.h>
@@ -22,23 +24,23 @@ void Worker::solveRequestCycle() {
     while (isConnected()) {
         int requestSize = getRequestCollectionSize();
         for (int count = 0; count < requestSize; count++) {
-            ttp2::ServerSessionController::Packet request = getRequest();
+            ttp2::Packet::Packet request = getRequest();
 
-            if (std::holds_alternative<ttp2::ServerSessionController::Standard>(request.payload)) {
+            if (std::holds_alternative<ttp2::Packet::Standard>(request.payload)) {
                 pushResponse(Worker::test(request));
-            } else if (std::holds_alternative<ttp2::ServerSessionController::File>(request.payload)) {
+            } else if (std::holds_alternative<ttp2::Packet::File>(request.payload)) {
                 logger->log(tablog::DEBUG, "id: " + std::to_string(request.id));
-                ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(request.payload);
+                ttp2::Packet::File file = std::get<ttp2::Packet::File>(request.payload);
                 Worker::setFile(file);
-            } else if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(request.payload)) {
+            } else if (std::holds_alternative<ttp2::Packet::Viewport>(request.payload)) {
                 logger->log(tablog::CRITICAL, "Undefined behavior for the viewport");
-            } else if (std::holds_alternative<ttp2::ServerSessionController::ViewportRequest>(request.payload)) {
-                ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(request.payload);
-                ttp2::ServerSessionController::Packet responsePacket = Worker::getViewport(viewportRequest);
+            } else if (std::holds_alternative<ttp2::Packet::ViewportRequest>(request.payload)) {
+                ttp2::Packet::ViewportRequest viewportRequest = std::get<ttp2::Packet::ViewportRequest>(request.payload);
+                ttp2::Packet::Packet responsePacket = Worker::getViewport(viewportRequest);
                 responsePacket.id = request.id;
                 pushResponse(responsePacket);
-            } else if (std::holds_alternative<ttp2::ServerSessionController::TqlQuery>(request.payload)) {
-                ttp2::ServerSessionController::TqlQuery queryRequest = std::get<ttp2::ServerSessionController::TqlQuery>(request.payload);
+            } else if (std::holds_alternative<ttp2::Packet::TqlQuery>(request.payload)) {
+                ttp2::Packet::TqlQuery queryRequest = std::get<ttp2::Packet::TqlQuery>(request.payload);
                 executeQuery(queryRequest);
             } else {
                 logger->log(tablog::CRITICAL, "Unknown payload type!");
@@ -49,20 +51,20 @@ void Worker::solveRequestCycle() {
 }
 
 // Logic functions
-ttp2::ServerSessionController::Packet Worker::test(ttp2::ServerSessionController::Packet packet) {
+ttp2::Packet::Packet Worker::test(ttp2::Packet::Packet packet) {
     return packet;
 }
 
-void Worker::setFile(ttp2::ServerSessionController::File newFile) {
+void Worker::setFile(ttp2::Packet::File newFile) {
     this->csvManager.setFile(newFile);
 }
 
-ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionController::ViewportRequest viewportRequest) {
-    ttp2::ServerSessionController::Packet packet;
-    ttp2::ServerSessionController::Viewport viewport;
+ttp2::Packet::Packet Worker::getViewport(ttp2::Packet::ViewportRequest viewportRequest) {
+    ttp2::Packet::Packet packet;
+    ttp2::Packet::Viewport viewport;
 
     if (viewportRequest.xEnd < viewportRequest.xStart || viewportRequest.yEnd < viewportRequest.yStart) {
-        ttp2::ServerSessionController::Viewport emptyViewport;
+        ttp2::Packet::Viewport emptyViewport;
         packet.payload = emptyViewport;
         return packet;
     }
@@ -77,39 +79,39 @@ ttp2::ServerSessionController::Packet Worker::getViewport(ttp2::ServerSessionCon
     return packet;
 }
 
-void Worker::executeQuery(ttp2::ServerSessionController::TqlQuery queryRequest) {
+void Worker::executeQuery(ttp2::Packet::TqlQuery queryRequest) {
     this->csvManager.executeQuery(queryRequest.query);
 }
 
 // Service logic
-ttp2::ServerSessionController::Packet Worker::getRequest() {
+ttp2::Packet::Packet Worker::getRequest() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!requests.empty()) {
-        ttp2::ServerSessionController::Packet firstRequest = requests[0];
+        ttp2::Packet::Packet firstRequest = requests[0];
         requests.erase(requests.begin());
         return firstRequest;
     }
-    ttp2::ServerSessionController::Packet emptyPacket;
+    ttp2::Packet::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushRequest(ttp2::ServerSessionController::Packet packet) {
+void Worker::pushRequest(ttp2::Packet::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     requests.push_back(packet);
 }
 
-ttp2::ServerSessionController::Packet Worker::getResponse() {
+ttp2::Packet::Packet Worker::getResponse() {
     std::lock_guard<std::mutex> lock(mtx);
     if (!responses.empty()) {
-        ttp2::ServerSessionController::Packet firstResponse = responses[0];
+        ttp2::Packet::Packet firstResponse = responses[0];
         responses.erase(responses.begin());
         return firstResponse;
     }
-    ttp2::ServerSessionController::Packet emptyPacket;
+    ttp2::Packet::Packet emptyPacket;
     return emptyPacket;
 }
 
-void Worker::pushResponse(ttp2::ServerSessionController::Packet packet) {
+void Worker::pushResponse(ttp2::Packet::Packet packet) {
     std::lock_guard<std::mutex> lock(mtx);
     responses.push_back(packet);
 }
