@@ -2,6 +2,8 @@
 #define NETWORK_MANAGER_H
 
 #include <client_session_controller.h>
+#include <packet_types.h>
+
 #include <memory>
 #include <string>
 #include <thread>
@@ -27,7 +29,7 @@ class NetworkManager
         std::shared_ptr<tud::ServerDiscovery> udpDiscovery;
         std::thread serverDiscoveryThread;
 
-        std::vector<ttp2::Networking::Viewport> insertionSortViewportsByX(std::vector<ttp2::Networking::Viewport> viewports);
+        std::vector<ttp2::Packet::Viewport> insertionSortViewportsByX(std::vector<ttp2::Packet::Viewport> viewports);
 };
 
 #endif

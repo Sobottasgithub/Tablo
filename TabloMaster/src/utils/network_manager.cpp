@@ -17,8 +17,6 @@
 #include <memory>
 #include <cerrno>
 #include <poll.h>
-#include <variant>
-#include <unordered_map>
 
 NetworkManager::NetworkManager(std::string interface) {
     logger->log(tablog::INFO, "Start Socket");
@@ -96,8 +94,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     int columnCount = 0;
 
     // merge logic
-    std::vector<ttp2::ServerSessionController::Packet> viewportReqests = {};
-    std::unordered_map<int, std::vector<ttp2::ServerSessionController::Viewport>> viewports = {};
+    std::vector<ttp2::Packet::Packet> viewportReqests = {};
+    std::unordered_map<int, std::vector<ttp2::Packet::Viewport>> viewports = {};
     while(serverSessionController->isConnected()) {
         // Establish new node connections
         std::vector<std::string> discoveredNodes = udpDiscovery->getDiscoveredAddresses();
@@ -178,16 +176,16 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         // Send request
         if (serverSessionController->hasRequest()) {
             while (serverSessionController->hasRequest()) {
-                ttp2::ServerSessionController::Packet packet = serverSessionController->popRequest();
+                ttp2::Packet::Packet packet = serverSessionController->popRequest();
                 logger->log(tablog::DEBUG, "Received packet id: " + std::to_string(packet.id));
 
-                if (std::holds_alternative<ttp2::ServerSessionController::Standard>(packet.payload)) {
+                if (std::holds_alternative<ttp2::Packet::Standard>(packet.payload)) {
                     for (int index = 0; index < nodeConnections.size(); index++) {
                         nodeConnections[index].node->pushRequest(packet);
                     }
-                } else if (std::holds_alternative<ttp2::ServerSessionController::File>(packet.payload)) {
+                } else if (std::holds_alternative<ttp2::Packet::File>(packet.payload)) {
                     // INFO: Column based distribution
-                    ttp2::ServerSessionController::File file = std::get<ttp2::ServerSessionController::File>(packet.payload);
+                    ttp2::Packet::File file = std::get<ttp2::Packet::File>(packet.payload);
                     filePartitionCount = file.payload->num_rows() / nodeConnections.size();
                     lastDelimiter = file.payload->num_rows() - 1;
                     columnCount = file.payload->num_columns() -1;
@@ -207,9 +205,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         logger->log(tablog::DEBUG, "File " + nodeConnections[nodeIndex].ip + ": start row: " + std::to_string(filePartitionCount*nodeIndex) + " >> end row: " + std::to_string(delimiter));
                         std::shared_ptr<arrow::Table> slicedRowTable = file.payload->Slice(filePartitionCount*nodeIndex, delimiter);
 
-                        ttp2::ServerSessionController::Packet nodePacket;
+                        ttp2::Packet::Packet nodePacket;
                         nodePacket.id = packet.id;
-                        ttp2::ServerSessionController::File nodeFilePacket;
+                        ttp2::Packet::File nodeFilePacket;
                         nodeFilePacket.filePath = file.filePath;
                         nodeFilePacket.start = filePartitionCount*nodeIndex;
                         nodeFilePacket.end = delimiter;
@@ -218,8 +216,8 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                     
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }
-                } else if (std::holds_alternative<ttp2::ServerSessionController::ViewportRequest>(packet.payload)) {
-                    ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(packet.payload);
+                } else if (std::holds_alternative<ttp2::Packet::ViewportRequest>(packet.payload)) {
+                    ttp2::Packet::ViewportRequest viewportRequest = std::get<ttp2::Packet::ViewportRequest>(packet.payload);
                     viewportReqests.push_back(packet);
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
@@ -252,9 +250,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                         if (viewportRequest.yEnd > columnCount)
                             viewportRequest.yEnd = columnCount;
                         
-                        ttp2::ServerSessionController::Packet nodePacket;
+                        ttp2::Packet::Packet nodePacket;
                         nodePacket.id = packet.id;
-                        ttp2::ServerSessionController::ViewportRequest nodeViewportPacket;
+                        ttp2::Packet::ViewportRequest nodeViewportPacket;
                         nodeViewportPacket.yStart = viewportRequest.yStart;
                         nodeViewportPacket.yEnd = viewportRequest.yEnd;
                         // Real slice e.x. node 2 gets 55 to 99
@@ -266,7 +264,7 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
 
                         nodeConnections[nodeIndex].node->pushRequest(nodePacket);
                     }
-                } else if (std::holds_alternative<ttp2::ServerSessionController::TqlQuery>(packet.payload)) {
+                } else if (std::holds_alternative<ttp2::Packet::TqlQuery>(packet.payload)) {
                     viewportReqests.push_back(packet);
 
                     for (int nodeIndex = 0; nodeIndex < nodeConnections.size(); nodeIndex++) {
@@ -282,10 +280,10 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
         if (nodeConnections.size() > 1) {
             for (int index = 0; index < nodeConnections.size(); index++) {
                 if(nodeConnections[index].node->hasResponse()) {
-                    ttp2::ServerSessionController::Packet packet = nodeConnections[index].node->popResponse();
+                    ttp2::Packet::Packet packet = nodeConnections[index].node->popResponse();
 
-                    if (std::holds_alternative<ttp2::ServerSessionController::Viewport>(packet.payload)) {
-                        ttp2::ServerSessionController::Viewport viewport = std::get<ttp2::ServerSessionController::Viewport>(packet.payload);
+                    if (std::holds_alternative<ttp2::Packet::Viewport>(packet.payload)) {
+                        ttp2::Packet::Viewport viewport = std::get<ttp2::Packet::Viewport>(packet.payload);
 
                         arrow::Status status = viewport.payload->Validate();
                         if (!status.ok()) {
@@ -309,13 +307,13 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
             }
 
             // merge viewports
-            std::unordered_map<int, std::vector<ttp2::Networking::Viewport>>::iterator viewportIterator = viewports.begin();
+            std::unordered_map<int, std::vector<ttp2::Packet::Viewport>>::iterator viewportIterator = viewports.begin();
             for (int viewportRequestIndex = 0; viewportRequestIndex < viewportReqests.size(); viewportRequestIndex++) {
                 while (viewportIterator != viewports.end()) {
                     if (viewportReqests[viewportRequestIndex].id == viewportIterator->first) {
-                        if (std::holds_alternative<ttp2::ServerSessionController::Standard>(viewportReqests[viewportRequestIndex].payload)) {
-                            ttp2::ServerSessionController::ViewportRequest viewportRequest = std::get<ttp2::ServerSessionController::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
-                            std::vector<ttp2::Networking::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
+                        if (std::holds_alternative<ttp2::Packet::Standard>(viewportReqests[viewportRequestIndex].payload)) {
+                            ttp2::Packet::ViewportRequest viewportRequest = std::get<ttp2::Packet::ViewportRequest>(viewportReqests[viewportRequestIndex].payload);
+                            std::vector<ttp2::Packet::Viewport> sortedViewports = insertionSortViewportsByX(viewportIterator->second);
                             int xEnd = sortedViewports.back().xEnd;
                         
                             if (viewportRequest.xStart == sortedViewports.begin()->xStart && viewportRequest.xEnd == xEnd) {
@@ -329,9 +327,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
                                 std::shared_ptr<arrow::Table> resultViewport = *arrow::ConcatenateTables(viewportPackets);
                                 // logger->log(tablog::DEBUG, "Concatenated viewport: \n" + resultViewport->ToString());
             
-                                ttp2::ServerSessionController::Packet resultPacket;
+                                ttp2::Packet::Packet resultPacket;
                                 resultPacket.id = viewportIterator->first;
-                                ttp2::ServerSessionController::Viewport resultViewportPacket;
+                                ttp2::Packet::Viewport resultViewportPacket;
                                 resultViewportPacket.yStart = sortedViewports.begin()->yStart;
                                 resultViewportPacket.yEnd = sortedViewports.begin()->yEnd;
                                 resultViewportPacket.xStart = sortedViewports.begin()->xStart;
@@ -366,9 +364,9 @@ void NetworkManager::handleClientConnection(int serverSocket, int clientSocket) 
     logger->log(tablog::INFO, "Terminated");
 }
 
-std::vector<ttp2::Networking::Viewport> NetworkManager::insertionSortViewportsByX(std::vector<ttp2::Networking::Viewport> viewports) {
+std::vector<ttp2::Packet::Viewport> NetworkManager::insertionSortViewportsByX(std::vector<ttp2::Packet::Viewport> viewports) {
     for (int index = 1; index < viewports.size()-1; index++) {
-        ttp2::Networking::Viewport viewport = viewports[index];
+        ttp2::Packet::Viewport viewport = viewports[index];
         int pointerIndex = index - 1;
 
         while (pointerIndex >= 0 && viewports[pointerIndex].xStart > viewport.xStart) {
