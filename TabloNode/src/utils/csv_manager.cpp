@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include <packet_types.h>
 #include <server_session_controller.h>
 #include <tablog.h>
 
@@ -111,7 +112,7 @@ std::shared_ptr<arrow::Table> CsvManager::getViewport(int xStart, int xEnd, int 
   return slicedRowTable;
 }
 
-void CsvManager::executeQuery(const std::string& query) {
+std::optional<ttp2::Packet::Error> CsvManager::executeQuery(const std::string& query) {
   try {
     tql::Lexer lexer;
     lexer.tokenize(query);
@@ -131,6 +132,11 @@ void CsvManager::executeQuery(const std::string& query) {
     std::string errorString = invalidArgument.what();
     logger->log(tablog::ERROR, "Invalid query: " + errorString);
 
-    // TODO: Send error message back to client
+    ttp2::Packet::Error error;
+    error.code = 404; // TODO: use real error code later
+    error.message = errorString;
+    return error;
   }
+
+  return {};
 }

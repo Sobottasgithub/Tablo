@@ -11,6 +11,7 @@
 #include <mutex>
 #include <variant>
 #include <thread>
+#include <optional>
 
 // Cycle
 void Worker::solveRequestCycle() {
@@ -80,7 +81,13 @@ ttp2::Packet::Packet Worker::getViewport(ttp2::Packet::ViewportRequest viewportR
 }
 
 void Worker::executeQuery(ttp2::Packet::TqlQuery queryRequest) {
-    this->csvManager.executeQuery(queryRequest.query);
+    std::optional<ttp2::Packet::Error> optionalError = this->csvManager.executeQuery(queryRequest.query);
+
+    if (optionalError.has_value()) {
+        ttp2::Packet::Packet packet;
+        packet.payload = optionalError.value();
+        pushResponse(packet);
+    }
 }
 
 // Service logic
