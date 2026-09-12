@@ -15,6 +15,7 @@
 
 #include <arrow/csv/api.h>
 #include <arrow/io/api.h>
+#include <variant>
 
 Cli::Cli(Argv* argv) {
   std::shared_ptr<tablog::Tablog> logger = tablog::TablogRegistry::getInstance().get("Tablo-Client");
@@ -73,6 +74,9 @@ Cli::Cli(Argv* argv) {
             } else {
               std::wcout << "Empty Viewport" << std::endl;
             }
+          } else if (std::holds_alternative<ttp2::Packet::Error>(response.payload)) {
+            ttp2::Packet::Error error = std::get<ttp2::Packet::Error>(response.payload);
+            std::wcout << "ERROR: " << error.code << " " << error.message.c_str() << std::endl; 
           }
         }
       } else {
