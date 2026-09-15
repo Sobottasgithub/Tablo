@@ -178,6 +178,10 @@
               tablo-client
               tablo-master
             ];
+
+            passthru = {
+              inherit version;
+            };
           };
 
           mkTabloDocker =
