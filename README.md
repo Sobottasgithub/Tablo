@@ -53,3 +53,5 @@ To use this feature, you NEED to use nix. Download available at: https://nixos.o
 **Tablo UDP Discovery:** [TUD](https://github.com/Sobottasgithub/TUD)
 
 **Tablo Query Language:** [TQL](https://github.com/Sobottasgithub/TQL)
+
+**Tablo Logging:** [Tablog](https://github.com/Sobottasgithub/Tablog)
